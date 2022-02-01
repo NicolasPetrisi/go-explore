@@ -15,5 +15,5 @@ source=$1
 dest=${2:-`echo $source | sed -E 's/\/*$//'`_demo}
 game=${3:-MontezumaRevenge}
 
-python gen_demo/new_gen_demo.py --source $source --destination=$dest --game=$game --select_done --n_demos=1 --compress=bz2 --min_compute_steps=0 $4
+python3 new_gen_demo.py --source $source --destination=$dest --game=$game --select_done --n_demos=1 --compress=bz2 --min_compute_steps=0 $4
 

@@ -103,6 +103,7 @@ def get_game(game,
         game_class.TARGET_SHAPE = target_shape
         game_class.MAX_PIX_VALUE = max_pix_value
         game_args = dict(name=game.split('_')[1])
+        #game_args = dict(end_on_death=False)
         grid_resolution = (
             GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
             GridDimension('x', x_res), GridDimension('y', y_res)
@@ -370,17 +371,21 @@ def get_env(game_name,
         def env_fn():
             logger.debug(f'Process seed set to: {rank} seed: {seed + rank}')
             set_global_seeds(seed + rank)
+            print(game_name)
             env_id = game_name + 'NoFrameskip-v4'
             if max_episode_steps is not None:
                 gym.spec(env_id).max_episode_steps = max_episode_steps
             local_env = gym.make(env_id)
             set_action_meanings(local_env.unwrapped.get_action_meanings())
+            print(game_args)
+            print(local_env)
             local_env = game_class(local_env, **game_args)
             # Even if make video is true, only define it for one of our environments
             if make_video and rank % nb_envs == 0 and hvd.local_rank() == 0:
                 make_video_local = True
             else:
                 make_video_local = False
+            
             video_file_prefix = save_path + '/vids/' + game_name
             video_writer = wrappers.VideoWriter(
                 local_env,
@@ -397,6 +402,7 @@ def get_env(game_name,
                 plot_grid=plot_grid,
                 plot_sub_goal=plot_sub_goal)
             local_env = video_writer
+
             local_env = wrappers.my_wrapper(
                 local_env,
                 clip_rewards=clip_rewards,
@@ -431,6 +437,7 @@ def get_env(game_name,
                 final_goal_reward=final_goal_reward
             )
             video_writer.goal_conditioned_wrapper = local_env
+
             if sil != 'none':
                 local_env = ge_wrappers.SilEnv(
                     env=local_env,
@@ -646,7 +653,7 @@ def setup(resolution,
         assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'room_x_y':
         cell_representation = cell_representations.CellRepresentationFactory(cell_representations.RoomXY)
-        assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
+        assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
 

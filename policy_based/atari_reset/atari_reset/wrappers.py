@@ -922,8 +922,8 @@ def my_wrapper(env,
         env = ClipRewardEnv(env)
     if sticky:
         env = StickyActionEnv(env)
-    if noops:
-        env = NoopEnv(env)
+    #if noops:  #TODO for some fucking reason, this crashes Alien? maybe it's a predator :)))))
+    #    env = NoopEnv(env)
     if ignore_negative_rewards:
         env = IgnoreNegativeRewardEnv(env)
     env = MaxAndSkipEnv(env, skip=skip)
@@ -1041,7 +1041,7 @@ def worker(remote, env_fn_wrapper):
                     ob = env.reset()
                     if 'skip_env.executed_actions' in info:
                         info['skip_env.executed_actions'].append(-1)
-                        info['skip_env.executed_actions'].append(env.recursive_getattr('noop_actions_taken'))
+                        #info['skip_env.executed_actions'].append(env.recursive_getattr('noop_actions_taken'))
                 remote.send((ob, reward, done, info))
             elif cmd == 'reset':
                 ob = env.reset()

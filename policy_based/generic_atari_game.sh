@@ -4,8 +4,7 @@
 # For the full experiment settings, change each setting to each "full experiment" value.
 
 # Full experiment: 16
-NB_MPI_WORKERS=4
-
+NB_MPI_WORKERS=2
 # Full experiment: 16
 NB_ENVS_PER_WORKER=2
 
@@ -17,7 +16,7 @@ CHECKPOINT=10000
 
 
 # The game is run with both sticky actions and noops. Also, for Montezuma's Revenge, the episode ends on death.
-GAME_OPTIONS="--sticky_actions --noops --end_on_death"
+GAME_OPTIONS="--game generic_Alien --sticky_actions --noops --end_on_death"
 
 # Both trajectory reward (goal_reward_factor) are 1, except for reaching the final cell, for which the reward is 3.
 # Extrinsic (game) rewards are clipped to [-2, 2]. Because most Atari games have large rewards, this usually means that extrinsic rewards are twice that of the trajectory rewards.
@@ -33,8 +32,8 @@ ENTROPY_INC_OPTIONS="--entropy_strategy dynamic_increase --inc_ent_fac 0.01 --en
 
 # The cell representation for Montezuma's Revenge is a domain knowledge representation including level, room, number of keys, and the x, y coordinate of the agent.
 # The x, y coordinate is discretized into bins of 36 by 18 pixels (note that the pixel of the x axis are doubled, so this is 18 by 18 on the orignal frame)
-CELL_REPRESENTATION_OPTIONS="--cell_representation level_room_keys_x_y --resolution=36,18"
-
+#CELL_REPRESENTATION_OPTIONS="--cell_representation level_room_keys_x_y --resolution=36,18"
+CELL_REPRESENTATION_OPTIONS="--cell_representation room_x_y"
 # When following a trajectory, the agent is allowed to reach the goal cell, or any of the subsequent soft_traj_win_size (10) - 1 cells.
 # While returning, the episode is terminated if it takes more than max_actions_to_goal (1000) to reach the current goal
 # While exploring, the episode is terminated if it takes more than max_actions_to_new_cell (1000) to discover a new cell
@@ -42,6 +41,6 @@ CELL_REPRESENTATION_OPTIONS="--cell_representation level_room_keys_x_y --resolut
 EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 0.5 --max_actions_to_goal 1000 --max_actions_to_new_cell 1000 --delay 0"
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory"
-TRAINING_OPTIONS="--goal_rep onehot --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil --max_compute_steps 12000000000"
+TRAINING_OPTIONS="--goal_rep onehot_r24 --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil --max_compute_steps 12000000000"
 MISC_OPTIONS="--low_prob_traj_tresh 0.01 --start_method spawn --log_info INFO --log_files __main__"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --seed ${SEED} --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

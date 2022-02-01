@@ -25,7 +25,6 @@ class FlatGoalRep(AbstractGoalRepresentation):
         self.rel_final_goal = rel_final_goal
         self.rel_sub_goal = rel_sub_goal
         self.length_data = length_data
-
         if self.rep_type == 'final_goal':
             self.total_length = self._get_length(self.rel_final_goal, length_data)
         elif self.rep_type == 'sub_goal':

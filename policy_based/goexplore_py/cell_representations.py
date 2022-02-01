@@ -83,7 +83,7 @@ class RoomXY(CellRepresentationBase):
     __slots__ = ['_room', '_x', '_y', '_done', 'tuple']
     attributes = ('room', 'x', 'y', 'done')
     array_length = 4
-    supported_games = ('pitfall', 'montezuma')
+    supported_games = ('pitfall', 'montezuma', 'alien')
 
     @staticmethod
     def get_attr_max(name):

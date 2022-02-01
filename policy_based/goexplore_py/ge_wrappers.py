@@ -197,7 +197,7 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         self.y_res = y_res
 
     def choose(self, go_explore_env):
-        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat')
+        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat') #TODO this line crashes
         height = go_explore_env.env.recursive_getattr('screen_width')
         max_cell_x = int((width - (self.x_res / 2)) / self.x_res)
         max_cell_y = int((height - (self.y_res / 2)) / self.y_res)
