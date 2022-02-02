@@ -35,6 +35,43 @@ class CellRepresentationBase:
     def as_array(self) -> np.ndarray:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
+class Generic(CellRepresentationBase):
+    __slots__ = ['_done'] 
+    attributes = ('done') 
+    array_length = 1
+    supported_games = ('$generic')
+
+    def __init__(self, atari_env=None):
+        self._done = None
+        if atari_env is not None:
+            self._done = atari_env.done
+
+    @staticmethod
+    def make(env=None) -> Any:
+        return Generic(env)
+
+    @staticmethod
+    def get_array_length() -> int:
+        return Generic.array_length
+
+    @staticmethod
+    def get_attributes() -> List[str]:
+        #TODO implement this
+        #raise NotImplementedError('Cell representation needs to implement get_attributes')
+        return Generic.attributes
+
+    @staticmethod
+    def get_attr_max(name) -> int:
+        #TODO implement this
+        #should not have to be used
+        return 2 #for the done variable, but preferably not used at all
+        #raise NotImplementedError('generic should not need say attr values')
+
+    def as_array(self) -> np.ndarray:
+        #TODO implement this
+        return np.array(self._done)
+        #raise NotImplementedError('Cell representation needs to implement as_array')
+
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):

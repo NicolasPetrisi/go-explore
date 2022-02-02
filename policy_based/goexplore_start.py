@@ -340,6 +340,7 @@ def _run(**kwargs):
         checkpoint_tracker.log_warmup = log_after_warm_up
         local_logger.info('Performing warm up cycles... done')
     
+    print("------------------------IT¨S WORKING!!!!!!!!!! PRAISE THE LORD!!!!!!!------------------------")
     while checkpoint_tracker.should_continue():
         # Run one iteration
         if hvd.rank() == 0:

@@ -19,8 +19,8 @@ import goexplore_py.pitfall_env as pitfall_env
 import goexplore_py.generic_atari_env as generic_atari_env
 import goexplore_py.generic_goal_conditioned_env as generic_goal_conditioned_env
 import goexplore_py.complex_fetch_env as complex_fetch_env
-from goexplore_py.randselectors import *
-from goexplore_py.goexplore import *
+from randselectors import *
+from goexplore import *
 # import goexplore
 # import montezuma_env as montezuma_env
 # import pitfall_env as pitfall_env

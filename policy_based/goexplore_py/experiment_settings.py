@@ -103,7 +103,6 @@ def get_game(game,
         game_class.TARGET_SHAPE = target_shape
         game_class.MAX_PIX_VALUE = max_pix_value
         game_args = dict(name=game.split('_')[1])
-        #game_args = dict(end_on_death=False)
         grid_resolution = (
             GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
             GridDimension('x', x_res), GridDimension('y', y_res)
@@ -654,8 +653,13 @@ def setup(resolution,
     elif cell_representation_name == 'room_x_y':
         cell_representation = cell_representations.CellRepresentationFactory(cell_representations.RoomXY)
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
+    elif cell_representation_name == 'generic':
+         cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
+         #should be generic and work for all atari games, do we really need next line?
+         #assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
+    #TODO allow for a generic cell represenation (score and frame)
 
     # Get game
     game_name, game_class, game_args, grid_resolution = get_game(game=game,
@@ -786,8 +790,10 @@ def setup(resolution,
 
     # Get goal explorer
     logger.info('Creating goal explorer')
-    goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
 
+    #TODO should choose Dom or Generic depending on input
+    goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
+    
     # Get frame wrapper
     logger.info('Obtaining frame wrapper')
     frame_resize_wrapper, new_height, new_width = get_frame_wrapper(frame_resize)

@@ -163,7 +163,7 @@ def get_neighbor(env, pos, offset, x_range, y_range):
     new_pos.y = y
     return new_pos
 
-
+#TODO Make a generic goalExplorer extending GoalExplorer
 class GoalExplorer:
     def __init__(self, random_exp_prob, random_explorer):
         self.exploration_strategy = global_const.EXP_STRAT_NONE
@@ -197,7 +197,8 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         self.y_res = y_res
 
     def choose(self, go_explore_env):
-        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat') #TODO this line crashes
+        print("before disaster")
+        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat') #TODO this line crashes when running generic_atari_game
         height = go_explore_env.env.recursive_getattr('screen_width')
         max_cell_x = int((width - (self.x_res / 2)) / self.x_res)
         max_cell_y = int((height - (self.y_res / 2)) / self.y_res)
