@@ -102,11 +102,14 @@ def get_game(game,
         game_class = generic_atari_env.MyAtari
         game_class.TARGET_SHAPE = target_shape
         game_class.MAX_PIX_VALUE = max_pix_value
-        game_args = dict(name=game.split('_')[1])
-        grid_resolution = (
-            GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
-            GridDimension('x', x_res), GridDimension('y', y_res)
-        )
+        game_args = dict(name=game.split('_')[1],
+            cell_representation=cell_representation )
+        #grid_resolution = (
+            #GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
+            #GridDimension('x', x_res), GridDimension('y', y_res)
+        #)
+        grid_resolution = ()
+        cell_representation.set_grid_resolution(grid_resolution)
     elif 'robot' in game_lowered:
         game_name = game.split('_')[1]
         game_class = generic_goal_conditioned_env.MyRobot
@@ -370,14 +373,11 @@ def get_env(game_name,
         def env_fn():
             logger.debug(f'Process seed set to: {rank} seed: {seed + rank}')
             set_global_seeds(seed + rank)
-            print(game_name)
             env_id = game_name + 'NoFrameskip-v4'
             if max_episode_steps is not None:
                 gym.spec(env_id).max_episode_steps = max_episode_steps
             local_env = gym.make(env_id)
             set_action_meanings(local_env.unwrapped.get_action_meanings())
-            print(game_args)
-            print(local_env)
             local_env = game_class(local_env, **game_args)
             # Even if make video is true, only define it for one of our environments
             if make_video and rank % nb_envs == 0 and hvd.local_rank() == 0:
@@ -640,6 +640,7 @@ def setup(resolution,
         max_pix_value = None
 
     # Get the cell representation
+    generic_game = False
     logger.info('Creating cell representation')
     if cell_representation_name == 'level_room_keys_x_y':
         cell_representation = cell_representations.CellRepresentationFactory(cell_representations.MontezumaPosLevel)
@@ -655,6 +656,7 @@ def setup(resolution,
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
+         generic_game = True
          #should be generic and work for all atari games, do we really need next line?
          #assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     else:
@@ -792,7 +794,11 @@ def setup(resolution,
     logger.info('Creating goal explorer')
 
     #TODO should choose Dom or Generic depending on input
-    goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
+    
+    if generic_game:
+        goal_explorer = ge_wrappers.GenericGoalExplorer(random_exp_prob, random_explorer)
+    else:
+        goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     
     # Get frame wrapper
     logger.info('Obtaining frame wrapper')

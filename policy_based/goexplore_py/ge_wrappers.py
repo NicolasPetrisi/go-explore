@@ -189,6 +189,14 @@ class GoalExplorer:
     def choose(self, go_explore_env):
         raise NotImplementedError('GoalExplorers need to implement a choose method.')
 
+class GenericGoalExplorer(GoalExplorer):
+    def __init__(self, random_exp_prob, random_explorer):
+        super(GenericGoalExplorer,self).__init__(random_exp_prob, random_explorer)
+
+    def choose(self, go_explore_env):
+        target_cell = go_explore_env.select_cell_from_archive()
+        go_explore_env.last_reached_cell = target_cell
+        return target_cell
 
 class DomKnowNeighborGoalExplorer(GoalExplorer):
     def __init__(self, x_res, y_res, random_exp_prob, random_explorer):
@@ -197,7 +205,6 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         self.y_res = y_res
 
     def choose(self, go_explore_env):
-        print("before disaster")
         width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat') #TODO this line crashes when running generic_atari_game
         height = go_explore_env.env.recursive_getattr('screen_width')
         max_cell_x = int((width - (self.x_res / 2)) / self.x_res)

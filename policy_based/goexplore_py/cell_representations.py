@@ -37,7 +37,7 @@ class CellRepresentationBase:
 
 class Generic(CellRepresentationBase):
     __slots__ = ['_done'] 
-    attributes = ('done') 
+    attributes = ('done',) 
     array_length = 1
     supported_games = ('$generic')
 
@@ -69,8 +69,13 @@ class Generic(CellRepresentationBase):
 
     def as_array(self) -> np.ndarray:
         #TODO implement this
-        return np.array(self._done)
+        return np.array([self._done])
         #raise NotImplementedError('Cell representation needs to implement as_array')
+    
+    # TODO This causes the MPI to crash..... _pickle.UnpicklingError: state is not a dictionary
+    def __getstate__(self):
+        print( ( self._done, ) )
+        return (self._done,)
 
 
 class CellRepresentationFactory:
@@ -97,10 +102,8 @@ class CellRepresentationFactory:
         self.grid_resolution = grid_resolution
         self.grid_res_dict = {}
         self.max_values = []
-
         for dimension in self.grid_resolution:
             self.grid_res_dict[dimension.attr] = dimension.div
-
         for attr_name in self.cell_rep_class.get_attributes():
             max_val = self.cell_rep_class.get_attr_max(attr_name)
             if attr_name in self.grid_res_dict:
@@ -445,6 +448,7 @@ class MontezumaPosLevel(CellRepresentationBase):
         return self.tuple == other.tuple
 
     def __getstate__(self):
+        print(self.tuple)
         return self.tuple
 
     def __setstate__(self, d):

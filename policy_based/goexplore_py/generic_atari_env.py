@@ -53,6 +53,7 @@ class AtariPosLevel:
             return False
         return self.tuple == other.tuple
 
+    #TODO does this affect anything?
     def __getstate__(self):
         return self.tuple
 
@@ -74,7 +75,7 @@ def clip(a, m, M):
 class MyAtari(MyWrapper):
     TARGET_SHAPE = None
     MAX_PIX_VALUE = None
-    def __init__(self, env, name, x_repeat=2, end_on_death=False):
+    def __init__(self, env, name, x_repeat=2, end_on_death=False, cell_representation =None):
         super(MyAtari, self).__init__(env)
         self.name = name
         #self.env = gym.make(f'{name}NoFrameskip-v4')
@@ -83,10 +84,14 @@ class MyAtari(MyWrapper):
         self.env.reset()
         self.state = []
         self.x_repeat = x_repeat
-        self.rooms = []
+        self.rooms = {}
         self.unprocessed_state = None
         self.end_on_death = end_on_death
         self.prev_lives = 0
+       
+        self.pos = None
+        self.cell_representation = cell_representation
+        self.done = 0
     def __getattr__(self, e):
         return getattr(self.env, e)
 
@@ -96,6 +101,7 @@ class MyAtari(MyWrapper):
         self.unwrapped.seed(0)
         self.unprocessed_state = self.env.reset()
         self.state = [convert_state(self.unprocessed_state)]
+        self.pos = self.cell_representation(self)
         return unprocessed
         return copy.copy(self.state)
 
@@ -127,12 +133,13 @@ class MyAtari(MyWrapper):
         if self.end_on_death and cur_lives < self.prev_lives:
             done = True
         self.prev_lives = cur_lives
-
-        return copy.copy(self.state), reward, done, lol
+        self.pos = self.cell_representation(self)
+        return self.unprocessed_state, reward, done, lol
 
     def get_pos(self):
         # NOTE: this only returns a dummy position
-        return AtariPosLevel()
+        return self.pos
+        #return AtariPosLevel()
 
     def render_with_known(self, known_positions, resolution, show=True, filename=None, combine_val=max,
                           get_val=lambda x: x.score, minmax=None):
