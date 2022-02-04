@@ -116,7 +116,7 @@ class GoalRepData:
                 feature_index = max_value
         return feature_index
 
-
+#TODO image is not and should not be one-hot encodeed. Figure out what thi does and how to do it for a image.
 class OneHotGoalRep(FlatGoalRep):
     """
     Takes the array from a representation and discretizes each value into a one-hot vector.

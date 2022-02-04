@@ -9,10 +9,10 @@
 # limitations under the License.
 
 
-#from .basics import *
-#from .import_ai import *
-#from . import montezuma_env
-#from .utils import imdownscale
+# from .basics import *
+# from .import_ai import *
+# from . import montezuma_env
+# from .utils import imdownscale
 
 import numpy as np
 import gym
@@ -20,15 +20,22 @@ import copy
 from typing import Tuple, List
 import typing
 from atari_reset.atari_reset.wrappers import MyWrapper
+import numpy as np
+import cv2
 
-def convert_state(state):
-    if MyAtari.TARGET_SHAPE is None:
+
+def convert_state(state, target_shape, max_pix_value):
+    if target_shape is None:
         return None
     import cv2
-    state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
-    if MyAtari.TARGET_SHAPE == (-1, -1):
-        return RLEArray(state)
-    return imdownscale(state, MyAtari.TARGET_SHAPE, MyAtari.MAX_PIX_VALUE)
+    resized_state = cv2.resize(cv2.cvtColor(state, cv2.COLOR_RGB2GRAY),
+        target_shape,
+        interpolation=cv2.INTER_AREA)
+    img =  ((resized_state / 255.0) * max_pix_value).astype(np.uint8)
+    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
+
+def to_ByteArr(array):
+    return cv2.imencode('.png', array, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
 class AtariPosLevel:
     __slots__ = ['level', 'score', 'room', 'x', 'y', 'tuple']
@@ -54,8 +61,11 @@ class AtariPosLevel:
         return self.tuple == other.tuple
 
     #TODO does this affect anything?
-    def __getstate__(self):
-        return self.tuple
+    # def __getstate__(self):
+    #     return self.__dict__
+
+    # def __setstate__(self, ob):
+    #     self.__dict__ = ob
 
     def __setstate__(self, d):
         self.level, self.score, self.room, self.x, self.y = d
@@ -73,9 +83,9 @@ def clip(a, m, M):
 
 
 class MyAtari(MyWrapper):
-    TARGET_SHAPE = None
-    MAX_PIX_VALUE = None
-    def __init__(self, env, name, x_repeat=2, end_on_death=False, cell_representation =None):
+    #TARGET_SHAPE = None
+    #MAX_PIX_VALUE = None
+    def __init__(self, env, name, target_shape = (120,144), max_pix_value = 255, x_repeat=2, end_on_death=False, cell_representation =None):
         super(MyAtari, self).__init__(env)
         self.name = name
         #self.env = gym.make(f'{name}NoFrameskip-v4')
@@ -92,6 +102,11 @@ class MyAtari(MyWrapper):
         self.pos = None
         self.cell_representation = cell_representation
         self.done = 0
+
+        self.image = None
+        self.target_shape = target_shape
+        self.max_pix_value = max_pix_value
+
     def __getattr__(self, e):
         return getattr(self.env, e)
 
@@ -100,7 +115,9 @@ class MyAtari(MyWrapper):
         unprocessed = self.env.reset()
         self.unwrapped.seed(0)
         self.unprocessed_state = self.env.reset()
-        self.state = [convert_state(self.unprocessed_state)]
+        #print(to_ByteArr(self.unprocessed_state))
+        self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
+        #print(self.state)
         self.pos = self.cell_representation(self)
         return unprocessed
         return copy.copy(self.state)
@@ -126,7 +143,7 @@ class MyAtari(MyWrapper):
 
     def step(self, action) -> typing.Tuple[np.ndarray, float, bool, dict]:
         self.unprocessed_state, reward, done, lol = self.env.step(action)
-        self.state.append(convert_state(self.unprocessed_state))
+        self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
 
         cur_lives = self.env.unwrapped.ale.lives()

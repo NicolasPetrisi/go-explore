@@ -50,7 +50,7 @@ class StochasticArchive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
 
         cell_set = set(self.cell_id_to_key_dict.values())
-
+        #print(cell_set)
         for key in self.archive:
             assert key in cell_set, 'key:' + str(key) + ' has no inverse id!'
 

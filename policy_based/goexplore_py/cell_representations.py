@@ -36,15 +36,20 @@ class CellRepresentationBase:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
 class Generic(CellRepresentationBase):
-    __slots__ = ['_done'] 
+    __slots__ = ['_done', 'tuple'] 
     attributes = ('done',) 
     array_length = 1
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):
         self._done = None
+        self.tuple = None
         if atari_env is not None:
             self._done = atari_env.done
+            self.set_tuple()
+
+    def set_tuple(self):
+        self.tuple = (self._done,)
 
     @staticmethod
     def make(env=None) -> Any:
@@ -56,27 +61,37 @@ class Generic(CellRepresentationBase):
 
     @staticmethod
     def get_attributes() -> List[str]:
-        #TODO implement this
         #raise NotImplementedError('Cell representation needs to implement get_attributes')
         return Generic.attributes
 
     @staticmethod
     def get_attr_max(name) -> int:
-        #TODO implement this
         #should not have to be used
         return 2 #for the done variable, but preferably not used at all
         #raise NotImplementedError('generic should not need say attr values')
 
     def as_array(self) -> np.ndarray:
-        #TODO implement this
-        return np.array([self._done])
+        return np.array(self.tuple)
         #raise NotImplementedError('Cell representation needs to implement as_array')
     
     # TODO This causes the MPI to crash..... _pickle.UnpicklingError: state is not a dictionary
     def __getstate__(self):
-        print( ( self._done, ) )
-        return (self._done,)
+        return self.tuple
 
+    def __hash__(self):
+        return hash(self.tuple)
+
+    def __eq__(self, other):
+        if not isinstance(other, Generic):
+            return False
+        return self.tuple == other.tuple
+
+    def __setstate__(self, d):
+        self._done = d
+        self.tuple = d
+
+    def __repr__(self):
+        return f'done={self._done}'
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):
@@ -448,7 +463,6 @@ class MontezumaPosLevel(CellRepresentationBase):
         return self.tuple == other.tuple
 
     def __getstate__(self):
-        print(self.tuple)
         return self.tuple
 
     def __setstate__(self, d):

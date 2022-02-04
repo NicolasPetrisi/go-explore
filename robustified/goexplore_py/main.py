@@ -349,7 +349,8 @@ def _run(
             old_compute = expl.frames_compute
             old_len_grid = len(expl.grid)
             old_max_score = expl.max_score
-
+            for k, v in expl.grid.items():
+                 print("key is2 :" + str(k))
             expl.run_cycle()
 
             t.update(expl.frames_true - old)
