@@ -636,7 +636,6 @@ def setup(resolution,
     target_shape = (resize_x, resize_y)
 
     if use_real_pos and  cell_representation_name != 'generic' :
-        print("massa jiberishasdflkn------------------------------------------------------------------------------------")
         target_shape = None
         max_pix_value = None
 

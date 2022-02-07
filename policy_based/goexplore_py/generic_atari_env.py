@@ -23,6 +23,8 @@ from atari_reset.atari_reset.wrappers import MyWrapper
 import numpy as np
 import cv2
 
+from goexplore_py.utils import bytes2floatArr
+
 
 def convert_state(state, target_shape, max_pix_value):
     if target_shape is None:
@@ -33,9 +35,6 @@ def convert_state(state, target_shape, max_pix_value):
         interpolation=cv2.INTER_AREA)
     img =  ((resized_state / 255.0) * max_pix_value).astype(np.uint8)
     return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
-
-def to_ByteArr(array):
-    return cv2.imencode('.png', array, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
 class AtariPosLevel:
     __slots__ = ['level', 'score', 'room', 'x', 'y', 'tuple']
@@ -85,7 +84,7 @@ def clip(a, m, M):
 class MyAtari(MyWrapper):
     #TARGET_SHAPE = None
     #MAX_PIX_VALUE = None
-    def __init__(self, env, name, target_shape = (120,144), max_pix_value = 255, x_repeat=2, end_on_death=False, cell_representation =None):
+    def __init__(self, env, name, target_shape = (30,36), max_pix_value = 255, x_repeat=2, end_on_death=False, cell_representation =None):
         super(MyAtari, self).__init__(env)
         self.name = name
         #self.env = gym.make(f'{name}NoFrameskip-v4')
@@ -114,13 +113,13 @@ class MyAtari(MyWrapper):
         #self.env = gym.make(f'{self.name}NoFrameskip-v4')
         unprocessed = self.env.reset()
         self.unwrapped.seed(0)
-        self.unprocessed_state = self.env.reset()
+        self.unprocessed_state = unprocessed 
         #print(to_ByteArr(self.unprocessed_state))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
+        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         #print(self.state)
         self.pos = self.cell_representation(self)
         return unprocessed
-        return copy.copy(self.state)
 
     def get_restore(self):
         return (
@@ -145,7 +144,7 @@ class MyAtari(MyWrapper):
         self.unprocessed_state, reward, done, lol = self.env.step(action)
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
-
+        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         cur_lives = self.env.unwrapped.ale.lives()
         if self.end_on_death and cur_lives < self.prev_lives:
             done = True

@@ -13,6 +13,7 @@ import os
 import glob
 import hashlib
 from contextlib import contextmanager
+import cv2
 
 
 class TimedPickle:
@@ -69,3 +70,12 @@ def get_code_hash():
 
 def clip(value, low, high):
     return max(min(value, high), low)
+
+
+def bytes2floatArr(array):
+    return cv2.imdecode(np.frombuffer(array, np.uint8), 0).astype(np.float32)
+
+def floatArr2bytes(array):
+    return cv2.imencode('.png', array, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
+
+

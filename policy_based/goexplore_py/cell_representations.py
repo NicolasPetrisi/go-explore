@@ -10,6 +10,7 @@ import numpy as np
 from typing import List, Any, Type
 from goexplore_py.montezuma_env import MyMontezuma
 from goexplore_py.pitfall_env import MyPitfall
+from goexplore_py.utils import bytes2floatArr, floatArr2bytes
 
 
 class CellRepresentationBase:
@@ -36,20 +37,22 @@ class CellRepresentationBase:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
 class Generic(CellRepresentationBase):
-    __slots__ = ['_done', 'tuple'] 
-    attributes = ('done',) 
-    array_length = 1
+    __slots__ = ['_image','_done', 'tuple'] 
+    attributes = ('image', 'done') 
+    array_length = 1081
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):
+        self._image =None
         self._done = None
         self.tuple = None
         if atari_env is not None:
+            self._image = atari_env.image
             self._done = atari_env.done
             self.set_tuple()
 
     def set_tuple(self):
-        self.tuple = (self._done,)
+        self.tuple = (self._image, self._done)
 
     @staticmethod
     def make(env=None) -> Any:
@@ -71,27 +74,32 @@ class Generic(CellRepresentationBase):
         #raise NotImplementedError('generic should not need say attr values')
 
     def as_array(self) -> np.ndarray:
-        return np.array(self.tuple)
-        #raise NotImplementedError('Cell representation needs to implement as_array')
+        ar =  self._image.flatten()
+        ar = np.append(ar + [(float(self._done))], 0)
+        return ar
     
-    # TODO This causes the MPI to crash..... _pickle.UnpicklingError: state is not a dictionary
     def __getstate__(self):
         return self.tuple
 
     def __hash__(self):
-        return hash(self.tuple)
+        tmp = (floatArr2bytes(self._image), self._done)
+        return hash(tmp)
 
     def __eq__(self, other):
         if not isinstance(other, Generic):
             return False
-        return self.tuple == other.tuple
+        return self._cmptuple(other)
+    
+    def _cmptuple(self, other):
+        return  np.array_equal(self._image, other._image) and self._done == other._done
 
     def __setstate__(self, d):
-        self._done = d
+        self._image, self._done = d
         self.tuple = d
 
+    #TODO printing entire image too much?
     def __repr__(self):
-        return f'done={self._done}'
+        return f'image={self._image} done={self._done}'
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):

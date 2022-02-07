@@ -10,6 +10,8 @@ import numpy as np
 from typing import List, Any
 from gym import spaces
 
+from goexplore_py.utils import bytes2floatArr
+
 
 class AbstractGoalRepresentation:
     def get_goal_space(self):
@@ -17,7 +19,6 @@ class AbstractGoalRepresentation:
 
     def get(self, current_cell: Any, final_goal: Any, sub_goal: Any):
         raise NotImplementedError('get needs to be implemented.')
-
 
 class FlatGoalRep(AbstractGoalRepresentation):
     def __init__(self, rep_type: str, rel_final_goal: bool, rel_sub_goal: bool, length_data: Any):
@@ -77,7 +78,7 @@ class ScaledGoalRep(FlatGoalRep):
         return spaces.Box(low=-float('inf'), high=float('inf'), shape=(self.total_length,), dtype=np.float32)
 
     def _get_goal_rep(self, goal: Any, current_cell: Any, relative: bool):
-        goal_rep = np.cast[np.float32](goal.as_array())
+        goal_rep = goal.as_array()
         goal_rep /= self.normalizing_constants
         goal_rep += self.offset_constants
         if relative:
@@ -116,7 +117,7 @@ class GoalRepData:
                 feature_index = max_value
         return feature_index
 
-#TODO image is not and should not be one-hot encodeed. Figure out what thi does and how to do it for a image.
+#TODO image is not and should not be one-hot encodeed. Figure out what this does and how to do it for a image.
 class OneHotGoalRep(FlatGoalRep):
     """
     Takes the array from a representation and discretizes each value into a one-hot vector.

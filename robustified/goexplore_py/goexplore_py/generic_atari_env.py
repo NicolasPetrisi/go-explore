@@ -15,7 +15,6 @@ from . import montezuma_env
 from .utils import imdownscale
 
 def convert_state(state):
-    print("ok----------------")
     if MyAtari.TARGET_SHAPE is None:
         return None
     import cv2
