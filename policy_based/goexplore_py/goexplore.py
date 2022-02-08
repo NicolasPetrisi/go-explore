@@ -193,12 +193,14 @@ class Explore:
             self.process_requests(requests)
 
     def run_cycle(self):
+        list_time = []
+        list_time.append(time.perf_counter())
         # Warm up cycles are not counted as cycles
         if not self.warm_up:
             self.cycles += 1
 
         mb_data = self.trajectory_gatherer.gather()
-
+        list_time.append(time.perf_counter())
         # While synchronizing the number of frames processed across all environments would be ideal, it makes loading
         # checkpoints harder. Instead, we will provide an estimate based on the maximum number of frames that could
         # potentially be processed
@@ -206,7 +208,7 @@ class Explore:
         global_frames = mpi.COMM_WORLD.allgather(local_frames)
         prev_frames = self.frames_compute
         self.frames_compute += sum(global_frames)
-
+        #list_time.append(time.perf_counter())
         self.archive.frame_skip = self.trajectory_gatherer.frame_skip
         self.archive.frames = prev_frames + sum(global_frames[0:hvd.rank()])
         self.archive.update(mb_data,
@@ -214,24 +216,24 @@ class Explore:
                             self.trajectory_gatherer.return_goals_reached,
                             self.trajectory_gatherer.sub_goals,
                             self.trajectory_gatherer.ent_incs)
-
+        #list_time.append(time.perf_counter())
         self._sync_info()
         cell_selector = self.archive.cell_selector
         trajectory_manager = self.archive.cell_trajectory_manager
         trajectory_manager.traj_prob_dict = cell_selector.get_traj_probabilities_dict(self.archive.archive)
-
+        #list_time.append(time.perf_counter())
         if self.sil == 'sil' or self.sil == 'replay':
             traj_candidates = []
 
             # Select a trajectory to imitate based on the current cell-selection procedure
             key = self.archive.cell_selector.choose_cell_key(self.archive.archive)[0]
-
+            #list_time.append(time.perf_counter())
             cell_traj_id = self.archive.archive[key].cell_traj_id
             cell_traj_end = self.archive.archive[key].cell_traj_end
             score = self.archive.archive[key].score
             trajectory_len = self.archive.archive[key].trajectory_len
             traj_candidates.append((cell_traj_id, cell_traj_end, score, trajectory_len))
-
+            #list_time.append(time.perf_counter())
             # Let the world know which trajectory we have chosen for self-imitation learning
             selected_trajectories = mpi.COMM_WORLD.allgather(cell_traj_id)
 
@@ -240,7 +242,7 @@ class Explore:
 
             # Determine who has my trajectory
             owner = self.get_traj_owner(owned_by_world, cell_traj_id)
-
+            #list_time.append(time.perf_counter())
             # If we do not have our own trajectory, and our environment is ready for the next demonstration, make a
             # request for our trajectory
             env_zero = self.trajectory_gatherer.env.get_envs()[0]
@@ -248,12 +250,12 @@ class Explore:
                 request = (hvd.rank(), cell_traj_id, owner)
             else:
                 request = (hvd.rank(), None, None)
-
+           # list_time.append(time.perf_counter())
             requests = mpi.COMM_WORLD.allgather(request)
-
+            #list_time.append(time.perf_counter())
             # Exchange trajectories
             self.process_requests(requests)
-
+            #list_time.append(time.perf_counter())
             # If we still do not have a trajectory to imitate, stop imitation learning
             if len(traj_candidates) == 0:
                 env_zero.recursive_call_method('set_sil_trajectory', [None, None])
@@ -269,6 +271,18 @@ class Explore:
                     env_zero.recursive_call_method('set_sil_trajectory', (frame_trajectory, cell_trajectory))
                     self.prev_selected_traj = selected_traj
                     self.prev_selected_traj_len = selected_traj_len
-
+            #list_time.append(time.perf_counter())
             for traj_id in self.archive.cell_trajectory_manager.cell_trajectories:
                 self.write_to_disk(traj_id)
+
+
+        list_time.append(time.perf_counter())
+        prev_time = list_time[0]
+        i = 1
+        tot_time = list_time[-1] - list_time[0]
+        print("total time is " + str(tot_time))
+        for t in list_time[1:]:
+            print( "time share from " + str(i-1) + " to " + str(i) + " is: " + str( (t - prev_time) / tot_time))
+            prev_time = t
+            i += 1
+

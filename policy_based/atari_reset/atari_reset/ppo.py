@@ -147,6 +147,7 @@ class Model(object):
     def load(self, load_path):
         loaded_params = joblib.load(load_path)
         restores = []
+        print("loading")
         for p, loaded_p in zip(self.params, loaded_params):
             restores.append(p.assign(loaded_p))
         self.sess.run(restores)

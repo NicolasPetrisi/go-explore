@@ -955,7 +955,6 @@ def setup(resolution,
     # Get the policy
     logger.info('Obtaining the policy')
     policy = get_policy(policy_name)
-
     logger.info('Initializing the model')
     if sil == 'sil' or sil == 'nosil' or sil == 'noframes':
         model = ge_models.GoalConFlexEntSilModel()

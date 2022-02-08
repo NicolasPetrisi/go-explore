@@ -15,7 +15,7 @@ from goexplore_py.explorers import RepeatedRandomExplorer
 from goexplore_py.data_classes import CellInfoStochastic
 import goexplore_py.mpi_support as mpi
 from atari_reset.atari_reset.ppo import flatten_lists, safemean
-
+import time
 
 class StochasticGatherer:
     def __init__(self,
@@ -61,8 +61,9 @@ class StochasticGatherer:
         self.processed_frames: int = 0
 
     def gather(self):
+        t1 = time.perf_counter()
         self.runner.run()
-
+        t2 = time.perf_counter()
         if hasattr(self.runner, 'trunc_lst_mb_sil_valid'):
             diff = len(self.runner.trunc_lst_mb_sil_valid) - np.sum(self.runner.trunc_lst_mb_sil_valid)
             self.processed_frames = int(diff * self.frame_skip)
@@ -94,10 +95,14 @@ class StochasticGatherer:
         self.sub_goals = [ei['sub_goal'] for ei in local_ep_infos]
         self.ent_incs = [ei['inc_ent'] for ei in local_ep_infos]
 
+        t3 = time.perf_counter()
         # We do not update the network during the warm up period
         if not self.freeze_network and not self.warm_up:
             self._train()
-
+        t4 = time.perf_counter()
+        print("first time :" + str(t2-t1))
+        print("second time :" + str(t3-t2))
+        print("third time :" + str(t4-t3))
         return (self.runner.ar_mb_cells,
                 self.runner.ar_mb_game_reward,
                 self.runner.trunc_lst_mb_trajectory_ids,

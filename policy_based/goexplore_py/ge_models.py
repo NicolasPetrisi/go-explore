@@ -158,6 +158,7 @@ class GoalConFlexEntSilModel(GoalConditionedModelFlexEnt):
 
     def train(self, lr, obs, goals, returns, advs, masks, actions, values, neglogpacs, valids, increase_ent,
               sil_actions=None, sil_rew=None, sil_valid=None, states=None):
+        import time
         self.train_it += 1
         td_map = {self.LR: lr, self.train_model.X: obs, self.train_model.goal: goals, self.A: actions, self.ADV: advs,
                   self.VALID: valids, self.R: returns,
@@ -166,4 +167,5 @@ class GoalConFlexEntSilModel(GoalConditionedModelFlexEnt):
         if states is not None:
             td_map[self.train_model.S] = states
             td_map[self.train_model.M] = masks
-        return self.filter_requested_losses(self.sess.run(self.loss_requested, feed_dict=td_map))
+        a = self.sess.run(self.loss_requested, feed_dict=td_map) #TODO This takes most of the time ~96% of the timespec
+        return self.filter_requested_losses(a)

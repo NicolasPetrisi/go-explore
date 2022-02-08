@@ -84,7 +84,7 @@ def clip(a, m, M):
 class MyAtari(MyWrapper):
     #TARGET_SHAPE = None
     #MAX_PIX_VALUE = None
-    def __init__(self, env, name, target_shape = (30,36), max_pix_value = 255, x_repeat=2, end_on_death=False, cell_representation =None):
+    def __init__(self, env, name, target_shape = (11,8), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation =None):
         super(MyAtari, self).__init__(env)
         self.name = name
         #self.env = gym.make(f'{name}NoFrameskip-v4')

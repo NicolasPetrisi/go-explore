@@ -175,7 +175,6 @@ class GRUPolicy(object):
 
         self.pdtype = make_pdtype(ac_space)
         self.pd = self.pdtype.pdfromflat(pi)
-
         a0 = self.pd.sample()
         neglogp0 = self.pd.neglogp(a0)
         self.initial_state = np.zeros((nenv, memsize), dtype=np.float32)

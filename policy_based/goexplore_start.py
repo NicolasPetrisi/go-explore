@@ -538,7 +538,7 @@ def find_checkpoint(base_path):
             local_logger.debug(f'job_lib_file: {job_lib_file}')
             num = str(os.path.basename(job_lib_file).split('_')[0])
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix)}')
-            arch_exists = os.path.exists(os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix))
+            arch_exists = os.path.exists(os.path.join(path_to_, num + ARCHIVE_POSTFIX + compress_suffix))
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + TRAJ_POSTFIX)}')
             traj_exists = os.path.exists(os.path.join(path_to_load, num + TRAJ_POSTFIX))
             if arch_exists and traj_exists:

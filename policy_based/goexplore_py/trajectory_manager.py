@@ -169,14 +169,14 @@ class CellTrajectoryManager:
             for tp in full_trajectory:
                 cell_key, reward, obs_and_goal, action, ge_reward = tp
                 obs, goal = obs_and_goal
-                cell_key_f = tf.train.Feature(int64_list=tf.train.Int64List(value=cell_key.__getstate__()))
+                #cell_key_f = tf.train.Feature(int64_list=tf.train.Int64List(value=cell_key.__getstate__()))
                 reward_f = tf.train.Feature(float_list=tf.train.FloatList(value=[reward]))
                 obs_f = tf.train.Feature(bytes_list=tf.train.BytesList(value=[obs.tostring()]))
                 goal_f = tf.train.Feature(float_list=tf.train.FloatList(value=goal))
                 action_f = tf.train.Feature(int64_list=tf.train.Int64List(value=[action]))
                 ge_reward_f = tf.train.Feature(float_list=tf.train.FloatList(value=[ge_reward]))
                 feature = {
-                    'cell_key': cell_key_f,
+                    #'cell_key': cell_key_f,
                     'reward': reward_f,
                     'obs': obs_f,
                     'goal': goal_f,
