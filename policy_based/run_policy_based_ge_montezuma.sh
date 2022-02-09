@@ -4,7 +4,7 @@
 # For the full experiment settings, change each setting to each "full experiment" value.
 
 # Full experiment: 16
-NB_MPI_WORKERS=2
+NB_MPI_WORKERS=4
 
 # Full experiment: 16
 NB_ENVS_PER_WORKER=2
@@ -29,7 +29,7 @@ CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=attr,nb_actions_t
 # When the agent takes too long to reach the next cell, its intropy increases according to (inc_ent_fac*steps)^ent_inc_power.
 # When exploring, this entropy increase starts when it takes more than expl_inc_ent_thresh (50) actions to reach a new cell.
 # When returning, entropy increase starts relative to the time it originally took to reach the target cell.
-ENTROPY_INC_OPTIONS="--entropy_strategy dynamic_increase --inc_ent_fac 0.01 --ent_inc_power 2 --ret_inc_ent_fac 1 --expl_inc_ent_thresh 50 --expl_ent_reset=on_new_cell --legacy_entropy 0"
+ENTROPY_INC_OPTIONS="--entropy_strategy dynamic_increase --inc_ent_fac 0.01 --ent_inc_power 2 --ret_inc_ent_fac 1 --expl_inc_ent_thresh 50 --expl_ent_reset=on_new_cell --legacy_entropy 0 --one_vid_per_goal 1"
 
 # The cell representation for Montezuma's Revenge is a domain knowledge representation including level, room, number of keys, and the x, y coordinate of the agent.
 # The x, y coordinate is discretized into bins of 36 by 18 pixels (note that the pixel of the x axis are doubled, so this is 18 by 18 on the orignal frame)

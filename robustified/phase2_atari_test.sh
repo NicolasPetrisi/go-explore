@@ -15,4 +15,4 @@ game=${1:-MontezumaRevenge}
 source=${2:-`pwd`/results}
 results=${3:-`pwd`/test_results}
 
-python atari_reset/check_atari.py --num_timesteps=100000000000 --noops --sticky --num_per_noop=1000 --load_path=$source --game=$game --save_path=$results
+python3 atari-reset/check_atari.py --num_timesteps=100000000000 --noops --sticky --num_per_noop=1000 --load_path=$source --game=$game --save_path=$results

@@ -19,6 +19,14 @@ import goexplore_py.pitfall_env as pitfall_env
 import goexplore_py.generic_atari_env as generic_atari_env
 import goexplore_py.generic_goal_conditioned_env as generic_goal_conditioned_env
 import goexplore_py.complex_fetch_env as complex_fetch_env
+from goexplore_py.randselectors import *
+from goexplore_py.goexplore import *
+# import goexplore
+# import montezuma_env as montezuma_env
+# import pitfall_env as pitfall_env
+# import generic_atari_env as generic_atari_env
+#import generic_goal_conditioned_env as generic_goal_conditioned_env
+#import complex_fetch_env as complex_fetch_env
 import cProfile
 import gzip
 
@@ -341,7 +349,8 @@ def _run(
             old_compute = expl.frames_compute
             old_len_grid = len(expl.grid)
             old_max_score = expl.max_score
-
+            for k, v in expl.grid.items():
+                 print("key is2 :" + str(k))
             expl.run_cycle()
 
             t.update(expl.frames_true - old)

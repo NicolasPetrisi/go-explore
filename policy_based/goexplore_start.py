@@ -538,7 +538,7 @@ def find_checkpoint(base_path):
             local_logger.debug(f'job_lib_file: {job_lib_file}')
             num = str(os.path.basename(job_lib_file).split('_')[0])
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix)}')
-            arch_exists = os.path.exists(os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix))
+            arch_exists = os.path.exists(os.path.join(path_to_, num + ARCHIVE_POSTFIX + compress_suffix))
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + TRAJ_POSTFIX)}')
             traj_exists = os.path.exists(os.path.join(path_to_load, num + TRAJ_POSTFIX))
             if arch_exists and traj_exists:
@@ -603,7 +603,7 @@ def run(kwargs):
         raise Exception('Experiment: ' + base_path + ' already exists!')
 
     # We need to setup the MPI environment before performing any data processing
-    nb_cpu = 2
+    nb_cpu = 4 #TODO why is this hard coded? we set it in the settings file? 
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])
     with session.as_default():
         worker_seed_start = master_seed + 1

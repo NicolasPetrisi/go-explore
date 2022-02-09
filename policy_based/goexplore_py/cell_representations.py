@@ -10,6 +10,7 @@ import numpy as np
 from typing import List, Any, Type
 from goexplore_py.montezuma_env import MyMontezuma
 from goexplore_py.pitfall_env import MyPitfall
+from goexplore_py.utils import bytes2floatArr, floatArr2bytes
 
 
 class CellRepresentationBase:
@@ -35,6 +36,92 @@ class CellRepresentationBase:
     def as_array(self) -> np.ndarray:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
+class Generic(CellRepresentationBase):
+    __slots__ = ['_image','_done', 'tuple'] 
+    attributes = ('image',  'done') 
+    array_length = 89 #TODO change in program flow to allow it to be generic
+    supported_games = ('$generic')
+
+    def __init__(self, atari_env=None):
+        self._image =None
+        self._done = None
+        self.tuple = None
+        #self._x = None
+        #self._y = None
+
+        if atari_env is not None:
+            self._image = atari_env.image
+            self._done = atari_env.done
+            #self._x = 1
+            #self._y = 1
+            #self.array_length = len(self._image.flatten()) + 1 #TODO Not used now, see todo above, plus one is for the done value
+            self.set_tuple()
+
+    @property
+    def x(self):
+        return 1
+
+    @property
+    def y(self):
+        return 1
+
+    @x.setter
+    def x(self, value):
+        pass
+
+    @y.setter
+    def y(self, value):
+        pass
+
+    def set_tuple(self):
+        self.tuple = (self._image, self._done)
+
+    @staticmethod
+    def make(env=None) -> Any:
+        return Generic(env)
+
+    @staticmethod
+    def get_array_length() -> int:
+        return Generic.array_length
+
+    @staticmethod
+    def get_attributes() -> List[str]:
+        #raise NotImplementedError('Cell representation needs to implement get_attributes')
+        return Generic.attributes
+
+    @staticmethod
+    def get_attr_max(name) -> int:
+        #should not have to be used
+        return 2 #for the done variable, but preferably not used at all
+        #raise NotImplementedError('generic should not need say attr values')
+
+    def as_array(self) -> np.ndarray:
+        ar =  self._image.flatten()
+        ar = np.append(ar + [(float(self._done))], 0)
+        return ar
+    
+    def __getstate__(self):
+        return self.tuple
+
+    def __hash__(self):
+        tmp = (floatArr2bytes(self._image), self._done)
+        return hash(tmp)
+
+    def __eq__(self, other):
+        if not isinstance(other, Generic):
+            return False
+        return self._cmptuple(other)
+    
+    def _cmptuple(self, other):
+        return  np.array_equal(self._image, other._image) and self._done == other._done
+
+    def __setstate__(self, d):
+        self._image, self._done = d
+        self.tuple = d
+
+    #TODO printing entire image too much?
+    def __repr__(self):
+        return f'image={self._image} done={self._done}'
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):
@@ -60,10 +147,8 @@ class CellRepresentationFactory:
         self.grid_resolution = grid_resolution
         self.grid_res_dict = {}
         self.max_values = []
-
         for dimension in self.grid_resolution:
             self.grid_res_dict[dimension.attr] = dimension.div
-
         for attr_name in self.cell_rep_class.get_attributes():
             max_val = self.cell_rep_class.get_attr_max(attr_name)
             if attr_name in self.grid_res_dict:
@@ -83,7 +168,7 @@ class RoomXY(CellRepresentationBase):
     __slots__ = ['_room', '_x', '_y', '_done', 'tuple']
     attributes = ('room', 'x', 'y', 'done')
     array_length = 4
-    supported_games = ('pitfall', 'montezuma')
+    supported_games = ('pitfall', 'montezuma', 'alien')
 
     @staticmethod
     def get_attr_max(name):
