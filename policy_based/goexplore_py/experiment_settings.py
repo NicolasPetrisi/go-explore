@@ -369,7 +369,7 @@ def get_env(game_name,
     temp_env = gym.make(game_name + 'NoFrameskip-v4')
     set_action_meanings(temp_env.unwrapped.get_action_meanings())
 
-    def make_env(rank):
+    def make_env(rank, local_rank):
         def env_fn():
             logger.debug(f'Process seed set to: {rank} seed: {seed + rank}')
             set_global_seeds(seed + rank)
@@ -380,7 +380,7 @@ def get_env(game_name,
             set_action_meanings(local_env.unwrapped.get_action_meanings())
             local_env = game_class(local_env, **game_args)
             # Even if make video is true, only define it for one of our environments
-            if make_video and rank % nb_envs == 0 and hvd.local_rank() == 0:
+            if make_video and rank % nb_envs == 0 and local_rank == 0:
                 make_video_local = True
             else:
                 make_video_local = False
@@ -448,7 +448,8 @@ def get_env(game_name,
             return local_env
         return env_fn
     logger.info(f'Creating: {nb_envs} environments.')
-    env_factories = [make_env(i + nb_envs * hvd.rank()) for i in range(nb_envs)]
+    a = hvd.local_rank()
+    env_factories = [make_env(i + nb_envs * hvd.rank(), a) for i in range(nb_envs)]
     env = ge_wrappers.GoalConSubprocVecEnv(env_factories, start_method)
     env = ge_wrappers.GoalConVecFrameStack(env, frame_history)
     if 'filter' in goal_representation_name:
@@ -1061,7 +1062,6 @@ def setup(resolution,
             logger.info('Full trajectories loaded.')
         logger.info('Waiting for rank 0 to finish loading checkpoint...')
         local_comm.barrier()
-
         mpi.get_comm_world().barrier()
         logger.info('Loading trajectories is done!')
 
@@ -1218,7 +1218,7 @@ def parse_arguments():
                         help='Maximum number of COMPUTE frames.')
     parser.add_argument('--max_iterations', type=int, default=DefaultArg(None),
                         help='Maximum number of iterations.')
-    parser.add_argument('--max_hours', '--mh', type=float, default=DefaultArg(None),
+    parser.add_argument('--max_hours', '--mh', type=float, default=DefaultArg(0.1),
                         help='Maximum number of hours to run this for.')
     parser.add_argument('--max_cells', type=int, default=DefaultArg(None),
                         help='The maximum number of cells before stopping.')
@@ -1494,11 +1494,11 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(False))
+    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
-    safe_set_argument(args, 'make_video', DefaultArg(False))
+    safe_set_argument(args, 'make_video', DefaultArg(True)) #TODO changed here!
     safe_set_argument(args, 'skip', DefaultArg(4))
     safe_set_argument(args, 'pixel_repetition', DefaultArg(1))
     safe_set_argument(args, 'plot_archive', DefaultArg(True))

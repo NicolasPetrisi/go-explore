@@ -78,7 +78,11 @@ class ScaledGoalRep(FlatGoalRep):
         return spaces.Box(low=-float('inf'), high=float('inf'), shape=(self.total_length,), dtype=np.float32)
 
     def _get_goal_rep(self, goal: Any, current_cell: Any, relative: bool):
+        
+        
         goal_rep = goal.as_array()
+        
+        
         goal_rep /= self.normalizing_constants
         goal_rep += self.offset_constants
         if relative:

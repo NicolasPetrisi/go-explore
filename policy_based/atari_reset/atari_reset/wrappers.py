@@ -733,8 +733,8 @@ class VideoWriter(MyWrapper):
         return matches
 
     def process_frame(self, frame):
-        f_out = np.zeros((160, 160, 3), dtype=np.uint8)
-        f_out[:, :, 0:3] = np.cast[np.uint8](frame)[50:, :, :]
+        f_out = np.zeros((210, 160, 3), dtype=np.uint8)
+        f_out[:, :, 0:3] = np.cast[np.uint8](frame)[:, :, :]
         f_out = f_out.repeat(2, axis=1)
         f_overlay = copy.copy(f_out)
 
@@ -766,7 +766,6 @@ class VideoWriter(MyWrapper):
             if goal is not None:
                 if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
                     self._render_cell(f_out, goal, (255, 0, 0))
-
         if self.plot_cell_traj:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
@@ -809,6 +808,7 @@ class VideoWriter(MyWrapper):
 
     def add_frame(self):
         if self.video_writer:
+            #print("self.obs" + str(self.obs.shape)) 
             self.video_writer.append_data(self.process_frame(self.obs))
             self.num_frames += 1
 

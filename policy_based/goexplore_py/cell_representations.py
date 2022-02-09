@@ -38,7 +38,7 @@ class CellRepresentationBase:
 
 class Generic(CellRepresentationBase):
     __slots__ = ['_image','_done', 'tuple'] 
-    attributes = ('image', 'done') 
+    attributes = ('image',  'done') 
     array_length = 89 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
@@ -46,11 +46,32 @@ class Generic(CellRepresentationBase):
         self._image =None
         self._done = None
         self.tuple = None
+        #self._x = None
+        #self._y = None
+
         if atari_env is not None:
             self._image = atari_env.image
             self._done = atari_env.done
+            #self._x = 1
+            #self._y = 1
             #self.array_length = len(self._image.flatten()) + 1 #TODO Not used now, see todo above, plus one is for the done value
             self.set_tuple()
+
+    @property
+    def x(self):
+        return 1
+
+    @property
+    def y(self):
+        return 1
+
+    @x.setter
+    def x(self, value):
+        pass
+
+    @y.setter
+    def y(self, value):
+        pass
 
     def set_tuple(self):
         self.tuple = (self._image, self._done)
