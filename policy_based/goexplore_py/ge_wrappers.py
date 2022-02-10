@@ -136,34 +136,34 @@ class GoalConVecGoalStack(VecWrapper):
 
 
 def get_neighbor(env, pos, offset, x_range, y_range):
+
     x = pos.x + offset[0]
     y = pos.y + offset[1]
-    room = pos.room
-    room_x, room_y = env.recursive_getattr('get_room_xy')(room)
+    #room = pos.room
+    #room_x, room_y = env.recursive_getattr('get_room_xy')(room)
     if x < x_range[0]:
         x = x_range[1]
-        room_x -= 1
+        #room_x -= 1
     elif x > x_range[1]:
         x = x_range[0]
-        room_x += 1
+        #room_x += 1
     elif y < y_range[0]:
         y = y_range[1]
-        room_y -= 1
+        #room_y -= 1
     elif y > y_range[1]:
         y = y_range[0]
-        room_y += 1
-    if env.recursive_getattr('get_room_out_of_bounds')(room_x, room_y):
-        return None
-    room = env.recursive_getattr('get_room_from_xy')(room_x, room_y)
-    if room == -1:
-        return None
+        #room_y += 1
+    #if env.recursive_getattr('get_room_out_of_bounds')(room_x, room_y):
+    #    return None
+    #room = env.recursive_getattr('get_room_from_xy')(room_x, room_y)
+    #if room == -1:
+    #    return None
     new_pos = copy.copy(pos)
-    new_pos.room = room
+    #new_pos.room = room
     new_pos.x = x
     new_pos.y = y
     return new_pos
 
-#TODO Make a generic goalExplorer extending GoalExplorer
 class GoalExplorer:
     def __init__(self, random_exp_prob, random_explorer):
         self.exploration_strategy = global_const.EXP_STRAT_NONE
@@ -205,7 +205,7 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         self.y_res = y_res
 
     def choose(self, go_explore_env):
-        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat') #TODO this line crashes when running generic_atari_game
+        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat')
         height = go_explore_env.env.recursive_getattr('screen_width')
         max_cell_x = int((width - (self.x_res / 2)) / self.x_res)
         max_cell_y = int((height - (self.y_res / 2)) / self.y_res)
@@ -214,6 +214,7 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         possible_neighbors = []
         unknown_neighbors = []
         for offset in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            print("Detta är print jordnöt" + str(go_explore_env.last_reached_cell))
             possible_neighbor = get_neighbor(go_explore_env.env,
                                              go_explore_env.last_reached_cell,
                                              offset,

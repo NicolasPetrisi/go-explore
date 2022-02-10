@@ -37,48 +37,51 @@ class CellRepresentationBase:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
 class Generic(CellRepresentationBase):
-    __slots__ = ['_image','_done', 'tuple'] 
-    attributes = ('image',  'done') 
-    array_length = 89 #TODO change in program flow to allow it to be generic
+    __slots__ = ['_image', '_x', '_y', '_done', 'tuple'] 
+    attributes = ('image', 'x', 'y' 'done') 
+    array_length = 91 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):
         self._image =None
         self._done = None
+        self._x = None
+        self._y = None
         self.tuple = None
-        #self._x = None
-        #self._y = None
 
         if atari_env is not None:
             self._image = atari_env.image
             self._done = atari_env.done
-            #self._x = 1
-            #self._y = 1
+            self._x = atari_env.x
+            self._y = atari_env.y
             #self.array_length = len(self._image.flatten()) + 1 #TODO Not used now, see todo above, plus one is for the done value
             self.set_tuple()
-
-    @property
-    def x(self):
-        return 1
-
-    @property
-    def y(self):
-        return 1
-
-    @x.setter
-    def x(self, value):
-        pass
-
-    @y.setter
-    def y(self, value):
-        pass
-
-    def set_tuple(self):
-        self.tuple = (self._image, self._done)
+            
 
     @staticmethod
     def make(env=None) -> Any:
-        return Generic(env)
+        return Generic(env)        
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        self._x = value
+
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        self._y = value
+
+    def set_tuple(self):
+        self.tuple = (self._image, self._x, self._y, self._done)
+
 
     @staticmethod
     def get_array_length() -> int:
@@ -86,18 +89,18 @@ class Generic(CellRepresentationBase):
 
     @staticmethod
     def get_attributes() -> List[str]:
-        #raise NotImplementedError('Cell representation needs to implement get_attributes')
         return Generic.attributes
 
     @staticmethod
     def get_attr_max(name) -> int:
         #should not have to be used
-        return 2 #for the done variable, but preferably not used at all
         #raise NotImplementedError('generic should not need say attr values')
+        return 2 #for the done variable, but preferably not used at all
+        
 
     def as_array(self) -> np.ndarray:
         ar =  self._image.flatten()
-        ar = np.append(ar + [(float(self._done))], 0)
+        ar = np.append(ar, [[(float(self._x), float(self._y), float(self._done))]])
         return ar
     
     def __getstate__(self):
@@ -113,15 +116,15 @@ class Generic(CellRepresentationBase):
         return self._cmptuple(other)
     
     def _cmptuple(self, other):
-        return  np.array_equal(self._image, other._image) and self._done == other._done
+        return  np.array_equal(self._image, other._image) and self._done == other._done and self._x == other._x and self._y == other._y
 
     def __setstate__(self, d):
-        self._image, self._done = d
+        self._image, self._x, self._y, self._done = d
         self.tuple = d
 
     #TODO printing entire image too much?
     def __repr__(self):
-        return f'image={self._image} done={self._done}'
+        return f'image={self._image is not None} x={self._x} y={self._y} done={self._done}'
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):

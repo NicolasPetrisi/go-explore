@@ -108,6 +108,10 @@ class MyAtari(MyWrapper):
         self.target_shape = target_shape
         self.max_pix_value = max_pix_value
 
+        # TODO These should be updated! But they are currently not.
+        self.x = 0
+        self.y = 0
+
     def __getattr__(self, e):
         return getattr(self.env, e)
 

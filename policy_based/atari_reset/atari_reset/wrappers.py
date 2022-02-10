@@ -560,7 +560,7 @@ class MaxAndSkipEnv(MyWrapper):
             obs, reward, done, info = self.env.step(action)
             self._obs_buffer.append(obs)
             total_reward += reward
-            combined_info['skip_env.executed_actions'].append(info['sticky_env.executed_action'])
+            #combined_info['skip_env.executed_actions'].append(info['sticky_env.executed_action'])
             combined_info.update(info)
             if done:
                 break

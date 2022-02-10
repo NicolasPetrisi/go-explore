@@ -794,12 +794,15 @@ def setup(resolution,
     # Get goal explorer
     logger.info('Creating goal explorer')
 
-    #TODO should choose Dom or Generic depending on input
     
-    if generic_game:
-        goal_explorer = ge_wrappers.GenericGoalExplorer(random_exp_prob, random_explorer)
-    else:
-        goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
+
+    goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
+
+    #TODO should choose Dom or Generic depending on input. Or maybe we need X/Y coordinates? 
+    #if generic_game:
+    #   goal_explorer = ge_wrappers.GenericGoalExplorer(random_exp_prob, random_explorer)
+    #else:
+    #    goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     
     # Get frame wrapper
     logger.info('Obtaining frame wrapper')
@@ -1218,7 +1221,7 @@ def parse_arguments():
                         help='Maximum number of COMPUTE frames.')
     parser.add_argument('--max_iterations', type=int, default=DefaultArg(None),
                         help='Maximum number of iterations.')
-    parser.add_argument('--max_hours', '--mh', type=float, default=DefaultArg(0.1),
+    parser.add_argument('--max_hours', '--mh', type=float, default=DefaultArg(10.0),
                         help='Maximum number of hours to run this for.')
     parser.add_argument('--max_cells', type=int, default=DefaultArg(None),
                         help='The maximum number of cells before stopping.')
@@ -1494,11 +1497,11 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
+    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
-    safe_set_argument(args, 'make_video', DefaultArg(True)) #TODO changed here!
+    safe_set_argument(args, 'make_video', DefaultArg(False)) #TODO changed here!
     safe_set_argument(args, 'skip', DefaultArg(4))
     safe_set_argument(args, 'pixel_repetition', DefaultArg(1))
     safe_set_argument(args, 'plot_archive', DefaultArg(True))
