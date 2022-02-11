@@ -855,7 +855,7 @@ class VideoWriter(MyWrapper):
             self.video_writer.close()
             if self.make_video and self.num_frames > self.min_video_length:
                 self.goals_processed.add(self.goal)
-                #print('Score achieved:', self.recursive_getattr('cur_score'))
+                #print('Score achieved:', self.recursive_getattr('cur_score')) # We commented this out because "cur_score" attribute does not exist in procgen.
                 print('Video for goal:', self.goal, 'is considered finished.')
             else:
                 print('Video for goal:', self.goal, 'considered too short, deleting...')

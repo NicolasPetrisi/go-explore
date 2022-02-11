@@ -44,6 +44,10 @@ from goexplore_py.globals import set_action_meanings, set_master_pid
 from goexplore_py.trajectory_manager import CellTrajectoryManager
 import goexplore_py.mpi_support as mpi
 
+
+from gym.wrappers import Monitor
+
+
 PROFILER = None
 
 master_pid = None
@@ -390,22 +394,33 @@ def get_env(game_name,
             else:
                 make_video_local = False
             
-            video_file_prefix = save_path + '/vids/' + game_name
-            video_writer = wrappers.VideoWriter(
-                local_env,
-                video_file_prefix,
-                plot_goal=plot_goal,
-                x_res=x_res,
-                y_res=y_res,
-                plot_archive=plot_archive,
-                plot_return_prob=plot_return_prob,
-                one_vid_per_goal=one_vid_per_goal,
-                make_video=make_video_local,
-                directory=save_path + '/vids',
-                pixel_repetition=pixel_repetition,
-                plot_grid=plot_grid,
-                plot_sub_goal=plot_sub_goal)
-            local_env = video_writer
+
+            
+            # When using Procgen by OpenAi the 'VideoWriter' wrapper class does not work well in creating the video.
+            # Instead we use the built in 'Monitor' class from the gym to create the video.
+            # We will loose some information from the video such as the grid and the goal tracking.
+            procgen = True # TODO: Make this an input argument from the .sh file!
+            if procgen:
+                video_writer = None
+                if make_video_local:
+                    local_env = Monitor(local_env, './video', force = True)
+            else:
+                video_file_prefix = save_path + '/vids/' + game_name
+                video_writer = wrappers.VideoWriter(
+                    local_env,
+                    video_file_prefix,
+                    plot_goal=plot_goal,
+                    x_res=x_res,
+                    y_res=y_res,
+                    plot_archive=plot_archive,
+                    plot_return_prob=plot_return_prob,
+                    one_vid_per_goal=one_vid_per_goal,
+                    make_video=make_video_local,
+                    directory=save_path + '/vids',
+                    pixel_repetition=pixel_repetition,
+                    plot_grid=plot_grid,
+                    plot_sub_goal=plot_sub_goal)
+                local_env = video_writer
 
             local_env = wrappers.my_wrapper(
                 local_env,
@@ -440,7 +455,9 @@ def get_env(game_name,
                 fail_ent_inc=fail_ent_inc,
                 final_goal_reward=final_goal_reward
             )
-            video_writer.goal_conditioned_wrapper = local_env
+
+            if video_writer:
+                video_writer.goal_conditioned_wrapper = local_env
 
             if sil != 'none':
                 local_env = ge_wrappers.SilEnv(

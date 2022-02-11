@@ -842,7 +842,7 @@ class GoalConSubprocVecEnv(object):
         envs: list of gym environments to run in subprocesses
         """
         nenvs = len(env_fns)
-        mp_context = mp.get_context("fork") 
+        mp_context = mp.get_context(start_method) 
         self.remotes, self.work_remotes = zip(*[mp_context.Pipe(duplex=True) for _ in range(nenvs)])
         self.ps = [mp_context.Process(target=worker, args=(work_remote, CloudpickleWrapper(env_fn)), daemon=True)
                    for (work_remote, env_fn) in zip(self.work_remotes, env_fns)]
