@@ -17,3 +17,5 @@ to_kill
 .unison*
 *.orig
 *~master
+image_processing/video/*
+policy_based/video/*
