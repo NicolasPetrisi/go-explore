@@ -733,7 +733,7 @@ class VideoWriter(MyWrapper):
         return matches
 
     def process_frame(self, frame):
-        f_out = np.zeros((210, 160, 3), dtype=np.uint8)
+        f_out = np.zeros((64, 64, 3), dtype=np.uint8) #TODO org (210, 160,3)
         f_out[:, :, 0:3] = np.cast[np.uint8](frame)[:, :, :]
         f_out = f_out.repeat(2, axis=1)
         f_overlay = copy.copy(f_out)
@@ -855,7 +855,7 @@ class VideoWriter(MyWrapper):
             self.video_writer.close()
             if self.make_video and self.num_frames > self.min_video_length:
                 self.goals_processed.add(self.goal)
-                print('Score achieved:', self.recursive_getattr('cur_score'))
+                #print('Score achieved:', self.recursive_getattr('cur_score'))
                 print('Video for goal:', self.goal, 'is considered finished.')
             else:
                 print('Video for goal:', self.goal, 'considered too short, deleting...')
@@ -914,7 +914,7 @@ def my_wrapper(env,
                sticky=True,
                skip=4,
                noops=False):
-    assert 'NoFrameskip' in env.spec.id
+    #assert 'NoFrameskip' in env.spec.id
     assert not (clip_rewards and scale_rewards), "Clipping and scaling rewards makes no sense"
     if scale_rewards is not None:
         env = ScaledRewardEnv(env, scale_rewards)

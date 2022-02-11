@@ -842,7 +842,7 @@ class GoalConSubprocVecEnv(object):
         envs: list of gym environments to run in subprocesses
         """
         nenvs = len(env_fns)
-        mp_context = mp.get_context(start_method)
+        mp_context = mp.get_context("fork") 
         self.remotes, self.work_remotes = zip(*[mp_context.Pipe(duplex=True) for _ in range(nenvs)])
         self.ps = [mp_context.Process(target=worker, args=(work_remote, CloudpickleWrapper(env_fn)), daemon=True)
                    for (work_remote, env_fn) in zip(self.work_remotes, env_fns)]
@@ -850,9 +850,8 @@ class GoalConSubprocVecEnv(object):
             p.start()
         # From this moment on, we have to close the environment in order to let the program end
         logger.debug(f'[master] sending command: get_spaces')
-
         self.remotes[0].send(('get_spaces', None))
-        self.action_space, self.observation_space = self._recv(self.remotes[0])
+        self.action_space, self.observation_space = self._recv(self.remotes[0]) #TODO this craches when running procgen
         self.remotes[0].send(('recursive_getattr', 'goal_space'))
         self.goal_space = self._recv(self.remotes[0])
         self.waiting = False

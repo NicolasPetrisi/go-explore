@@ -84,14 +84,16 @@ def clip(a, m, M):
 class MyAtari(MyWrapper):
     #TARGET_SHAPE = None
     #MAX_PIX_VALUE = None
-    screen_width = 160
-    screen_height = 210
+    screen_width = 64
+    screen_height = 64
     def __init__(self, env, name, target_shape = (11,8), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation =None):
         super(MyAtari, self).__init__(env)
         self.name = name
         #self.env = gym.make(f'{name}NoFrameskip-v4')
         #self.env = envi #gym.make(f'{name}NoFrameskip-v4Deterministic-v4')
-        self.unwrapped.seed(0)
+        #print("++++++++++++++" + str(self.unwrapped.seed))
+        #self.unwrapped.seed(0)
+        #self.unwrapped.seed() #TODO seed is ignored in procgen XD
         self.env.reset()
         self.state = []
         self.x_repeat = x_repeat
@@ -118,7 +120,7 @@ class MyAtari(MyWrapper):
     def reset(self) -> np.ndarray:
         #self.env = gym.make(f'{self.name}NoFrameskip-v4')
         unprocessed = self.env.reset()
-        self.unwrapped.seed(0)
+        #self.unwrapped.seed() TODO Seed ignored again
         self.unprocessed_state = unprocessed 
         #print(to_ByteArr(self.unprocessed_state))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
@@ -151,10 +153,10 @@ class MyAtari(MyWrapper):
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
-        cur_lives = self.env.unwrapped.ale.lives()
+        #cur_lives = self.env.unwrapped.ale.lives()
         if self.end_on_death and cur_lives < self.prev_lives:
             done = True
-        self.prev_lives = cur_lives
+        #self.prev_lives = cur_lives
         self.pos = self.cell_representation(self)
         return self.unprocessed_state, reward, done, lol
 
