@@ -656,6 +656,11 @@ def run(kwargs):
             _run(**kwargs)
             if PROFILER is not None:
                 PROFILER.disable()
+        except Exception as exc: # TODO This has been added for now. This didn't exist before and could just crash silently...
+            print("WARNING, CRASHING FROM _run(**kwargs)")
+            print(exc)
+            print("WARNING, CRASHING FROM _run(**kwargs)")
+            # TODO In here, make sure that all forks have been shut down.
         finally:
             try:
                 # delete directory

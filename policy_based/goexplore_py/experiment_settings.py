@@ -400,11 +400,11 @@ def get_env(game_name,
             # Instead we use the built in 'Monitor' class from the gym to create the video.
             # We will loose some information from the video such as the grid and the goal tracking.
             procgen = True # TODO: Make this an input argument from the .sh file!
-            video_freq = 1 # TODO: Make this an input argument from the .sh file! How often to make a video between runs.
+            video_freq = 1 # TODO: Make this an input argument from the .sh file! How often to make a video between runs. episode_id%video_freq==0
             if procgen:
                 video_writer = None
                 if make_video_local:
-                    local_env = Monitor(local_env, './video', force = True, video_callable=lambda episode_id: episode_id%video_freq==0)
+                    local_env = Monitor(local_env, './video', force = True, video_callable=lambda episode_id: True)
             else:
                 video_file_prefix = save_path + '/vids/' + game_name
                 video_writer = wrappers.VideoWriter(
@@ -1517,7 +1517,7 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
+    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
