@@ -86,7 +86,7 @@ class MyAtari(MyWrapper):
     #MAX_PIX_VALUE = None
     screen_width = 64
     screen_height = 64
-    def __init__(self, env, name, target_shape = (11,8), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation =None):
+    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 255 , x_repeat=2, end_on_death=False, cell_representation =None):
         super(MyAtari, self).__init__(env)
         self.name = name
         #self.env = gym.make(f'{name}NoFrameskip-v4')
@@ -124,6 +124,7 @@ class MyAtari(MyWrapper):
         self.unprocessed_state = unprocessed 
         #print(to_ByteArr(self.unprocessed_state))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
+        #print(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         #print(self.state)
         self.pos = self.cell_representation(self)

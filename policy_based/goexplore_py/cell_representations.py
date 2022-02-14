@@ -39,7 +39,7 @@ class CellRepresentationBase:
 class Generic(CellRepresentationBase):
     __slots__ = ['_image', '_x', '_y', '_done', 'tuple'] 
     attributes = ('image', 'x', 'y' 'done') 
-    array_length = 91 #TODO change in program flow to allow it to be generic
+    array_length = 628 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):

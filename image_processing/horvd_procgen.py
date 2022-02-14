@@ -22,7 +22,7 @@ def to_np(array):
     return cv2.imdecode(np.frombuffer(array, np.uint8), 0)
 
 def make_env(a,b):
-    env = gym.make("procgen:procgen-coinrun-v0", render_mode="rgb_array")
+    env = gym.make("procgen:procgen-maze-v0", render_mode="rgb_array")
     print(env.unwrapped.env.env.get_combos())
     env = Monitor(env, './video', force = True)
     return env

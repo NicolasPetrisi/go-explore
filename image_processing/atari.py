@@ -9,8 +9,15 @@ def to_np(array):
     print(cv2.imdecode(np.frombuffer(arr, np.uint8), 0))
     return cv2.imdecode(np.frombuffer(array, np.uint8), 0)
 
-env = gym.make('AlienNoFrameskip-v4')
+#env = gym.make('AlienNoFrameskip-v4')
 #env = Monitor(env, './video', force = True)
+
+
+env = gym.make("procgen:procgen-maze-v0", render_mode="rgb_array")    
+env = Monitor(env, './video', force = True, video_callable=lambda episode_id: True)
+
+
+
 for episode in range(5):
     observation = env.reset()
     print(observation.shape)
