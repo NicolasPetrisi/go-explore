@@ -39,18 +39,17 @@ class CellRepresentationBase:
 class Generic(CellRepresentationBase):
     __slots__ = ['_image', '_x', '_y', '_done', 'tuple'] 
     attributes = ('image', 'x', 'y' 'done') 
-    array_length = 628 #TODO change in program flow to allow it to be generic
+    array_length = 3 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):
-        self._image =None
         self._done = None
         self._x = None
         self._y = None
         self.tuple = None
 
         if atari_env is not None:
-            self._image = atari_env.image
+            #self._image = atari_env.image
             self._done = atari_env.done
             self._x = atari_env.x
             self._y = atari_env.y
@@ -80,7 +79,7 @@ class Generic(CellRepresentationBase):
         self._y = value
 
     def set_tuple(self):
-        self.tuple = (self._image, self._x, self._y, self._done)
+        self.tuple = (self._x, self._y, self._done)
 
 
     @staticmethod
@@ -99,32 +98,32 @@ class Generic(CellRepresentationBase):
         
 
     def as_array(self) -> np.ndarray:
-        ar =  self._image.flatten()
-        ar = np.append(ar, [[(float(self._x), float(self._y), float(self._done))]])
-        return ar
+        #ar =  self._image.flatten()
+        #ar = np.append(ar, [[(float(self._x), float(self._y), float(self._done))]])
+        return np.array(self.tuple)
     
     def __getstate__(self):
         return self.tuple
 
     def __hash__(self):
-        tmp = (floatArr2bytes(self._image), self._done)
-        return hash(tmp)
+        #tmp = (floatArr2bytes(self._image), self._done)
+        return hash(self.tuple)
 
     def __eq__(self, other):
         if not isinstance(other, Generic):
             return False
-        return self._cmptuple(other)
+        return self.tuple == other.tuple
     
     def _cmptuple(self, other):
         return  np.array_equal(self._image, other._image) and self._done == other._done and self._x == other._x and self._y == other._y
 
     def __setstate__(self, d):
-        self._image, self._x, self._y, self._done = d
+        self._x, self._y, self._done = d
         self.tuple = d
 
     #TODO printing entire image too much?
     def __repr__(self):
-        return f'image={self._image is not None} x={self._x} y={self._y} done={self._done}'
+        return f'x={self._x} y={self._y} done={self._done}'
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):

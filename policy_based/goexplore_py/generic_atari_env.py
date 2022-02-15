@@ -121,7 +121,8 @@ class MyAtari(MyWrapper):
         #self.env = gym.make(f'{self.name}NoFrameskip-v4')
         unprocessed = self.env.reset()
         #self.unwrapped.seed() TODO Seed ignored again
-        self.unprocessed_state = unprocessed 
+        self.unprocessed_state = unprocessed
+        self.pos_from_unprocessed_state(self.get_face_pixels(unprocessed))
         #print(to_ByteArr(self.unprocessed_state))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
         #print(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
@@ -150,7 +151,10 @@ class MyAtari(MyWrapper):
         return copy.copy(self.state)
 
     def step(self, action) -> typing.Tuple[np.ndarray, float, bool, dict]:
+        #a  = self.env.unwrapped.env.env.get_combos()[action]
+        #print(" in pos :"  + str(self.x) + ":" + str(self.y) + " and taking action: " + str(a))
         self.unprocessed_state, reward, done, lol = self.env.step(action)
+        self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
@@ -159,12 +163,27 @@ class MyAtari(MyWrapper):
             done = True
         #self.prev_lives = cur_lives
         self.pos = self.cell_representation(self)
+        #print("x value is : " + str(self.x) + " y value is: " +str(self.y))
         return self.unprocessed_state, reward, done, lol
 
     def get_pos(self):
         # NOTE: this only returns a dummy position
         return self.pos
         #return AtariPosLevel()
+    
+    def pos_from_unprocessed_state(self, face_pixels):
+        face_pixels = [(y, x * self.x_repeat) for y, x in face_pixels]
+        # While we are dead or if we are on a transition screen, we assume that our position does not change
+        if len(face_pixels) == 0:
+            assert self.pos is not None, 'No face pixel and no previous pos'
+            return self.pos  # Simply re-use the same position
+        y, x = np.mean(face_pixels, axis=0)
+        self.x = x
+        self.y = y
+
+    #TODO make generic or at least not this bad
+    def get_face_pixels(self, unprocessed_state):
+        return set(zip(*np.where(unprocessed_state[:, :, 2] == 204)))
 
     def render_with_known(self, known_positions, resolution, show=True, filename=None, combine_val=max,
                           get_val=lambda x: x.score, minmax=None):

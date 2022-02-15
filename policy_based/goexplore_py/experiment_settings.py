@@ -108,10 +108,10 @@ def get_game(game,
         game_class.MAX_PIX_VALUE = max_pix_value
         game_args = dict(name=game.split('_')[1],
             cell_representation=cell_representation )
-        #grid_resolution = (
+        grid_resolution = (
             #GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
-            #GridDimension('x', x_res), GridDimension('y', y_res)
-        #)
+            GridDimension('x', x_res), GridDimension('y', y_res)
+        )
         grid_resolution = ()
         cell_representation.set_grid_resolution(grid_resolution)
     elif 'robot' in game_lowered:
@@ -133,9 +133,8 @@ def get_game(game,
 def get_frame_wrapper(frame_resize):
     if frame_resize == "RectColorFrame":
         frame_resize_wrapper = ge_wrappers.RectColorFrame
-        print("rect color frame is activated")
         new_height = 64
-        new_width = 80
+        new_width = 64 #TODO change!!
     elif frame_resize == "RectGreyFrame":
         frame_resize_wrapper = ge_wrappers.RectGreyFrame
         new_height = 105
@@ -386,21 +385,23 @@ def get_env(game_name,
                 gym.spec(env_id).max_episode_steps = max_episode_steps
             #local_env = gym.make(env_id)
             #set_action_meanings(local_env.unwrapped.get_action_meanings())
-            local_env = gym.make(env_id, render_mode="rgb_array", start_level=1444, use_sequential_levels=True, num_levels = 1)
-            set_action_meanings(temp_env.unwrapped.env.env.get_combos())
-            local_env = game_class(local_env, **game_args)
             # Even if make video is true, only define it for one of our environments
             if make_video and rank % nb_envs == 0 and local_rank == 0:
                 make_video_local = True
+                local_env = gym.make(env_id, render_mode="rgb_array", start_level=1344269901, use_sequential_levels=False, num_levels = 1)
             else:
                 make_video_local = False
+                local_env = gym.make(env_id, start_level=1344269901, use_sequential_levels=False, num_levels = 1)
+            
+            set_action_meanings(temp_env.unwrapped.env.env.get_combos())
+            local_env = game_class(local_env, **game_args)
             
 
             
             # When using Procgen by OpenAi the 'VideoWriter' wrapper class does not work well in creating the video.
             # Instead we use the built in 'Monitor' class from the gym to create the video.
             # We will loose some information from the video such as the grid and the goal tracking.
-            procgen = True # TODO: Make this an input argument from the .sh file!
+            procgen = False # TODO: Make this an input argument from the .sh file!
             video_freq = 1 # TODO: Make this an input argument from the .sh file! How often to make a video between runs. episode_id%video_freq==0
             if procgen:
                 video_writer = None
@@ -813,7 +814,8 @@ def setup(resolution,
         raise NotImplementedError('Unknown selector: ' + selector_name)
 
     logger.info('Creating random explorer')
-    random_explorer = explorers.RepeatedRandomExplorer(mean_repeat)
+    #random_explorer = explorers.RepeatedRandomExplorer(mean_repeat)
+    random_explorer = explorers.RandomExplorer()
 
     # Get goal explorer
     logger.info('Creating goal explorer')
@@ -1522,8 +1524,8 @@ def parse_arguments():
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
-    safe_set_argument(args, 'make_video', DefaultArg(False)) #TODO changed here!
-    safe_set_argument(args, 'skip', DefaultArg(4))
+    safe_set_argument(args, 'make_video', DefaultArg(True)) #TODO changed here!
+    safe_set_argument(args, 'skip', DefaultArg(1))
     safe_set_argument(args, 'pixel_repetition', DefaultArg(1))
     safe_set_argument(args, 'plot_archive', DefaultArg(True))
     safe_set_argument(args, 'plot_goal', DefaultArg(True))

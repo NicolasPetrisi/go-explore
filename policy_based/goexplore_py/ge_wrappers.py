@@ -66,8 +66,6 @@ class GoalConVecFrameStack(VecWrapper):
                 self.stacked_obs[i] = 0
         self.stacked_obs[..., -obs.shape[-1]:] = obs
         obs_and_goals = (self.stacked_obs, goals)
-        print(obs[0,:,:,:].shape)
-        print(convert_state(obs[0 , : , : , :], (64,64), 255))
         return obs_and_goals, rews, news, infos
 
     def reset(self):

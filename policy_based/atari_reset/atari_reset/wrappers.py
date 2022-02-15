@@ -725,6 +725,7 @@ class VideoWriter(MyWrapper):
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = cell.x * self.x_res
         y_min = cell.y * self.y_res
+        print("okejjjjjj??? cell.x is: "+ str(cell.x) + " and x_res is: " +str(self.x_res) + " but the combo is: " + str(x_min))
         cv2.rectangle(canvas, (x_min, y_min), (x_min + self.x_res, y_min + self.y_res), color, -1)
         if overlay is not None:
             cv2.rectangle(overlay, (x_min, y_min), (x_min + self.x_res, y_min + self.y_res), color, 1)

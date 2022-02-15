@@ -34,6 +34,7 @@ class RepeatedRandomExplorer:
 
     def get_action(self, env):
         if self.remaining <= 0:
+            print("aaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
             self.action = random.randint(0, env.action_space.n - 1)
             # Note, this is equivalent to selecting an action and then repeating it
             # with some probability.
