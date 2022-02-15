@@ -725,7 +725,8 @@ class VideoWriter(MyWrapper):
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = cell.x * self.x_res
         y_min = cell.y * self.y_res
-        print("okejjjjjj??? cell.x is: "+ str(cell.x) + " and x_res is: " +str(self.x_res) + " but the combo is: " + str(x_min))
+        #print("Detta är cell: " + str(type(cell)))
+        #print("okejjjjjj??? cell.x is: "+ str(cell.x) + " and x_res is: " +str(self.x_res) + " but the combo is: " + str(x_min))
         cv2.rectangle(canvas, (x_min, y_min), (x_min + self.x_res, y_min + self.y_res), color, -1)
         if overlay is not None:
             cv2.rectangle(overlay, (x_min, y_min), (x_min + self.x_res, y_min + self.y_res), color, 1)
@@ -739,7 +740,7 @@ class VideoWriter(MyWrapper):
     def process_frame(self, frame):
         f_out = np.zeros((64, 64, 3), dtype=np.uint8) #TODO org (210, 160,3)
         f_out[:, :, 0:3] = np.cast[np.uint8](frame)[:, :, :]
-        f_out = f_out.repeat(2, axis=1)
+        #f_out = f_out.repeat(2, axis=1)
         f_overlay = copy.copy(f_out)
 
         if self.plot_grid:
@@ -794,8 +795,8 @@ class VideoWriter(MyWrapper):
 
         cv2.addWeighted(f_overlay, 0.5, f_out, 0.5, 0, f_out)
 
-        f_out = f_out.repeat(self.pixel_repetition, axis=0)
-        f_out = f_out.repeat(self.pixel_repetition, axis=1)
+        #f_out = f_out.repeat(self.pixel_repetition, axis=0)
+        #f_out = f_out.repeat(self.pixel_repetition, axis=1)
 
         if self.draw_text:
             if 'increase_entropy' in self.goal_conditioned_wrapper.info:

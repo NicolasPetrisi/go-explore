@@ -68,6 +68,7 @@ class Generic(CellRepresentationBase):
     @x.setter
     def x(self, value):
         self._x = value
+        self.set_tuple()
 
 
     @property
@@ -77,6 +78,7 @@ class Generic(CellRepresentationBase):
     @y.setter
     def y(self, value):
         self._y = value
+        self.set_tuple()
 
     def set_tuple(self):
         self.tuple = (self._x, self._y, self._done)
@@ -114,9 +116,7 @@ class Generic(CellRepresentationBase):
             return False
         return self.tuple == other.tuple
     
-    def _cmptuple(self, other):
-        return  np.array_equal(self._image, other._image) and self._done == other._done and self._x == other._x and self._y == other._y
-
+    
     def __setstate__(self, d):
         self._x, self._y, self._done = d
         self.tuple = d
@@ -135,12 +135,14 @@ class CellRepresentationFactory:
 
     def __call__(self, env=None):
         cell_representation = self.cell_rep_class.make(env)
-
+        #print("Vi borde vara här och leka")
         if env is not None:
             for dimension in self.grid_resolution:
                 if dimension.div != 1:
                     value = getattr(cell_representation, dimension.attr)
+                    print("JAG HAR FEMTON BANANER " + str(value))
                     value = (int(value / dimension.div))
+                    #print("detta valuejag: " + str(value))
                     setattr(cell_representation, dimension.attr, value)
 
         return cell_representation

@@ -82,8 +82,8 @@ def clip(a, m, M):
 
 
 class MyAtari(MyWrapper):
-    #TARGET_SHAPE = None
-    #MAX_PIX_VALUE = None
+    TARGET_SHAPE = None
+    MAX_PIX_VALUE = None
     screen_width = 64
     screen_height = 64
     def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation =None):
@@ -110,7 +110,6 @@ class MyAtari(MyWrapper):
         self.target_shape = target_shape
         self.max_pix_value = max_pix_value
 
-        # TODO These should be updated! But they are currently not.
         self.x = 0
         self.y = 0
 
@@ -129,6 +128,8 @@ class MyAtari(MyWrapper):
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         #print(self.state)
         self.pos = self.cell_representation(self)
+
+        print("x and y posses: " + str(self.x) + ", " + str(self.y))
         return unprocessed
 
     def get_restore(self):
@@ -183,7 +184,10 @@ class MyAtari(MyWrapper):
 
     #TODO make generic or at least not this bad
     def get_face_pixels(self, unprocessed_state):
-        return set(zip(*np.where(unprocessed_state[:, :, 2] == 204)))
+        #print(np.all(unprocessed_state == [187, 203, 204], axis=-1))
+        #TODO Make the calculations below on several lines instead of a single. One line for each RGB value comparison?
+        return set(zip(*np.where(unprocessed_state == [187, 203, 204])))
+        #return set(zip(*np.where(unprocessed_state[:, :, 0] == 187 & unprocessed_state[:, :, 1] == 203 & unprocessed_state[:, :, 2] == 204)))
 
     def render_with_known(self, known_positions, resolution, show=True, filename=None, combine_val=max,
                           get_val=lambda x: x.score, minmax=None):

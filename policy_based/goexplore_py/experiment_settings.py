@@ -112,7 +112,6 @@ def get_game(game,
             #GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
             GridDimension('x', x_res), GridDimension('y', y_res)
         )
-        grid_resolution = ()
         cell_representation.set_grid_resolution(grid_resolution)
     elif 'robot' in game_lowered:
         game_name = game.split('_')[1]
@@ -823,12 +822,14 @@ def setup(resolution,
     #TODO should choose Dom or Generic depending on input
     
     if generic_game:
-        goal_explorer = ge_wrappers.GenericGoalExplorer(random_exp_prob, random_explorer)
+        #goal_explorer = ge_wrappers.GenericGoalExplorer(random_exp_prob, random_explorer)
+        goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     else:
         goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     
     # Get frame wrapper
     logger.info('Obtaining frame wrapper')
+
     frame_resize_wrapper, new_height, new_width = get_frame_wrapper(frame_resize)
 
     logger.info('Obtaining cell trajectory manager')
@@ -1187,7 +1188,7 @@ def parse_arguments():
                         help='Whether or not to enable a memory allocation trace.')
 
     # Cell representation arguments
-    parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('16,16'),
+    parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('4,4'),
                         help='Length of the side of a grid cell. A doubled atari frame is 320 by 210.')
     parser.add_argument('--score_objects', dest='score_objects', default=DefaultArg(True), action='store_false',
                         help='Use scores in the cell description. Otherwise objects will be used.')
@@ -1202,9 +1203,9 @@ def parse_arguments():
                              '(because the state encodes the location of the remaining keys anymore), but takes more '
                              'time/memory space, which in practice makes it worse quite often. Using this is better if '
                              'running with --no_optimize_score')
-    parser.add_argument('--resize_x', '--rx', type=int, default=DefaultArg(11),
+    parser.add_argument('--resize_x', '--rx', type=int, default=DefaultArg(64),
                         help='What to resize the pixels to in the x direction for use as a state.')
-    parser.add_argument('--resize_y', '--ry', type=int, default=DefaultArg(8),
+    parser.add_argument('--resize_y', '--ry', type=int, default=DefaultArg(64),
                         help='What to resize the pixels to in the y direction for use as a state.')
     parser.add_argument('--state_is_pixels', '--pix', default=DefaultArg(True), dest='use_real_pos',
                         action='store_false',
