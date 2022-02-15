@@ -126,6 +126,9 @@ class VecWrapper(object):
     def get_envs(self):
         return self.venv.get_envs()
 
+# This class is wrapper of the enviroment. subclasses are ex. recColorFrame, genericAtariEnv, NoopsEnv etc
+# the ColourFrame classes reshape the observation to the desied form, when changing to new enviroment where observation is not the
+# same as in atari, this can yield unwanted results. 
 
 class MyWrapper(gym.Wrapper):
     def __init__(self, env):

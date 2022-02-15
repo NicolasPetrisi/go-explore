@@ -133,7 +133,8 @@ def get_game(game,
 def get_frame_wrapper(frame_resize):
     if frame_resize == "RectColorFrame":
         frame_resize_wrapper = ge_wrappers.RectColorFrame
-        new_height = 105
+        print("rect color frame is activated")
+        new_height = 64
         new_width = 80
     elif frame_resize == "RectGreyFrame":
         frame_resize_wrapper = ge_wrappers.RectGreyFrame
@@ -1517,11 +1518,11 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
+    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
-    safe_set_argument(args, 'make_video', DefaultArg(True)) #TODO changed here!
+    safe_set_argument(args, 'make_video', DefaultArg(False)) #TODO changed here!
     safe_set_argument(args, 'skip', DefaultArg(4))
     safe_set_argument(args, 'pixel_repetition', DefaultArg(1))
     safe_set_argument(args, 'plot_archive', DefaultArg(True))

@@ -24,6 +24,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def convert_state(state, target_shape, max_pix_value):
+    if target_shape is None:
+        return None
+    import cv2
+    #resized_state = cv2.resize(cv2.cvtColor(state),
+        #target_shape,
+        #interpolation=cv2.INTER_AREA)
+    img =  ((state / 255.0) * max_pix_value).astype(np.uint8)
+    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
+
 class GoalConVecFrameStack(VecWrapper):
     """
     Vectorized environment base class
@@ -56,6 +66,8 @@ class GoalConVecFrameStack(VecWrapper):
                 self.stacked_obs[i] = 0
         self.stacked_obs[..., -obs.shape[-1]:] = obs
         obs_and_goals = (self.stacked_obs, goals)
+        print(obs[0,:,:,:].shape)
+        print(convert_state(obs[0 , : , : , :], (64,64), 255))
         return obs_and_goals, rews, news, infos
 
     def reset(self):
@@ -1026,7 +1038,8 @@ class RectColorFrame(MyWrapper):
     def __init__(self, env):
         """Warp frames to 105x80"""
         MyWrapper.__init__(self, env)
-        self.res = (105, 80, 3)
+        #self.res = (105, 80, 3) # TODO The old res, should be restored and new res in a new class
+        self.res = (64, 64, 3)
         self.net_res = (self.res[1], self.res[0], self.res[2])
         self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)
 
