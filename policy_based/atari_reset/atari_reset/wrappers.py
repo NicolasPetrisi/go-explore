@@ -680,8 +680,8 @@ class PreventSlugEnv(MyWrapper):
 class VideoWriter(MyWrapper):
     def __init__(self, env, file_prefix,
                  plot_goal=False,
-                 x_res=16,
-                 y_res=16,
+                 x_res=64,
+                 y_res=64,
                  plot_archive=False,
                  plot_return_prob=True,
                  one_vid_per_goal=False,
@@ -769,8 +769,8 @@ class VideoWriter(MyWrapper):
         if self.plot_goal:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
-                if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-                    self._render_cell(f_out, goal, (255, 0, 0))
+                #if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
+                self._render_cell(f_out, goal, (255, 0, 0))
         if self.plot_cell_traj:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:

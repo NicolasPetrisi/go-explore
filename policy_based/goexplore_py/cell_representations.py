@@ -140,7 +140,7 @@ class CellRepresentationFactory:
             for dimension in self.grid_resolution:
                 if dimension.div != 1:
                     value = getattr(cell_representation, dimension.attr)
-                    print("JAG HAR FEMTON BANANER " + str(value))
+                    #print("JAG HAR FEMTON BANANER " + str(value))
                     value = (int(value / dimension.div))
                     #print("detta valuejag: " + str(value))
                     setattr(cell_representation, dimension.attr, value)

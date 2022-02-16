@@ -173,7 +173,7 @@ class MyAtari(MyWrapper):
         #return AtariPosLevel()
     
     def pos_from_unprocessed_state(self, face_pixels):
-        face_pixels = [(y, x * self.x_repeat) for y, x in face_pixels]
+        face_pixels = [(y, x) for y, x in face_pixels] #  * self.x_repeat
         # While we are dead or if we are on a transition screen, we assume that our position does not change
         if len(face_pixels) == 0:
             assert self.pos is not None, 'No face pixel and no previous pos'
@@ -184,10 +184,10 @@ class MyAtari(MyWrapper):
 
     #TODO make generic or at least not this bad
     def get_face_pixels(self, unprocessed_state):
-        #print(np.all(unprocessed_state == [187, 203, 204], axis=-1))
-        #TODO Make the calculations below on several lines instead of a single. One line for each RGB value comparison?
-        return set(zip(*np.where(unprocessed_state == [187, 203, 204])))
-        #return set(zip(*np.where(unprocessed_state[:, :, 0] == 187 & unprocessed_state[:, :, 1] == 203 & unprocessed_state[:, :, 2] == 204)))
+        COLOR = (187,203,204)
+        indices = np.where(np.all(unprocessed_state == COLOR, axis=-1))
+        indexes = zip(indices[0], indices[1])
+        return set(indexes)
 
     def render_with_known(self, known_positions, resolution, show=True, filename=None, combine_val=max,
                           get_val=lambda x: x.score, minmax=None):

@@ -34,7 +34,7 @@ ENTROPY_INC_OPTIONS="--entropy_strategy dynamic_increase --inc_ent_fac 0.01 --en
 # The x, y coordinate is discretized into bins of 36 by 18 pixels (note that the pixel of the x axis are doubled, so this is 18 by 18 on the orignal frame)
 #CELL_REPRESENTATION_OPTIONS="--cell_representation level_room_keys_x_y --resolution=36,18"
 
-CELL_REPRESENTATION_OPTIONS="--cell_representation generic" #TODO change this, should be something like: --cell_representation generic
+CELL_REPRESENTATION_OPTIONS="--cell_representation generic --res=64,64" #TODO change this, should be something like: --cell_representation generic
 
 # When following a trajectory, the agent is allowed to reach the goal cell, or any of the subsequent soft_traj_win_size (10) - 1 cells.
 # While returning, the episode is terminated if it takes more than max_actions_to_goal (1000) to reach the current goal
