@@ -531,6 +531,9 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
+    for remoteEnv in expl.trajectory_gatherer.env.get_envs():
+        remoteEnv.close()
+
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
 
@@ -662,7 +665,7 @@ def run(kwargs):
                 PROFILER.disable()
         except Exception as exc: # FN: This has been added for now. This didn't exist before and could just crash silently...
             print("WARNING, CRASHING FROM _run(**kwargs)")
-            exc.print_exception()
+            print(exc)
             print("WARNING, CRASHING FROM _run(**kwargs)")
             # TODO In here, make sure that all forks have been shut down.
         finally:

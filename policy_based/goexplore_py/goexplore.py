@@ -276,13 +276,13 @@ class Explore:
                 self.write_to_disk(traj_id)
 
 
-        list_time.append(time.perf_counter())
-        prev_time = list_time[0]
-        i = 1
-        tot_time = list_time[-1] - list_time[0]
-        print("total time is " + str(tot_time))
-        for t in list_time[1:]:
-            print( "time share from " + str(i-1) + " to " + str(i) + " is: " + str( (t - prev_time) / tot_time))
-            prev_time = t
-            i += 1
+        #list_time.append(time.perf_counter())
+        #prev_time = list_time[0]
+        #i = 1
+        #tot_time = list_time[-1] - list_time[0]
+        #print("total time is " + str(tot_time))
+        #for t in list_time[1:]:
+        #    print( "time share from " + str(i-1) + " to " + str(i) + " is: " + str( (t - prev_time) / tot_time))
+        #    prev_time = t
+        #    i += 1
 

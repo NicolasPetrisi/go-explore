@@ -100,9 +100,9 @@ class StochasticGatherer:
         if not self.freeze_network and not self.warm_up:
             self._train()
         t4 = time.perf_counter()
-        print("first time :" + str(t2-t1))
-        print("second time :" + str(t3-t2))
-        print("third time :" + str(t4-t3))
+        #print("first time :" + str(t2-t1))
+        #print("second time :" + str(t3-t2))
+        #print("third time :" + str(t4-t3))
         return (self.runner.ar_mb_cells,
                 self.runner.ar_mb_game_reward,
                 self.runner.trunc_lst_mb_trajectory_ids,
