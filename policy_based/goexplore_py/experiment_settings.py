@@ -244,8 +244,8 @@ def get_goal_rep(goal_representation_name: str,
                  cell_representation: Any,
                  new_width: int,
                  new_height: int,
-                 x_res: int,
-                 y_res: int,
+                 x_res: float,
+                 y_res: float,
                  goal_value: int,
                  rep_type: str,
                  rel_final_goal: bool,
@@ -615,7 +615,7 @@ def setup(resolution,
     global master_pid
     logger.info('Starting setup')
     set_master_pid(os.getpid())
-    res = [int(x) for x in resolution.split(',')]
+    res = [float(x) for x in resolution.split(',')]
     if len(res) == 2:
         x_res, y_res = res
     elif len(res) == 1:
@@ -1188,7 +1188,7 @@ def parse_arguments():
                         help='Whether or not to enable a memory allocation trace.')
 
     # Cell representation arguments
-    parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('4,4'),
+    parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('20.48,20.48'),
                         help='Length of the side of a grid cell. A doubled atari frame is 320 by 210.')
     parser.add_argument('--score_objects', dest='score_objects', default=DefaultArg(True), action='store_false',
                         help='Use scores in the cell description. Otherwise objects will be used.')

@@ -129,8 +129,10 @@ class MyAtari(MyWrapper):
         #print(self.state)
         self.pos = self.cell_representation(self)
 
-        print("x and y posses: " + str(self.x) + ", " + str(self.y))
         return unprocessed
+
+    def get_full_res_image(self):
+        return self.env.render(mode="rgb_array")
 
     def get_restore(self):
         return (
@@ -160,8 +162,8 @@ class MyAtari(MyWrapper):
         self.state.pop(0)
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         #cur_lives = self.env.unwrapped.ale.lives()
-        if self.end_on_death and cur_lives < self.prev_lives:
-            done = True
+        #if self.end_on_death and cur_lives < self.prev_lives:
+        #    done = True
         #self.prev_lives = cur_lives
         self.pos = self.cell_representation(self)
         #print("x value is : " + str(self.x) + " y value is: " +str(self.y))

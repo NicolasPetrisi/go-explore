@@ -24,7 +24,7 @@ except ModuleNotFoundError:
 @dataclass
 class GridDimension:
     attr: str
-    div: int
+    div: float
 
 
 @dataclass
