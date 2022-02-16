@@ -740,6 +740,9 @@ class VideoWriter(MyWrapper):
             matches = getattr(cell_1, attr_name) == getattr(cell_2, attr_name)
         return matches
 
+
+    # FN, main function when making videos. The resolution is hard coded, we use 512,512,3 for procgen for the enchanced 
+    # frame frome procgen to speare our eyes. The grid, goal and subgoals and some text are added here depending on options used.
     def process_frame(self, frame):
         f_out = np.zeros((512, 512, 3), dtype=np.uint8) #TODO org (210, 160,3)
         f_out[:, :, 0:3] = np.cast[np.uint8](frame)[:, :, :]
@@ -784,14 +787,15 @@ class VideoWriter(MyWrapper):
                         self.time_in_cell = traj[self.cell_traj_index][1]
                     traj_cell = traj[self.cell_traj_index][0]
                     self.time_in_cell -= 1
-
                     self._render_cell(f_out, traj_cell, (255, 255, 0))
 
         if self.plot_sub_goal:
             goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
             if goal is not None:
                 if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-                    self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
+                    #print("here: " + str(goal))
+                    #self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
+                    pass
         for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
             if self.match_attr(cell, current_cell, 'level') and self.match_attr(cell, current_cell, 'room'):
                 self._render_cell(f_out, cell, (255, 0, 255))
@@ -800,6 +804,11 @@ class VideoWriter(MyWrapper):
 
         #f_out = f_out.repeat(self.pixel_repetition, axis=0)
         #f_out = f_out.repeat(self.pixel_repetition, axis=1)
+        if self.goal_conditioned_wrapper.returning:
+            text = "state: return"
+        else:
+            text = "state: exploration"
+        f_out = cv2.putText(f_out, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
 
         if self.draw_text:
             if 'increase_entropy' in self.goal_conditioned_wrapper.info:
@@ -814,6 +823,7 @@ class VideoWriter(MyWrapper):
             im.save(filename)
         return f_out
 
+    #Adding a frame for the video
     def add_frame(self):
         if self.video_writer:
             #print("self.obs" + str(self.obs.shape)) 
@@ -850,9 +860,11 @@ class VideoWriter(MyWrapper):
                 self.current_file_name = self._get_file_name()
                 self.video_writer = imageio.get_writer(self.current_file_name, mode='I', fps=30)
             else:
-                self.video_writer = None
+                #self.video_writer = None
+                pass
         else:
-            self.video_writer = None
+            pass
+            #self.video_writer = None
 
     def close(self):
         self._finalize_video()

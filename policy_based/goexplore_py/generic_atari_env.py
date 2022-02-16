@@ -89,10 +89,6 @@ class MyAtari(MyWrapper):
     def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation =None):
         super(MyAtari, self).__init__(env)
         self.name = name
-        #self.env = gym.make(f'{name}NoFrameskip-v4')
-        #self.env = envi #gym.make(f'{name}NoFrameskip-v4Deterministic-v4')
-        #print("++++++++++++++" + str(self.unwrapped.seed))
-        #self.unwrapped.seed(0)
         #self.unwrapped.seed() #TODO seed is ignored in procgen XD
         self.env.reset()
         self.state = []
@@ -117,20 +113,16 @@ class MyAtari(MyWrapper):
         return getattr(self.env, e)
 
     def reset(self) -> np.ndarray:
-        #self.env = gym.make(f'{self.name}NoFrameskip-v4')
         unprocessed = self.env.reset()
-        #self.unwrapped.seed() TODO Seed ignored again
         self.unprocessed_state = unprocessed
         self.pos_from_unprocessed_state(self.get_face_pixels(unprocessed))
-        #print(to_ByteArr(self.unprocessed_state))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
-        #print(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
-        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
-        #print(self.state)
+        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y and done are used
         self.pos = self.cell_representation(self)
 
         return unprocessed
 
+    #The full image in order to get a better picture/video
     def get_full_res_image(self):
         return self.env.render(mode="rgb_array")
 
@@ -154,29 +146,25 @@ class MyAtari(MyWrapper):
         return copy.copy(self.state)
 
     def step(self, action) -> typing.Tuple[np.ndarray, float, bool, dict]:
-        #a  = self.env.unwrapped.env.env.get_combos()[action]
-        #print(" in pos :"  + str(self.x) + ":" + str(self.y) + " and taking action: " + str(a))
         self.unprocessed_state, reward, done, lol = self.env.step(action)
         self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
+
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
-        #cur_lives = self.env.unwrapped.ale.lives()
-        #if self.end_on_death and cur_lives < self.prev_lives:
-        #    done = True
-        #self.prev_lives = cur_lives
+
+        #FN, gives a GenericCellRepresentation with the values in this enviroment
         self.pos = self.cell_representation(self)
-        #print("x value is : " + str(self.x) + " y value is: " +str(self.y))
+
         return self.unprocessed_state, reward, done, lol
 
+    #FN, Returns the current pos, a GenericCellrepreentation
     def get_pos(self):
-        # NOTE: this only returns a dummy position
         return self.pos
-        #return AtariPosLevel()
     
+    #FN, get our current position. This is taken from the picture where face_pixels are the pixels that match our agent
     def pos_from_unprocessed_state(self, face_pixels):
         face_pixels = [(y, x) for y, x in face_pixels] #  * self.x_repeat
-        # While we are dead or if we are on a transition screen, we assume that our position does not change
         if len(face_pixels) == 0:
             assert self.pos is not None, 'No face pixel and no previous pos'
             return self.pos  # Simply re-use the same position
@@ -184,6 +172,7 @@ class MyAtari(MyWrapper):
         self.x = x
         self.y = y
 
+    #FN, Get the mouse position from the frame by looking for it's RGB values.
     #TODO make generic or at least not this bad
     def get_face_pixels(self, unprocessed_state):
         COLOR = (187,203,204)
@@ -191,6 +180,7 @@ class MyAtari(MyWrapper):
         indexes = zip(indices[0], indices[1])
         return set(indexes)
 
+    #FN, don't know what this does yet
     def render_with_known(self, known_positions, resolution, show=True, filename=None, combine_val=max,
                           get_val=lambda x: x.score, minmax=None):
         pass

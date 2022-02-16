@@ -410,11 +410,7 @@ def _run(**kwargs):
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
 
-            print("Return success: " + str(return_success_rate))
-            s = ""
-            for k in expl.archive.archive.keys():
-                print(k)
-            print("Cells: " + s)
+            #print("Return success: " + str(return_success_rate))
             
 
             logger.write('it', checkpoint_tracker.n_iters)

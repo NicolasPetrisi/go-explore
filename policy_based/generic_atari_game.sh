@@ -40,7 +40,7 @@ CELL_REPRESENTATION_OPTIONS="--cell_representation generic" #TODO change this, s
 # While returning, the episode is terminated if it takes more than max_actions_to_goal (1000) to reach the current goal
 # While exploring, the episode is terminated if it takes more than max_actions_to_new_cell (1000) to discover a new cell
 # When the the final cell is reached, there is a random_exp_prob (0.5) chance that we explore by taking random actions, rather than by sampling from the policy.
-EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 1.0 --max_actions_to_goal 1000 --max_actions_to_new_cell 1000 --delay 0"
+EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 0.5 --max_actions_to_goal 1000 --max_actions_to_new_cell 1000 --delay 0"
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory"
 TRAINING_OPTIONS="--goal_rep raw --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil --max_compute_steps 12000000000" #"--goal_rep onehot_r24 should probally be --goal_rep onehot

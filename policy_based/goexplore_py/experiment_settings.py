@@ -371,6 +371,7 @@ def get_env(game_name,
     logger.info(f'Creating environment for game: {game_name}')
     #temp_env = gym.make(game_name + 'NoFrameskip-v4')
     #set_action_meanings(temp_env.unwrapped.get_action_meanings())
+    #FN, Why do we do this here?
     temp_env = gym.make("procgen:procgen-" + str(game_name) + "-v0", render_mode="rgb_array")
     set_action_meanings(temp_env.unwrapped.env.env.get_combos())
 
@@ -387,7 +388,11 @@ def get_env(game_name,
             # Even if make video is true, only define it for one of our environments
             if make_video and rank % nb_envs == 0 and local_rank == 0:
                 make_video_local = True
-                local_env = gym.make(env_id, render_mode="rgb_array", start_level=1344269901, use_sequential_levels=False, num_levels = 1)
+                #FN, procgen enviroment. env_id is the name, render_mode to allow videos, start level the seed for levels. 
+                #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
+                #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
+                #or reaching the next cheese(where a new level will be used)
+                local_env = gym.make(env_id, render_mode="rgb_array", start_level=1344269901, use_sequential_levels=True, num_levels = 1)
             else:
                 make_video_local = False
                 local_env = gym.make(env_id, start_level=1344269901, use_sequential_levels=False, num_levels = 1)
@@ -1422,7 +1427,7 @@ def parse_arguments():
                         type=int, default=DefaultArg(1),
                         help='Whether to clip (1) the game reward or not (0)')
     parser.add_argument('--one_vid_per_goal', dest='one_vid_per_goal',
-                        type=int, default=DefaultArg(1),
+                        type=int, default=DefaultArg(0),
                         help='Whether to create only one video per goal (1) or not (0)')
     parser.add_argument('--rew_clip_range', dest='rew_clip_range',
                         type=str, default=DefaultArg('-1,1'),

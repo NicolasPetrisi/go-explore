@@ -36,6 +36,9 @@ class CellRepresentationBase:
     def as_array(self) -> np.ndarray:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
+
+#FN, Class to represent Cells by us
+#NOTE image is currently not used   
 class Generic(CellRepresentationBase):
     __slots__ = ['_image', '_x', '_y', '_done', 'tuple'] 
     attributes = ('image', 'x', 'y' 'done') 
@@ -61,6 +64,7 @@ class Generic(CellRepresentationBase):
     def make(env=None) -> Any:
         return Generic(env)        
 
+    #FN, to be able to use GenericCellRepresentation.x to reach this value
     @property
     def x(self):
         return self._x
@@ -94,21 +98,16 @@ class Generic(CellRepresentationBase):
 
     @staticmethod
     def get_attr_max(name) -> int:
-        #should not have to be used
-        #raise NotImplementedError('generic should not need say attr values')
+        #FN, used in the program to get the one-hot representations, we currently don't use it so its just a dummy function now
         return 2 #for the done variable, but preferably not used at all
         
-
     def as_array(self) -> np.ndarray:
-        #ar =  self._image.flatten()
-        #ar = np.append(ar, [[(float(self._x), float(self._y), float(self._done))]])
         return np.array(self.tuple)
     
     def __getstate__(self):
         return self.tuple
 
     def __hash__(self):
-        #tmp = (floatArr2bytes(self._image), self._done)
         return hash(self.tuple)
 
     def __eq__(self, other):
@@ -116,12 +115,10 @@ class Generic(CellRepresentationBase):
             return False
         return self.tuple == other.tuple
     
-    
     def __setstate__(self, d):
         self._x, self._y, self._done = d
         self.tuple = d
-
-    #TODO printing entire image too much?
+        
     def __repr__(self):
         return f'x={self._x} y={self._y} done={self._done}'
 
@@ -140,9 +137,7 @@ class CellRepresentationFactory:
             for dimension in self.grid_resolution:
                 if dimension.div != 1:
                     value = getattr(cell_representation, dimension.attr) * 8
-                    #print("JAG HAR FEMTON BANANER " + str(value))
                     value = (int(value / dimension.div))
-                    #print("detta valuejag: " + str(value))
                     setattr(cell_representation, dimension.attr, value)
 
         return cell_representation
