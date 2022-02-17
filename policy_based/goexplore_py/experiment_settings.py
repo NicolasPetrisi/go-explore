@@ -69,6 +69,34 @@ def get_game(game,
              seed_high,
              cell_representation,
              end_on_death):
+    """Creates the inner most environment for the Wrapper being built around the gym environment.
+
+    Args:
+        game (string): The game which to create an environment and build the program for.
+        target_shape ((int, int)): What to resize the pixels to in the (x, y) direction for use as a state.
+        max_pix_value (int): The maximum value which a pixel can take.
+        score_objects (_type_): _description_
+        objects_from_pixels (_type_): _description_
+        objects_remember_rooms (bool): If the agent should remember objects present in rooms. Only applicable on Montezuma and Pitfall
+        only_keys (bool): _description_
+        x_res (float): _description_
+        y_res (float): _description_
+        interval_size (_type_): _description_
+        seed_low (_type_): _description_
+        seed_high (_type_): _description_
+        cell_representation (CellRepresentationBase): Which cell representation to use.
+        end_on_death (bool): End episode on death.
+
+    Raises:
+        NotImplementedError: When unknown arguments are used for parameters such as 'game'.
+
+    Returns:
+        game_name (string): The parsed name of the game \n
+        game_class (MyWrapper): The most inner layer of the Wrapper being built around the game environment \n
+        game_args (dict): The arguments to use for the game_class returned.  \n
+        grid_resolution (tuple): The arguments used for the grid resolution in cell_representation. \n
+    """
+    
     game_lowered = game.lower()
     logger.info(f'Loading game: {game_lowered}')
     if game_lowered == 'montezuma' or game_lowered == 'montezumarevenge':
@@ -132,10 +160,23 @@ def get_game(game,
 
 
 def get_frame_wrapper(frame_resize):
+    """Gets the Wrapper to use to reshape the frame to the desired shape and color.
+
+    Args:
+        frame_resize (string): Which type of frame Wrapper to use.
+
+    Raises:
+        NotImplementedError: If an unknown frame Wrapper type is chosen.
+
+    Returns:
+        frame_resize_wrapper (MyWrapper): The Wrapper type.\n
+        new_height (int): The height of the frame to resize to.\n
+        new_width (int): The width of the frame to resize to.\n
+    """
     if frame_resize == "RectColorFrame":
         frame_resize_wrapper = ge_wrappers.RectColorFrame
         new_height = 64
-        new_width = 64 #TODO change!!
+        new_width = 64
     elif frame_resize == "RectGreyFrame":
         frame_resize_wrapper = ge_wrappers.RectGreyFrame
         new_height = 105
@@ -154,6 +195,11 @@ def get_frame_wrapper(frame_resize):
 
 
 def set_global_seeds(i):
+    """_summary_
+
+    Args:
+        i (_type_): _description_
+    """
     try:
         import tensorflow as local_tf
         local_tf.set_random_seed(i)
@@ -165,6 +211,18 @@ def set_global_seeds(i):
 
 
 def hrv_and_tf_init(nb_cpu, nb_envs, seed_offset):
+    """Initialize Horovod and Tensorflow.
+
+    Args:
+        nb_cpu (int): Number of CPUs to use.
+        nb_envs (int): Number of environments 
+        seed_offset (_type_): _description_
+
+    Returns:
+        _type_: _description_
+        session (_type_): _description_
+        master_seed (_type_): _description_
+    """
     hvd.init()
     master_seed = hvd.rank() * (nb_envs + 1) + seed_offset
     logger.info(f'initialized worker {hvd.rank()} with seed {master_seed}')
@@ -186,6 +244,24 @@ def get_archive(archive_names,
                 cell_trajectory_manager=None,
                 max_failed: int = None,
                 reset_on_update: bool = False):
+    """Creates the Archive to use to store cells and other relevant information for Go-Explore when running.
+
+    Args:
+        archive_names (_type_): _description_
+        optimize_score (_type_): _description_
+        grid_resolution (_type_): _description_
+        pre_fill_archive (str, optional): _description_. Defaults to None.
+        selector (_type_, optional): _description_. Defaults to None.
+        cell_trajectory_manager (_type_, optional): _description_. Defaults to None.
+        max_failed (int, optional): _description_. Defaults to None.
+        reset_on_update (bool, optional): _description_. Defaults to False.
+
+    Raises:
+        NotImplementedError: When using an unknown archive pre-fill.
+
+    Returns:
+        _type_: _description_
+    """
     local_archives = []
 
     domain_knowledge_archive = None
@@ -252,6 +328,26 @@ def get_goal_rep(goal_representation_name: str,
                  rep_type: str,
                  rel_final_goal: bool,
                  rel_sub_goal: bool):
+    """_summary_
+
+    Args:
+        goal_representation_name (str): _description_
+        cell_representation (Any): _description_
+        new_width (int): _description_
+        new_height (int): _description_
+        x_res (float): _description_
+        y_res (float): _description_
+        goal_value (int): _description_
+        rep_type (str): _description_
+        rel_final_goal (bool): _description_
+        rel_sub_goal (bool): _description_
+
+    Raises:
+        NotImplementedError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     if goal_representation_name == 'raw':
         goal_representation = goal_rep.ScaledGoalRep(
             rep_type,
@@ -370,6 +466,62 @@ def get_env(game_name,
             fail_ent_inc,
             final_goal_reward
             ):
+    """Creates all environments for all workers to run with Horovod.
+
+    Args:
+        game_name (string): Name of the game to create environments for.
+        game_class (MyWrapper): The game Wrapper to wrap around the gym environment.
+        game_args (dict): The arguments for the game_class.
+        clip_rewards (_type_): _description_
+        frame_resize_wrapper (MyWrapper): The frame Wrapper to use.
+        scale_rewards (_type_): _description_
+        ignore_negative_rewards (bool): If to ignore negative rewards or not.
+        sticky (bool): If sticky actions are wanted or not.
+        archive_collection (_type_): _description_
+        goal_representation (_type_): _description_
+        done_on_return (bool): If to only return, but not explore.
+        nb_envs (int): Number of environments per worker.
+        goal_representation_name (_type_): _description_
+        x_res (float): The size in x dimension for the grid cells.
+        y_res (float): The size in y dimension for the grid cells.
+        make_video (bool): If videos of the run should be created.
+        save_path (_type_): _description_
+        plot_goal (_type_): _description_
+        plot_return_prob (_type_): _description_
+        plot_archive (_type_): _description_
+        one_vid_per_goal (_type_): _description_
+        skip (_type_): _description_
+        goal_explorer (_type_): _description_
+        seed (_type_): _description_
+        trajectory_tracker (_type_): _description_
+        max_exploration_steps (_type_): _description_
+        max_episode_steps (_type_): _description_
+        entropy_manager (_type_): _description_
+        on_done_reward (float): Reward provided for finishing an episode.
+        no_exploration_gradients (_type_): _description_
+        frame_history (_type_): _description_
+        pixel_repetition (_type_): _description_
+        sil (_type_): _description_
+        gamma (_type_): _description_
+        noops (bool): If noops are desired or not.
+        game_reward_factor (_type_): _description_
+        goal_reward_factor (_type_): _description_
+        clip_game_reward (_type_): _description_
+        rew_clip_range (_type_): _description_
+        max_actions_to_goal (_type_): _description_
+        max_actions_to_new_cell (_type_): _description_
+        plot_grid (bool): If the grid should be plotted in the video or not.
+        plot_sub_goal (_type_): _description_
+        cell_reached (_type_): _description_
+        start_method (_type_): _description_
+        cell_selection_modifier (_type_): _description_
+        traj_modifier (_type_): _description_
+        fail_ent_inc (_type_): _description_
+        final_goal_reward (_type_): _description_
+
+    Returns:
+        MyWrapper: The final environment with all Wrappers applied.
+    """
     logger.info(f'Creating environment for game: {game_name}')
     #temp_env = gym.make(game_name + 'NoFrameskip-v4')
     #set_action_meanings(temp_env.unwrapped.get_action_meanings())
@@ -489,11 +641,28 @@ def get_env(game_name,
 
 
 def get_policy(policy_name):
+    """_summary_
+
+    Args:
+        policy_name (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     policy = {'gru_simple_goal': ge_policies.GRUPolicyGoalConSimpleFlexEnt}[policy_name]
     return policy
 
 
+
 def process_defaults(kwargs):
+    """_summary_
+
+    Args:
+        kwargs (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     for key in kwargs:
         if isinstance(kwargs[key], DefaultArg):
             kwargs[key] = kwargs[key].v
@@ -619,6 +788,135 @@ def setup(resolution,
           low_prob_traj_tresh,
           reset_on_update,
           weight_based_skew):
+    """Sets up everything needed to start running the experiment.
+
+    Args:
+        resolution (_type_): _description_
+        score_objects (_type_): _description_
+        base_path (_type_): _description_
+        game (_type_): _description_
+        objects_from_pixels (_type_): _description_
+        objects_remember_rooms (_type_): _description_
+        only_keys (_type_): _description_
+        optimize_score (_type_): _description_
+        use_real_pos (_type_): _description_
+        resize_x (_type_): _description_
+        resize_y (_type_): _description_
+        max_pix_value (_type_): _description_
+        interval_size (_type_): _description_
+        seed_low (_type_): _description_
+        seed_high (_type_): _description_
+        goal_rep_names (_type_): _description_
+        pre_fill_archive (_type_): _description_
+        archive_to_load (_type_): _description_
+        done_on_return (_type_): _description_
+        nb_envs (_type_): _description_
+        goal_value (_type_): _description_
+        inc_ent_fac (_type_): _description_
+        end_on_death (_type_): _description_
+        archive_names (_type_): _description_
+        selector_name (_type_): _description_
+        frame_resize (_type_): _description_
+        clip_rewards (_type_): _description_
+        scale_rewards (_type_): _description_
+        ignore_negative_rewards (_type_): _description_
+        sticky (_type_): _description_
+        num_steps (_type_): _description_
+        lam (_type_): _description_
+        gamma (_type_): _description_
+        entropy_coef (_type_): _description_
+        vf_coef (_type_): _description_
+        l2_coef (_type_): _description_
+        clip_range (_type_): _description_
+        model_path (_type_): _description_
+        test_mode (_type_): _description_
+        nb_of_epochs (_type_): _description_
+        learning_rate (_type_): _description_
+        seed (_type_): _description_
+        make_video (_type_): _description_
+        skip (_type_): _description_
+        freeze_network (_type_): _description_
+        n_digits (_type_): _description_
+        checkpoint_game (_type_): _description_
+        checkpoint_compute (_type_): _description_
+        max_game_steps (_type_): _description_
+        max_compute_steps (_type_): _description_
+        max_hours (_type_): _description_
+        max_iterations (_type_): _description_
+        max_cells (_type_): _description_
+        max_score (_type_): _description_
+        save_pictures (_type_): _description_
+        clear_pictures (_type_): _description_
+        trajectory_tracker_name (_type_): _description_
+        checkpoint_it (_type_): _description_
+        selector_weights_str (_type_): _description_
+        special_attribute_str (_type_): _description_
+        max_exploration_steps (_type_): _description_
+        ret_inc_ent_thresh (_type_): _description_
+        expl_inc_ent_thresh (_type_): _description_
+        entropy_strategy (_type_): _description_
+        ent_inc_power (_type_): _description_
+        ret_inc_ent_fac (_type_): _description_
+        rep_type (_type_): _description_
+        rel_final_goal (_type_): _description_
+        rel_sub_goal (_type_): _description_
+        on_done_reward (_type_): _description_
+        no_exploration_gradients (_type_): _description_
+        frame_history (_type_): _description_
+        expl_ent_reset (_type_): _description_
+        pixel_repetition (_type_): _description_
+        max_episode_steps (_type_): _description_
+        sil (_type_): _description_
+        sil_coef (_type_): _description_
+        sil_vf_coef (_type_): _description_
+        sil_ent_coef (_type_): _description_
+        max_traj_candidates (_type_): _description_
+        exchange_sil_traj (_type_): _description_
+        random_exp_prob (_type_): _description_
+        mean_repeat (_type_): _description_
+        checkpoint_first_iteration (_type_): _description_
+        checkpoint_last_iteration (_type_): _description_
+        save_archive (_type_): _description_
+        save_model (_type_): _description_
+        disable_hvd (_type_): _description_
+        noops (_type_): _description_
+        cell_representation_name (_type_): _description_
+        game_reward_factor (_type_): _description_
+        goal_reward_factor (_type_): _description_
+        clip_game_reward (_type_): _description_
+        one_vid_per_goal (_type_): _description_
+        rew_clip_range (_type_): _description_
+        max_actions_to_goal (_type_): _description_
+        max_actions_to_new_cell (_type_): _description_
+        plot_archive (_type_): _description_
+        plot_goal (_type_): _description_
+        plot_grid (_type_): _description_
+        plot_sub_goal (_type_): _description_
+        cell_reached_name (_type_): _description_
+        soft_traj_track_window_size (_type_): _description_
+        expl_state (_type_): _description_
+        cell_trajectories_file (_type_): _description_
+        start_method (_type_): _description_
+        cell_selection_modifier (_type_): _description_
+        traj_modifier (_type_): _description_
+        checkpoint_time (_type_): _description_
+        base_weight (_type_): _description_
+        delay (_type_): _description_
+        max_failed (_type_): _description_
+        legacy_entropy (_type_): _description_
+        fail_ent_inc (_type_): _description_
+        temp_dir (_type_): _description_
+        final_goal_reward (_type_): _description_
+        low_prob_traj_tresh (_type_): _description_
+        reset_on_update (_type_): _description_
+        weight_based_skew (_type_): _description_
+
+    Raises:
+        NotImplementedError: When an unknown argument for a parameter is used.
+
+    Returns:
+        Explore: The exploring agent to use in the experiment.
+    """
     global master_pid
     logger.info('Starting setup')
     set_master_pid(os.getpid())
@@ -1102,6 +1400,7 @@ def setup(resolution,
     cell_trajectory_manager.keep_new_trajectories = True
 
     logger.info('Setup finished!')
+    print(expl)
     return expl, log_par
 
 
@@ -1127,6 +1426,14 @@ class DefaultArg:
 
 
 def start_logger(kwargs):
+    """_summary_
+
+    Args:
+        kwargs (_type_): _description_
+
+    Raises:
+        ValueError: _description_
+    """
     log_info = kwargs['log_info']
     log_files = kwargs['log_files']
 
@@ -1153,6 +1460,14 @@ def start_logger(kwargs):
 
 
 def del_out_of_setup_args(kwargs):
+    """_summary_
+
+    Args:
+        kwargs (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Process the resize shape argument
     if kwargs['resize_shape']:
         x, y, p = kwargs['resize_shape'].split('x')
@@ -1178,6 +1493,11 @@ def del_out_of_setup_args(kwargs):
 
 
 def parse_arguments():
+    """All standard arguments and their descriptions.
+
+    Returns:
+        Namespace: All standard arguments and their descriptions.
+    """
     global PROFILER
 
     if platform == "darwin":
@@ -1539,5 +1859,5 @@ def parse_arguments():
     safe_set_argument(args, 'plot_goal', DefaultArg(True))
     safe_set_argument(args, 'plot_grid', DefaultArg(True))
     safe_set_argument(args, 'plot_sub_goal', DefaultArg(True))
-    
+    print("kja: " + str(args))
     return args
