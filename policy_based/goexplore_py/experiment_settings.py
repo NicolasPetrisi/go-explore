@@ -395,7 +395,7 @@ def get_env(game_name,
                 local_env = gym.make(env_id, render_mode="rgb_array", start_level=1344269901, use_sequential_levels=True, num_levels = 1)
             else:
                 make_video_local = False
-                local_env = gym.make(env_id, start_level=1344269901, use_sequential_levels=False, num_levels = 1)
+                local_env = gym.make(env_id, start_level=1344269901, use_sequential_levels=True, num_levels = 1)
             
             set_action_meanings(temp_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)
@@ -1526,7 +1526,7 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
+    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))

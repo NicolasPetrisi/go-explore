@@ -40,6 +40,7 @@ import contextlib
 
 # Go-Explore imports
 from goexplore_py.utils import get_code_hash
+from goexplore_py.utils import make_plot
 from goexplore_py.experiment_settings import hrv_and_tf_init, parse_arguments, setup, process_defaults, \
     del_out_of_setup_args
 from goexplore_py.logger import SimpleLogger
@@ -531,6 +532,12 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
+    y_values = ["score", "ret_suc"]
+    x_value = "frames"
+    for y_value in y_values:
+        make_plot(log_par.base_path + '/log.txt',x_value,y_value)
+
+    
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
 

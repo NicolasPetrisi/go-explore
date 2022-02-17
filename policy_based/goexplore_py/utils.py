@@ -78,4 +78,45 @@ def bytes2floatArr(array):
 def floatArr2bytes(array):
     return cv2.imencode('.png', array, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
+import matplotlib.pyplot as plt
+import sys
+
+
+def make_sub_list(input_list,seperator):
+    final = []
+    for line in input_list:
+        tmp = line.split(seperator)
+        almost_final = []
+        for word in tmp:
+            almost_final.append(word.strip())
+        final.append(almost_final)
+    return final
+
+def get_values(filepath, x_name, y_name):
+    with open(filepath) as f:
+        lines = f.readlines()
+        first = make_sub_list(lines, ',')
+
+        x_index = first[0].index(x_name)
+        y_index = first[0].index(y_name)
+        x_values = []
+        y_values = []
+        for line in first[1:]:
+            if line[y_index] != 'nan':
+                y = float(line[y_index])
+                if y > -0.1:
+                    x_values.append(int(line[x_index]))
+                    y_values.append(float(line[y_index]))
+        return x_values,y_values
+
+def plot_values(x_values, y_values, name="plot.png"):
+    plt.clf()
+    plt.plot(x_values, y_values)
+    plt.savefig(name)
+
+def make_plot(filename, x_name, y_name):
+    x, y = get_values(filename, x_name , y_name)
+    plot_values(x,y,f'plots/{y_name}_of_{x_name}.png')
+
+
 

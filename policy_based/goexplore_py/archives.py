@@ -37,7 +37,7 @@ class StochasticArchive:
         self.cell_selector = cell_selector
         self.max_score: float = -float('inf')
         self.frames: int = 0
-        self.frame_skip: int = 4
+        self.frame_skip: int = 1
 
         # Temporary data
         # This information is reset every iteration, so it does not need to be restored
