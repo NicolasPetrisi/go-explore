@@ -24,15 +24,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def convert_state(state, target_shape, max_pix_value):
-    if target_shape is None:
-        return None
-    import cv2
-    #resized_state = cv2.resize(cv2.cvtColor(state),
-        #target_shape,
-        #interpolation=cv2.INTER_AREA)
-    img =  ((state / 255.0) * max_pix_value).astype(np.uint8)
-    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
+#def convert_state(state, target_shape, max_pix_value): # TODO remove this??
+#    if target_shape is None:
+#        return None
+#    import cv2
+#    #resized_state = cv2.resize(cv2.cvtColor(state),
+#        #target_shape,
+#        #interpolation=cv2.INTER_AREA)
+#    img =  ((state / 255.0) * max_pix_value).astype(np.uint8)
+#    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
 class GoalConVecFrameStack(VecWrapper):
     """
@@ -773,6 +773,9 @@ class GoalConGoExploreEnv(MyWrapper):
 
 
 class RemoteEnv(object):
+    """This is the object sending message to the different workers across the program.
+    """
+    
     def __init__(self, remote):
         self.remote = remote
         self.waiting = False
@@ -1054,7 +1057,27 @@ class RectColorFrame(MyWrapper):
     def __init__(self, env):
         """Warp frames to 105x80"""
         MyWrapper.__init__(self, env)
-        #self.res = (105, 80, 3) # TODO The old res, should be restored and new res in a new class
+        self.res = (105, 80, 3)
+        self.net_res = (self.res[1], self.res[0], self.res[2])
+        self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)
+
+    def reshape_obs(self, obs):
+        obs = np.array(Image.fromarray(obs).resize((self.res[0], self.res[1]),
+                                                   resample=Image.BILINEAR), dtype=np.uint8)
+        return obs
+
+    def reset(self):
+        return self.reshape_obs(self.env.reset())
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        return self.reshape_obs(obs), reward, done, info
+
+
+class RectColorFrameProcgen(MyWrapper): # TODO Can we remove this wrapper? Does it have to be added?
+    def __init__(self, env):
+        """Warp frames to 64x64"""
+        MyWrapper.__init__(self, env)
         self.res = (64, 64, 3)
         self.net_res = (self.res[1], self.res[0], self.res[2])
         self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)

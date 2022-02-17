@@ -175,6 +175,10 @@ def get_frame_wrapper(frame_resize):
     """
     if frame_resize == "RectColorFrame":
         frame_resize_wrapper = ge_wrappers.RectColorFrame
+        new_height = 105
+        new_width = 80
+    if frame_resize == "RectColorFrameProcgen":
+        frame_resize_wrapper = ge_wrappers.RectColorFrameProcgen
         new_height = 64
         new_width = 64
     elif frame_resize == "RectGreyFrame":
@@ -1625,7 +1629,7 @@ def parse_arguments():
                         help='Whether the sub goal should be relative to the agents current cell.')
 
     # State representation arguments
-    parser.add_argument('--frame_resize', dest='frame_resize', type=str, default=DefaultArg('RectColorFrame'),
+    parser.add_argument('--frame_resize', dest='frame_resize', type=str, default=DefaultArg('RectColorFrameProcgen'),
                         help='How to resize the frame, and whether the frame will be color or grey scale.')
     parser.add_argument('--frame_history', dest='frame_history', type=int, default=DefaultArg(4),
                         help='How many old frames to show.')
