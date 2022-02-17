@@ -73,9 +73,25 @@ def clip(value, low, high):
 
 
 def bytes2floatArr(array):
+    """gives a np.array from a byte array of an image
+
+    Args:
+        array (byteArray): byte array representation of the image
+
+    Returns:
+        _type_: np.array represenatation of the image
+    """
     return cv2.imdecode(np.frombuffer(array, np.uint8), 0).astype(np.float32)
 
 def floatArr2bytes(array):
+    """gives a byte array from a np.array representation of an image
+
+    Args:
+        array (np.array): np.array representation of the image
+
+    Returns:
+        byteArray: byte array representation of the image
+    """
     return cv2.imencode('.png', array, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
 import matplotlib.pyplot as plt
@@ -83,6 +99,16 @@ import sys
 
 
 def make_sub_list(input_list,seperator):
+    """Help method to make plots. transform a list of strings sperated by commas to \n
+       a list of list of the string, splitted at the commas
+
+    Args:
+        input_list (list): list of strings, taken from log.txt
+        seperator (string/char): sperator sign
+
+    Returns:
+        list: list of list of strings
+    """
     final = []
     for line in input_list:
         tmp = line.split(seperator)
@@ -93,6 +119,17 @@ def make_sub_list(input_list,seperator):
     return final
 
 def get_values(filepath, x_name, y_name):
+    """extract the x and y values from log.txt file to be used when plotting the graph
+
+    Args:
+        filepath (string): filepth to the log file
+        x_name (string): name of the attribue in the log file to be used as x-value
+        y_name (_type_): name of the attribue in the log file to be used as y-value
+
+    Returns:
+        x_values (list): x-values to be used in the graph
+        y_values (list): y-values to be used in the graph
+    """
     with open(filepath) as f:
         lines = f.readlines()
         first = make_sub_list(lines, ',')
@@ -110,11 +147,26 @@ def get_values(filepath, x_name, y_name):
         return x_values,y_values
 
 def plot_values(x_values, y_values, name="plot.png"):
+    """plots the x and y values to a graph and aves it
+
+    Args:
+        x_values (list): x-values in the graph
+        y_values (list): y-values in the graph
+        name (str, optional): name of the saved graph. Defaults to "plot.png".
+    """
     plt.clf()
     plt.plot(x_values, y_values)
     plt.savefig(name)
 
 def make_plot(filename, x_name, y_name):
+    """makes a plot with x_name as x values and y_name as y values.\n
+       The plot will be saved in temp/run_numberandhash/plots/
+
+    Args:
+        filename (string): filepath to the log file
+        x_name (string): name of the atribute to be used as x value
+        y_name (string): name of the atribute to be used as y value
+    """
     if not os.path.isdir('plots'):
         os.mkdir('plots')
     x, y = get_values(filename, x_name , y_name)
