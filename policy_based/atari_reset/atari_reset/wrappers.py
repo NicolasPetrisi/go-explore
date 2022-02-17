@@ -863,7 +863,7 @@ class VideoWriter(MyWrapper):
                 #self.video_writer = None
                 pass
         else:
-            pass
+            assert self.video_writer == None, "If make_video is false then there should be no video_writer" #FN, we added this. If video_writer isn't already None then there's a bug.
             #self.video_writer = None
 
     def close(self):
