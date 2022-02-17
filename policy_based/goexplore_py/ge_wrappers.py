@@ -146,7 +146,18 @@ class GoalConVecGoalStack(VecWrapper):
 
 
 def get_neighbor(env, pos, offset, x_range, y_range):
+    """get a neighbouring cell of the current cell(pos)
+    
+    Args:
+        env : unused
+        pos (CellRepresentation): Current Cell, assumed to have x and y coordinates
+        offset (_type_): x and y offset to look for neighbour from, ex [0,1]
+        x_range (_type_): max x value
+        y_range (_type_): max y value
 
+    Returns:
+        _type_: neighbouring Cell
+    """
     x = pos.x + offset[0]
     y = pos.y + offset[1]
     #room = pos.room
@@ -215,6 +226,14 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         self.y_res = y_res
 
     def choose(self, go_explore_env):
+        """Choose cell to be the next goal in goal-condition exploration
+
+        Args:
+            go_explore_env (_type_): enviroment eg. GenericAtariEnv?
+
+        Returns:
+            _type_: Next goal cell
+        """
         width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat')
         height = go_explore_env.env.recursive_getattr('screen_width')
         max_cell_x = int((width - (self.x_res / 2)) / self.x_res)

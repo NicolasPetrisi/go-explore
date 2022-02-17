@@ -27,6 +27,16 @@ from goexplore_py.utils import bytes2floatArr
 
 
 def convert_state(state, target_shape, max_pix_value):
+    """converts a state to a specified size in grayscale and with a specified max pixel value
+
+    Args:
+        state (_type_): observation of the enviroment
+        target_shape (tuple): target shape (width, height)
+        max_pix_value (int): the maximun pixel value
+
+    Returns:
+        _type_: a compressed bytearray with the specified quallities
+    """
     if target_shape is None:
         return None
     import cv2
@@ -37,6 +47,11 @@ def convert_state(state, target_shape, max_pix_value):
     return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
 class AtariPosLevel:
+    """old code for an atari enviroment, don't think it runs
+
+    Returns:
+        _type_: _description_
+    """
     __slots__ = ['level', 'score', 'room', 'x', 'y', 'tuple']
 
     def __init__(self, level=0, score=0, room=0, x=0, y=0):
@@ -58,13 +73,6 @@ class AtariPosLevel:
         if not isinstance(other, AtariPosLevel):
             return False
         return self.tuple == other.tuple
-
-    #TODO does this affect anything?
-    # def __getstate__(self):
-    #     return self.__dict__
-
-    # def __setstate__(self, ob):
-    #     self.__dict__ = ob
 
     def __setstate__(self, d):
         self.level, self.score, self.room, self.x, self.y = d
@@ -89,7 +97,6 @@ class MyAtari(MyWrapper):
     def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation=None, seed_lvl=0):
         super(MyAtari, self).__init__(env)
         self.name = name
-        #self.unwrapped.seed() #TODO seed is ignored in procgen XD
         self.env.reset()
         self.state = []
         self.x_repeat = x_repeat
@@ -114,20 +121,34 @@ class MyAtari(MyWrapper):
         return getattr(self.env, e)
 
     def reset(self) -> np.ndarray:
+        """reseting an enviroment to the start state
+
+        Returns:
+            np.ndarray: observation of the start frame (64,64,3) in procgen
+        """
         unprocessed = self.env.reset()
         self.unprocessed_state = unprocessed
         self.pos_from_unprocessed_state(self.get_face_pixels(unprocessed))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
-        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y and done are used
+        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y, seed_lvl and done are used
         self.pos = self.cell_representation(self)
 
         return unprocessed
 
-    #The full image in order to get a better picture/video
     def get_full_res_image(self):
+        """A higher resolution image of the frame
+
+        Returns:
+            _type_: Full image for video/image, resolution (512,512,3) in procgen
+        """
         return self.env.render(mode="rgb_array")
 
     def get_restore(self):
+        """This method does not run, maybe an relic from robustified version?
+
+        Returns:
+            _type_: _description_
+        """
         return (
             self.unwrapped.clone_state(),
             copy.copy(self.state),
@@ -135,6 +156,14 @@ class MyAtari(MyWrapper):
         )
 
     def restore(self, data):
+        """This method does not run, maybe an relic from robustified version?
+
+        Args:
+            data (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         (
             full_state,
             state,
@@ -147,9 +176,19 @@ class MyAtari(MyWrapper):
         return copy.copy(self.state)
 
     def step(self, action) -> typing.Tuple[np.ndarray, float, bool, dict]:
+        """Perform the action on the enviroment
+
+        Args:
+            action (int): number describing the action to be taken
+
+        Returns:
+            self.unprocessed_state (np.ndarray): the observation after taking the action\n
+            reward (float): reward for taking the action\n
+            done (bool): if the enviroment is done after taking the action\n
+            lol (dict): level inormation after taking the action
+        """
         self.unprocessed_state, reward, done, lol = self.env.step(action)
         self.seed_lvl = lol['level_seed']
-        #self.seed_lvl = 
         self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
@@ -161,12 +200,23 @@ class MyAtari(MyWrapper):
 
         return self.unprocessed_state, reward, done, lol
 
-    #FN, Returns the current pos, a GenericCellrepreentation
     def get_pos(self):
+        """Get the current pos, a GenericCellRepresentation
+
+        Returns:
+            CellRepresentation: Cell represenation of the current state, should be a GenericCellRepresentation
+        """
         return self.pos
     
-    #FN, get our current position. This is taken from the picture where face_pixels are the pixels that match our agent
     def pos_from_unprocessed_state(self, face_pixels):
+        """sets the x and y position of agent, aquired from an observation
+
+        Args:
+            face_pixels (_type_): pixels specific for only the agent
+
+        Returns:
+            _type_: old pos if no pixels where specified, otherwise no return
+        """
         face_pixels = [(y, x) for y, x in face_pixels] #  * self.x_repeat
         if len(face_pixels) == 0:
             assert self.pos is not None, 'No face pixel and no previous pos'
@@ -175,15 +225,32 @@ class MyAtari(MyWrapper):
         self.x = x
         self.y = y
 
-    #FN, Get the mouse position from the frame by looking for it's RGB values.
     #TODO make generic or at least not this bad
     def get_face_pixels(self, unprocessed_state):
+        """get location of pixels unique for the agent
+
+        Args:
+            unprocessed_state (_type_): observation of the enviroment
+
+        Returns:
+            set: a set of y and x postion of pixels unique for the agent 
+        """
         COLOR = (187,203,204)
         indices = np.where(np.all(unprocessed_state == COLOR, axis=-1))
         indexes = zip(indices[0], indices[1])
         return set(indexes)
 
-    #FN, don't know what this does yet
     def render_with_known(self, known_positions, resolution, show=True, filename=None, combine_val=max,
                           get_val=lambda x: x.score, minmax=None):
+        """Not used, perhaps a relic from robustified
+
+        Args:
+            known_positions (_type_): _description_
+            resolution (_type_): _description_
+            show (bool, optional): _description_. Defaults to True.
+            filename (_type_, optional): _description_. Defaults to None.
+            combine_val (_type_, optional): _description_. Defaults to max.
+            get_val (_type_, optional): _description_. Defaults to lambdax:x.score.
+            minmax (_type_, optional): _description_. Defaults to None.
+        """
         pass
