@@ -148,7 +148,7 @@ class MyAtari(MyWrapper):
 
     def step(self, action) -> typing.Tuple[np.ndarray, float, bool, dict]:
         self.unprocessed_state, reward, done, lol = self.env.step(action)
-        print("trolololol: " + str(lol))
+        self.seed_lvl = lol['level_seed']
         #self.seed_lvl = 
         self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))

@@ -88,7 +88,6 @@ class Generic(CellRepresentationBase):
 
     def set_tuple(self):
         self.tuple = (self._x, self._y, self._seed_lvl, self._done)
-        print("New tuple: " + str(self.tuple))
 
 
     @staticmethod
