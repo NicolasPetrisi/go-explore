@@ -1400,7 +1400,6 @@ def setup(resolution,
     cell_trajectory_manager.keep_new_trajectories = True
 
     logger.info('Setup finished!')
-    print(expl)
     return expl, log_par
 
 

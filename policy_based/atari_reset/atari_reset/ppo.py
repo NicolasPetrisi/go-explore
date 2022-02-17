@@ -266,13 +266,10 @@ class Runner(object):
         logger.info('Resetting environments...')
         obs_and_goals = self.env.reset()
         obs, goals = obs_and_goals
-        #print("obs is now: " + str(obs.shape))
         logger.info('Casting the observation...')
         self.obs_final = np.cast[self.model.train_model.X.dtype.name](obs)
-        #print("obs final: " + str(self.obs_final.shape))
         logger.info(f'Assigning the observation to a slice of our observation array: {self.obs_final.shape}')
         self.ar_mb_obs_2[:, 0, ...] = self.obs_final
-        #print("ar_mb_obs_2: " +  str(self.ar_mb_obs_2.shape))
         logger.info('Casting the goal...')
         self.mb_goals.append(np.cast[self.model.train_model.goal.dtype.name](goals))    
         logger.info(f'Creating entropy array of size: {self.nenv}')
@@ -340,7 +337,6 @@ class Runner(object):
                                                                   self.mb_dones,
                                                                   self.mb_increase_ent)
             obs_and_goals, rewards, dones, infos = self.env.step(actions)
-            #print("obs amd goals: " + str(obs_and_goals[0].shape) + "   " + str(obs_and_goals[1].shape))
             self.append_mb_data(actions, values, states, neglogpacs, obs_and_goals, rewards, dones, infos)
 
         self.mb_advs = [np.zeros_like(self.mb_values[0])] * (len(self.mb_rewards) + 1)

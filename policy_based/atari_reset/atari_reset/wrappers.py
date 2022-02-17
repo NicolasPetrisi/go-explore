@@ -728,8 +728,6 @@ class VideoWriter(MyWrapper):
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = int(cell.x * self.x_res)
         y_min = int(cell.y * self.y_res)
-        #print("Detta är cell: " + str(type(cell)))
-        #print("okejjjjjj??? cell.x is: "+ str(cell.x) + " and x_res is: " +str(self.x_res) + " but the combo is: " + str(x_min))
         cv2.rectangle(canvas, (x_min, y_min), (x_min + int(self.x_res), y_min + int(self.y_res)), color, -1)
         if overlay is not None:
             cv2.rectangle(overlay, (x_min, y_min), (x_min + int(self.x_res), y_min + int(self.y_res)), color, 1)
@@ -793,7 +791,6 @@ class VideoWriter(MyWrapper):
             goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
             if goal is not None:
                 if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-                    #print("here: " + str(goal))
                     #self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
                     pass
         for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
@@ -826,7 +823,6 @@ class VideoWriter(MyWrapper):
     #Adding a frame for the video
     def add_frame(self):
         if self.video_writer:
-            #print("self.obs" + str(self.obs.shape)) 
             self.video_writer.append_data(self.process_frame(self.env.get_full_res_image()))
             self.num_frames += 1
 
