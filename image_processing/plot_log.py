@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import sys
-
+import os
 
 def make_sub_list(input_list,seperator):
     final = []
@@ -37,6 +37,8 @@ def main():
     x, y = get_values(str(sys.argv[1]),"frames","score" )
     plot_values(x,y,"score_of_frames.png")
     x, y = get_values(str(sys.argv[1]),"frames","ret_suc" )
-    plot_values(x,y, "ret_suc_of_frames.png")
+    if not os.path.isdir('plots'):
+        os.mkdir('plots')
+    plot_values(x,y, 'plots/ret_suc_of_frames.png' )
 
 main()

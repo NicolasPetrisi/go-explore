@@ -224,7 +224,6 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         possible_neighbors = []
         unknown_neighbors = []
         for offset in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
-            #print("Detta är print jordnöt" + str(go_explore_env.last_reached_cell))
             possible_neighbor = get_neighbor(go_explore_env.env,
                                              go_explore_env.last_reached_cell,
                                              offset,
