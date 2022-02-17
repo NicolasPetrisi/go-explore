@@ -115,6 +115,8 @@ def plot_values(x_values, y_values, name="plot.png"):
     plt.savefig(name)
 
 def make_plot(filename, x_name, y_name):
+    if not os.path.isdir('plots'):
+        os.mkdir('plots')
     x, y = get_values(filename, x_name , y_name)
     plot_values(x,y,f'./plots/{y_name}_of_{x_name}.png')
 
