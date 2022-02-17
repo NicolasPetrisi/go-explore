@@ -41,7 +41,7 @@ class CellRepresentationBase:
 #NOTE image is currently not used   
 class Generic(CellRepresentationBase):
     __slots__ = ['_image', '_x', '_y', '_done', 'tuple'] 
-    attributes = ('image', 'x', 'y' 'done') 
+    attributes = ('image', 'x', 'y', 'done') 
     array_length = 3 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
