@@ -858,7 +858,7 @@ class VideoWriter(MyWrapper):
                 self.num_frames = 0
                 os.makedirs(self.directory, exist_ok=True)
                 self.current_file_name = self._get_file_name()
-                self.video_writer = imageio.get_writer(self.current_file_name, mode='I', fps=30)
+                self.video_writer = imageio.get_writer(self.current_file_name, mode='I', fps=15)
             else:
                 #self.video_writer = None
                 pass
