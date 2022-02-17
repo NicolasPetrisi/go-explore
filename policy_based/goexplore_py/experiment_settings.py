@@ -1859,5 +1859,4 @@ def parse_arguments():
     safe_set_argument(args, 'plot_goal', DefaultArg(True))
     safe_set_argument(args, 'plot_grid', DefaultArg(True))
     safe_set_argument(args, 'plot_sub_goal', DefaultArg(True))
-    print("kja: " + str(args))
     return args
