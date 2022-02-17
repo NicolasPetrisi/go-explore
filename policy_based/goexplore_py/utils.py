@@ -116,7 +116,7 @@ def plot_values(x_values, y_values, name="plot.png"):
 
 def make_plot(filename, x_name, y_name):
     x, y = get_values(filename, x_name , y_name)
-    plot_values(x,y,f'plots/{y_name}_of_{x_name}.png')
+    plot_values(x,y,f'./plots/{y_name}_of_{x_name}.png')
 
 
 

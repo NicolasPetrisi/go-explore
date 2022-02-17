@@ -40,15 +40,16 @@ class CellRepresentationBase:
 #FN, Class to represent Cells by us
 #NOTE image is currently not used   
 class Generic(CellRepresentationBase):
-    __slots__ = ['_image', '_x', '_y', '_done', 'tuple'] 
-    attributes = ('image', 'x', 'y', 'done') 
-    array_length = 3 #TODO change in program flow to allow it to be generic
+    __slots__ = ['_image', '_x', '_y', '_seed_lvl', '_done', 'tuple'] 
+    attributes = ('image', 'x', 'y', 'seed_lvl', 'done') 
+    array_length = 4 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):
         self._done = None
         self._x = None
         self._y = None
+        self._seed_lvl = None
         self.tuple = None
 
         if atari_env is not None:
@@ -56,6 +57,7 @@ class Generic(CellRepresentationBase):
             self._done = atari_env.done
             self._x = atari_env.x
             self._y = atari_env.y
+            self._seed_lvl = atari_env.seed_lvl
             #self.array_length = len(self._image.flatten()) + 1 #TODO Not used now, see todo above, plus one is for the done value
             self.set_tuple()
             
@@ -85,7 +87,8 @@ class Generic(CellRepresentationBase):
         self.set_tuple()
 
     def set_tuple(self):
-        self.tuple = (self._x, self._y, self._done)
+        self.tuple = (self._x, self._y, self._seed_lvl, self._done)
+        print("New tuple: " + str(self.tuple))
 
 
     @staticmethod
@@ -116,7 +119,7 @@ class Generic(CellRepresentationBase):
         return self.tuple == other.tuple
     
     def __setstate__(self, d):
-        self._x, self._y, self._done = d
+        self._x, self._y, self._seed_lvl, self._done = d
         self.tuple = d
         
     def __repr__(self):

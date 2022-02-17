@@ -194,7 +194,6 @@ class ShiftingList(list):
 class Runner(object):
     def __init__(self, env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg):
         self.env = env
-        print(" env is : " + str(env))
         self.model = model
         self.nenv = env.num_envs
         self.gamma = gamma

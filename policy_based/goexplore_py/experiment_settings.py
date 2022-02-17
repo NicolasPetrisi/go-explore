@@ -49,6 +49,7 @@ from gym.wrappers import Monitor
 
 
 PROFILER = None
+SEED_LVL = 1344269901 # FN, set this to 0 if random levels are wanted.
 
 master_pid = None
 logger = logging.getLogger(__name__)
@@ -107,7 +108,8 @@ def get_game(game,
         game_class.TARGET_SHAPE = target_shape
         game_class.MAX_PIX_VALUE = max_pix_value
         game_args = dict(name=game.split('_')[1],
-            cell_representation=cell_representation )
+            cell_representation=cell_representation,
+            seed_lvl=SEED_LVL)
         grid_resolution = (
             #GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
             GridDimension('x', x_res), GridDimension('y', y_res)
@@ -392,10 +394,10 @@ def get_env(game_name,
                 #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
                 #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
                 #or reaching the next cheese(where a new level will be used)
-                local_env = gym.make(env_id, render_mode="rgb_array", start_level=1344269901, use_sequential_levels=True, num_levels = 1)
+                local_env = gym.make(env_id, render_mode="rgb_array", start_level=SEED_LVL, use_sequential_levels=True, num_levels = 1)
             else:
                 make_video_local = False
-                local_env = gym.make(env_id, start_level=1344269901, use_sequential_levels=True, num_levels = 1)
+                local_env = gym.make(env_id, start_level=SEED_LVL, use_sequential_levels=True, num_levels = 1)
             
             set_action_meanings(temp_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)

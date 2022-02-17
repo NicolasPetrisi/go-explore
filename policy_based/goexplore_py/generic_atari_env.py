@@ -86,7 +86,7 @@ class MyAtari(MyWrapper):
     MAX_PIX_VALUE = None
     screen_width = 64
     screen_height = 64
-    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation =None):
+    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation=None, seed_lvl=0):
         super(MyAtari, self).__init__(env)
         self.name = name
         #self.unwrapped.seed() #TODO seed is ignored in procgen XD
@@ -108,6 +108,7 @@ class MyAtari(MyWrapper):
 
         self.x = 0
         self.y = 0
+        self.seed_lvl = seed_lvl
 
     def __getattr__(self, e):
         return getattr(self.env, e)
@@ -147,6 +148,8 @@ class MyAtari(MyWrapper):
 
     def step(self, action) -> typing.Tuple[np.ndarray, float, bool, dict]:
         self.unprocessed_state, reward, done, lol = self.env.step(action)
+        print("trolololol: " + str(lol))
+        #self.seed_lvl = 
         self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
