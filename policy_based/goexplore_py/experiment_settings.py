@@ -1462,7 +1462,7 @@ def parse_arguments():
                         default=DefaultArg(False), action='store_true',
                         help='Whether to create a log immediately after performing a warm up (for debugging purpose).')
     parser.add_argument('--start_method', dest='start_method',
-                        type=str, default=DefaultArg('fork'), #TODO we changed this, original value was "spwan" the error descibed in next line didn't happen (yet)
+                        type=str, default=DefaultArg('fork'), #TODO we changed this, original value was "spawn" the error descibed in next line didn't happen (yet)
                         help='Currently, fork causes a deadlock when loading checkpoints.')
     parser.add_argument('--cell_selection_modifier', dest='cell_selection_modifier',
                         type=str, default=DefaultArg('none'),

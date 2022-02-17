@@ -537,7 +537,6 @@ def _run(**kwargs):
     for y_value in y_values:
         make_plot(log_par.base_path + '/log.txt',x_value,y_value)
 
-    
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
 
@@ -667,9 +666,9 @@ def run(kwargs):
             _run(**kwargs)
             if PROFILER is not None:
                 PROFILER.disable()
-        except Exception as exc: # TODO This has been added for now. This didn't exist before and could just crash silently...
+        except Exception as exc: # FN: This has been added for now. This didn't exist before and could just crash silently...
             print("WARNING, CRASHING FROM _run(**kwargs)")
-            exc.print_exception()
+            print(exc)
             print("WARNING, CRASHING FROM _run(**kwargs)")
             # TODO In here, make sure that all forks have been shut down.
         finally:
