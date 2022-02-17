@@ -542,7 +542,6 @@ def _run(**kwargs):
 
 
 def find_checkpoint(base_path):
-    print("mmemeee")
     for path_to_load in sorted(glob.glob(base_path + '/*'), reverse=True):
         local_logger.debug(f'path_to_load: {path_to_load}')
         for job_lib_file in sorted(glob.glob(path_to_load + '/*' + MODEL_POSTFIX), reverse=True):
