@@ -37,10 +37,12 @@ class CellRepresentationBase:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
 
-#FN, Class to represent Cells by us
-#NOTE image is currently not used   
+
 class Generic(CellRepresentationBase):
-    __slots__ = ['_image', '_x', '_y', '_seed_lvl', '_done', 'tuple'] 
+    """Class to represent Cell used by Fredrik and Nicolas.
+       Cells are representated by the x and y position, seed_lvl and the done boolean
+    """
+    __slots__ = ['_image', '_x', '_y', '_seed_lvl', '_done', 'tuple'] #NOTE image is currently not used   
     attributes = ('image', 'x', 'y', 'seed_lvl', 'done') 
     array_length = 4 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
@@ -64,25 +66,58 @@ class Generic(CellRepresentationBase):
 
     @staticmethod
     def make(env=None) -> Any:
+        """reurns an instance of Generic
+
+        Args:
+            env (_type_, optional): enviroment in the the class. Defaults to None.
+
+        Returns:
+            Generic: an instance of Generic
+        """
         return Generic(env)        
 
-    #FN, to be able to use GenericCellRepresentation.x to reach this value
     @property
     def x(self):
+        """to be able to reach the x attribute nicly
+            NOTE if objcted was not created from CellRepresentationFactory and using it's __call__ method 
+            this can be a flot, otherwise it's allways an int
+
+        Returns:
+            int: x postion
+
+        """
         return self._x
 
     @x.setter
-    def x(self, value):
+    def x(self, value): 
+        """setting the x-value
+
+        Args:
+            value (any): The value to set the x postion to
+        """
         self._x = value
         self.set_tuple()
 
 
     @property
     def y(self):
+        """to be able to reach the y attribute nicly
+            NOTE if objcted was not created from CellRepresentationFactory and using it's __call__ method 
+            this can be a flot, otherwise it's allways an int
+
+        Returns:
+            int: y postion
+
+        """
         return self._y
 
     @y.setter
     def y(self, value):
+        """setting the x-value
+
+        Args:
+            value (any): The value to set the y postion to
+        """
         self._y = value
         self.set_tuple()
 
@@ -100,8 +135,8 @@ class Generic(CellRepresentationBase):
 
     @staticmethod
     def get_attr_max(name) -> int:
-        #FN, used in the program to get the one-hot representations, we currently don't use it so its just a dummy function now
-        return 2 #for the done variable, but preferably not used at all
+        #FN, used in the program to get the one-hot representations, the value is not used for procgen so its just a dummy function now
+        return 2 
         
     def as_array(self) -> np.ndarray:
         return np.array(self.tuple)
@@ -133,8 +168,16 @@ class CellRepresentationFactory:
         self.max_values = None
 
     def __call__(self, env=None):
+        """function that is called when a CellRepresentation is called as a function i.e. as cell_representation(self)
+           It calles make which calls the init function in the CellRepresentation and then sets atrributes acording to the grid resolution 
+
+        Args:
+            env (_type_, optional): enviroment. Defaults to None.
+
+        Returns:
+            CellRepresentation: a new cell representation  
+        """
         cell_representation = self.cell_rep_class.make(env)
-        #print("Vi borde vara här och leka")
         if env is not None:
             for dimension in self.grid_resolution:
                 if dimension.div != 1:
