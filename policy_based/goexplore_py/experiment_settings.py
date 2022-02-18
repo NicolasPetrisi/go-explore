@@ -1510,7 +1510,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
 
     # General arguments
-    parser.add_argument('--seed', type=int, default=DefaultArg(0),
+    parser.add_argument('--seed', type=int, default=DefaultArg(np.random.randint(0,1000000)),
                         help='The random seed.')
     parser.add_argument('--profile', dest='profile', action='store_true', default=DefaultArg(False),
                         help='Whether or not to enable a profiler.')
@@ -1851,7 +1851,7 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
+    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
