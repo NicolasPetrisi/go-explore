@@ -412,7 +412,8 @@ def _run(**kwargs):
 
 
             #print("Return success: " + str(return_success_rate))
-            
+            for k in sorted(expl.archive.archive.keys()):
+                print(k)
 
             logger.write('it', checkpoint_tracker.n_iters)
             logger.write('score', expl.archive.max_score)
@@ -666,11 +667,6 @@ def run(kwargs):
             _run(**kwargs)
             if PROFILER is not None:
                 PROFILER.disable()
-        except Exception as exc: # FN: This has been added for now. This didn't exist before and could just crash silently...
-            print("WARNING, CRASHING FROM _run(**kwargs)")
-            print(exc)
-            print("WARNING, CRASHING FROM _run(**kwargs)")
-            # TODO In here, make sure that all forks have been shut down.
         finally:
             try:
                 # delete directory

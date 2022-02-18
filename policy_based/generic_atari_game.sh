@@ -9,7 +9,7 @@ NB_MPI_WORKERS=4
 NB_ENVS_PER_WORKER=4
 
 # Full experiment: different for each run
-SEED=0
+#SEED=0
 
 # Full experiment: 200000000
 CHECKPOINT=50000
@@ -23,7 +23,7 @@ GAME_OPTIONS="--game generic_${Game} --end_on_death"
 REWARD_OPTIONS="--game_reward_factor 1 --goal_reward_factor 1 --clip_game_reward 1 --rew_clip_range=-2,2 --final_goal_reward 3"
 
 # Cell selection is relative to: 1 / (1 + 0.5*number_of_actions_taken_in_cell).
-CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
+CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=max_score_cell --base_weight 0" #--selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
 
 # When the agent takes too long to reach the next cell, its intropy increases according to (inc_ent_fac*steps)^ent_inc_power.
 # When exploring, this entropy increase starts when it takes more than expl_inc_ent_thresh (50) actions to reach a new cell.
@@ -45,4 +45,4 @@ EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --rand
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory"
 TRAINING_OPTIONS="--goal_rep raw --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil --max_compute_steps 12000000000" #"--goal_rep onehot_r24 should probally be --goal_rep onehot
 MISC_OPTIONS="--low_prob_traj_tresh 0.01 --start_method fork --log_info INFO --log_files __main__" #--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
-mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --seed ${SEED} --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}
+mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

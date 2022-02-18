@@ -115,6 +115,7 @@ class MyAtari(MyWrapper):
 
         self.x = 0
         self.y = 0
+        self.org_seed = seed_lvl
         self.seed_lvl = seed_lvl
 
     def __getattr__(self, e):
@@ -126,13 +127,16 @@ class MyAtari(MyWrapper):
         Returns:
             np.ndarray: observation of the start frame (64,64,3) in procgen
         """
+        #unprocessed, reward, done, lol = self.env.reset()
         unprocessed = self.env.reset()
+        self.seed_lvl = self.org_seed
         self.unprocessed_state = unprocessed
         self.pos_from_unprocessed_state(self.get_face_pixels(unprocessed))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y, seed_lvl and done are used
         self.pos = self.cell_representation(self)
-
+        if self.seed_lvl == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
+            print("somethinng wrong, from reset: "+  str(self.pos))
         return unprocessed
 
     def get_full_res_image(self):
@@ -189,14 +193,17 @@ class MyAtari(MyWrapper):
         """
         self.unprocessed_state, reward, done, lol = self.env.step(action)
         self.seed_lvl = lol['level_seed']
+        prev_level = lol['prev_level_seed']
         self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
         self.state.pop(0)
-
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
 
         #FN, gives a GenericCellRepresentation with the values in this enviroment
         self.pos = self.cell_representation(self)
+        if self.seed_lvl == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
+            print("somethinng wrong, from reset: "+  str(self.pos))
+            #print("went to previous start level by step! with pos: " + str(self.pos))
 
         return self.unprocessed_state, reward, done, lol
 
@@ -220,6 +227,7 @@ class MyAtari(MyWrapper):
         face_pixels = [(y, x) for y, x in face_pixels] #  * self.x_repeat
         if len(face_pixels) == 0:
             assert self.pos is not None, 'No face pixel and no previous pos'
+            print("old pos  used in seed: " + str(self.pos))
             return self.pos  # Simply re-use the same position
         y, x = np.mean(face_pixels, axis=0)
         self.x = x

@@ -756,7 +756,7 @@ class VideoWriter(MyWrapper):
         current_cell = self.goal_conditioned_wrapper.archive.get_cell_from_env(self.goal_conditioned_wrapper.env)
         if self.plot_archive:
             for cell_key in self.local_archive:
-                if self.match_attr(cell_key, current_cell, 'level') and self.match_attr(cell_key, current_cell, 'room'):
+                if self.match_attr(cell_key, current_cell, 'seed_lvl'): # and self.match_attr(cell_key, current_cell, 'room'):
                     base_brightness = 50
                     if self.plot_return_prob:
                         reached = self.goal_conditioned_wrapper.archive.cells_reached_dict.get(cell_key, [])
@@ -801,11 +801,19 @@ class VideoWriter(MyWrapper):
 
         #f_out = f_out.repeat(self.pixel_repetition, axis=0)
         #f_out = f_out.repeat(self.pixel_repetition, axis=1)
+
+        d = {-1:"exp_ini",
+             0:"exp None",
+             1:"random", 
+             2:"policy"} # To translate explorer numbers into readable values
         if self.goal_conditioned_wrapper.returning:
             text = "state: return"
         else:
-            text = "state: exploration"
+            text = "state: exploration (" + str(d[self.goal_conditioned_wrapper.goal_explorer.exploration_strategy]) + ")"
         f_out = cv2.putText(f_out, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
+        text = "level_seed: " + str(getattr(current_cell,'seed_lvl'))
+        f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
+
 
         if self.draw_text:
             if 'increase_entropy' in self.goal_conditioned_wrapper.info:

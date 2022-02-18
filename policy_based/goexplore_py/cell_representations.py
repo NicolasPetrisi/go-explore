@@ -121,6 +121,15 @@ class Generic(CellRepresentationBase):
         self._y = value
         self.set_tuple()
 
+    @property
+    def seed_lvl(self):
+        return self._seed_lvl
+
+    @seed_lvl.setter
+    def seed_lvl(self, value):
+        self._seed_lvl = value
+        self.set_tuple()
+
     def set_tuple(self):
         self.tuple = (self._x, self._y, self._seed_lvl, self._done)
 
@@ -157,7 +166,19 @@ class Generic(CellRepresentationBase):
         self.tuple = d
         
     def __repr__(self):
-        return f'x={self._x} y={self._y} done={self._done}'
+        return f'x={self._x} y={self._y} seed_lvl={self._seed_lvl} done={self._done}'
+    
+    def __lt__(self, other):
+        if not isinstance(other, Generic):
+            return False
+        if other._seed_lvl == self._seed_lvl:
+            if other._x == self._x:
+                return other._y < self._y
+            else:
+                return other._x < self._x
+        else: 
+            return other._seed_lvl < self._seed_lvl
+
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):
