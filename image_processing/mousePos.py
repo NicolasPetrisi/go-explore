@@ -16,18 +16,38 @@ def getMousePos(image):
     setter = set(indexes)
     print(setter)
 
-def facePixels(image):
-    print(set(zip(*np.where(image[:, :, 2] == 204))))
+def pos_from_unprocessed_state(self, face_pixels):
+    """sets the x and y position of agent, aquired from an observation
 
-def imageThing(image,name,size):
-    f_out = np.zeros((size, size, 3), dtype=np.uint8) #TODO org (210, 160,3)
-    f_out[:, :, 0:3] = np.cast[np.uint8](image)[:, :, :]
-        #f_out = f_out.repeat(2, axis=1)
-    filename =  f'{name}.png'
-    im = Image.fromarray(f_out)
-    im.save(filename)
+    Args:
+        face_pixels (_type_): pixels specific for only the agent
 
-for episode in range(1):
+    Returns:
+        _type_: old pos if no pixels where specified, otherwise no return
+    """
+    face_pixels = [(y, x) for y, x in face_pixels] #  * self.x_repeat
+    if len(face_pixels) == 0:
+        print("no face pixels!!")
+        return(-1,-1)
+    y, x = np.mean(face_pixels, axis=0)
+    return (x, y)
+
+#TODO make generic or at least not this bad
+def get_face_pixels(self, unprocessed_state):
+    """get location of pixels unique for the agent
+
+    Args:
+        unprocessed_state (_type_): observation of the enviroment
+
+    Returns:
+        set: a set of y and x postion of pixels unique for the agent 
+    """
+    COLOR = (187,203,204)
+    indices = np.where(np.all(unprocessed_state == COLOR, axis=-1))
+    indexes = zip(indices[0], indices[1])
+    return set(indexes)
+
+for episode in range(2):
     observation = env.reset()
     print(observation.shape)
     done = False

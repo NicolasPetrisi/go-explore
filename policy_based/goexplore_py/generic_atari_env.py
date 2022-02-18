@@ -94,7 +94,7 @@ class MyAtari(MyWrapper):
     MAX_PIX_VALUE = None
     screen_width = 64
     screen_height = 64
-    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation=None, seed_lvl=0):
+    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation=None, level_seed=0):
         super(MyAtari, self).__init__(env)
         self.name = name
         self.env.reset()
@@ -115,8 +115,8 @@ class MyAtari(MyWrapper):
 
         self.x = 0
         self.y = 0
-        self.org_seed = seed_lvl
-        self.seed_lvl = seed_lvl
+        self.org_seed = level_seed
+        self.level_seed = level_seed
 
     def __getattr__(self, e):
         return getattr(self.env, e)
@@ -129,13 +129,13 @@ class MyAtari(MyWrapper):
         """
         #unprocessed, reward, done, lol = self.env.reset()
         unprocessed = self.env.reset()
-        self.seed_lvl = self.org_seed
+        self.level_seed = self.org_seed
         self.unprocessed_state = unprocessed
         self.pos_from_unprocessed_state(self.get_face_pixels(unprocessed))
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
-        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y, seed_lvl and done are used
+        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y, level_seed and done are used
         self.pos = self.cell_representation(self)
-        if self.seed_lvl == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
+        if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
             print("somethinng wrong, from reset: "+  str(self.pos))
         return unprocessed
 
@@ -192,7 +192,7 @@ class MyAtari(MyWrapper):
             lol (dict): level inormation after taking the action
         """
         self.unprocessed_state, reward, done, lol = self.env.step(action)
-        self.seed_lvl = lol['level_seed']
+        self.level_seed = lol['level_seed']
         prev_level = lol['prev_level_seed']
         self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
         self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
@@ -201,7 +201,7 @@ class MyAtari(MyWrapper):
 
         #FN, gives a GenericCellRepresentation with the values in this enviroment
         self.pos = self.cell_representation(self)
-        if self.seed_lvl == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
+        if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
             print("somethinng wrong, from reset: "+  str(self.pos))
             #print("went to previous start level by step! with pos: " + str(self.pos))
 
