@@ -555,7 +555,7 @@ def get_env(game_name,
                 make_video_local = False
                 local_env = gym.make(env_id, start_level=SEED_LVL, use_sequential_levels=True, num_levels = 1)
             
-            set_action_meanings(temp_env.unwrapped.env.env.get_combos())
+            set_action_meanings(local_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)
             
 
