@@ -40,10 +40,10 @@ class CellRepresentationBase:
 
 class Generic(CellRepresentationBase):
     """Class to represent Cell used by Fredrik and Nicolas.
-       Cells are representated by the x and y position, seed_lvl and the done boolean
+       Cells are representated by the x and y position, level_seed and the done boolean
     """
     __slots__ = ['_image', '_x', '_y', '_seed_lvl', '_done', 'tuple'] #NOTE image is currently not used   
-    attributes = ('image', 'x', 'y', 'seed_lvl', 'done') 
+    attributes = ('image', 'x', 'y', 'level_seed', 'done') 
     array_length = 4 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
@@ -59,7 +59,7 @@ class Generic(CellRepresentationBase):
             self._done = atari_env.done
             self._x = atari_env.x
             self._y = atari_env.y
-            self._seed_lvl = atari_env.seed_lvl
+            self._seed_lvl = atari_env.level_seed
             #self.array_length = len(self._image.flatten()) + 1 #TODO Not used now, see todo above, plus one is for the done value
             self.set_tuple()
             
@@ -122,11 +122,11 @@ class Generic(CellRepresentationBase):
         self.set_tuple()
 
     @property
-    def seed_lvl(self):
+    def level_seed(self):
         return self._seed_lvl
 
-    @seed_lvl.setter
-    def seed_lvl(self, value):
+    @level_seed.setter
+    def level_seed(self, value):
         self._seed_lvl = value
         self.set_tuple()
 
@@ -166,7 +166,7 @@ class Generic(CellRepresentationBase):
         self.tuple = d
         
     def __repr__(self):
-        return f'x={self._x} y={self._y} seed_lvl={self._seed_lvl} done={self._done}'
+        return f'x={self._x} y={self._y} level_seed={self._seed_lvl} done={self._done}'
     
     def __lt__(self, other):
         if not isinstance(other, Generic):

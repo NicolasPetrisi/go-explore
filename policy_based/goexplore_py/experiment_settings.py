@@ -565,7 +565,7 @@ def get_env(game_name,
             # We will loose some information from the video such as the grid and the goal tracking.
             procgen = False # TODO: Make this an input argument from the .sh file!
             video_freq = 1 # TODO: Make this an input argument from the .sh file! How often to make a video between runs. episode_id%video_freq==0
-            if procgen:
+            if procgen: # TODO: This part of the if-case could probably be remvoed. Will most likely not be used anymore.
                 video_writer = None
                 if make_video_local:
                     local_env = Monitor(local_env, './video', force = True, video_callable=lambda episode_id: True)
