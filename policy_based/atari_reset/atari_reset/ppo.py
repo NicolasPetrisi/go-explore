@@ -337,7 +337,10 @@ class Runner(object):
                                                                   self.mb_dones,
                                                                   self.mb_increase_ent)
             obs_and_goals, rewards, dones, infos = self.env.step(actions)
-            self.append_mb_data(actions, values, states, neglogpacs, obs_and_goals, rewards, dones, infos)
+            # FN, This line above is the most outer layer call of the wrapper's 'step' function. It calls for GoalConVecFrameStack
+            # which in turns calls for GoalConSubprocVecEnv to send the action to the runners/workers to execute.
+
+            self.append_mb_data(actions, values, states, neglogpacs, obs_and_goals, rewards, dones, infos) 
 
         self.mb_advs = [np.zeros_like(self.mb_values[0])] * (len(self.mb_rewards) + 1)
         for t in reversed(range(len(self.mb_rewards))):
