@@ -1,0 +1,18 @@
+Starting program_runner for: 
+gameName=maze
+loadPath=-
+hoursPerLevel=0.1
+levels=4
+dateAndTime=22/02/2022 17:24:12
+
+0.4 hours remaining. Starting new run for loadPath=-
+----------
+0.3 hours remaining. Starting new run for loadPath=/home/nicolas/temp/0005_765513cd6ff84e7996f95834a254e077//000000003078_model.joblib
+----------
+0.2 hours remaining. Starting new run for loadPath=/home/nicolas/temp/0005_765513cd6ff84e7996f95834a254e077//000000003078_model.joblib
+----------
+0.1 hours remaining. Starting new run for loadPath=/home/nicolas/temp/0005_765513cd6ff84e7996f95834a254e077//000000003078_model.joblib
+----------
+
+
+Run finished successfully at 22/02/2022 17:24:12 with total time in hours of: 0.0
