@@ -14,7 +14,26 @@ NB_ENVS_PER_WORKER=4
 # Full experiment: 200000000
 CHECKPOINT=50000
 
+
 Game=$1
+
+if [ $2! = '-' ];
+then
+    Load="--load_path $2"
+else
+    Load=""
+fi
+
+
+if [ $3 != '-' ];
+then
+    MaxTime="--mh $3"
+else
+    MaxTime=""
+fi
+
+
+#Load="--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
 # The game is run with both sticky actions and noops. Also, for Montezuma's Revenge, the episode ends on death.
 GAME_OPTIONS="--game generic_${Game} --end_on_death"
 
@@ -44,5 +63,5 @@ EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --rand
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory"
 TRAINING_OPTIONS="--goal_rep raw --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil --max_compute_steps 12000000000" #"--goal_rep onehot_r24 should probally be --goal_rep onehot
-MISC_OPTIONS="--low_prob_traj_tresh 0.01 --start_method fork --log_info INFO --log_files __main__" #--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
+MISC_OPTIONS="--low_prob_traj_tresh 0.01 --start_method fork --log_info INFO --log_files __main__ ${Load} ${MaxTime}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}
