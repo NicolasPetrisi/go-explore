@@ -2,17 +2,19 @@ Starting program_runner for:
 gameName=maze
 loadPath=-
 hoursPerLevel=0.1
-levels=4
-dateAndTime=22/02/2022 17:24:12
+levels=5
+dateAndTime=23/02/2022 09:44:07
 
+0.5 hours remaining. Starting new run for loadPath=-
+<<ERROR>>: Could not find any '.joblib' file at the location: /home/nicolas/temp/0015_7cb231141acf4480ae19b4fba0ff95a7/
+Using model from previous run instead located at: -
+----------
 0.4 hours remaining. Starting new run for loadPath=-
+<<ERROR>>: Could not find any '.joblib' file at the location: /home/nicolas/temp/0015_7cb231141acf4480ae19b4fba0ff95a7/
+Using model from previous run instead located at: -
 ----------
-0.3 hours remaining. Starting new run for loadPath=/home/nicolas/temp/0005_765513cd6ff84e7996f95834a254e077//000000003078_model.joblib
-----------
-0.2 hours remaining. Starting new run for loadPath=/home/nicolas/temp/0005_765513cd6ff84e7996f95834a254e077//000000003078_model.joblib
-----------
-0.1 hours remaining. Starting new run for loadPath=/home/nicolas/temp/0005_765513cd6ff84e7996f95834a254e077//000000003078_model.joblib
-----------
+0.3 hours remaining. Starting new run for loadPath=-
+<<ERROR>>: Could not find any '.joblib' file at the location: /home/nicolas/temp/0015_7cb231141acf4480ae19b4fba0ff95a7/
+3 errors have occured, aborting run. Something is wrong.
 
-
-Run finished successfully at 22/02/2022 17:24:12 with total time in hours of: 0.0
+<<WARNING>>: Run finished at 23/02/2022 09:45:45 with an error occuring.
