@@ -19,4 +19,4 @@ to_kill
 *~master
 image_processing/video/*
 policy_based/video/*
-program_runner_log.txt
+policy_based/program_runner_log.txt
