@@ -310,7 +310,6 @@ class Runner(object):
 
     def run(self):
         # shift forward
-        print("rank: " +str(hvd.local_rank()) + " in ppo.Runner is performing run--------------------")
         if len(self.mb_rewards) >= self.nsteps + self.num_steps_to_cut_left + self.num_steps_to_cut_right:
             for shifting_list in self.to_shift:
                 shifting_list.shift(self.nsteps)
@@ -329,7 +328,6 @@ class Runner(object):
         self.mb_traj_len = []
 
         self.steps_taken = 0
-        print("rank: " +str(hvd.local_rank()) + " in ppo.Runner:: self.nsteps: " +str(self.nsteps) + " len(self.mb.reward): "+str(len(self.mb_rewards)))
         while len(self.mb_rewards) < self.nsteps+self.num_steps_to_cut_left+self.num_steps_to_cut_right:
             self.steps_taken += 1
 
@@ -338,7 +336,6 @@ class Runner(object):
                                                                   self.mb_states,
                                                                   self.mb_dones,
                                                                   self.mb_increase_ent)
-            #print("rank: " +str(hvd.local_rank()) + " in ppo.Runner:: actions taken is: " + str(actions) +" on enviroment: " +str(self.env))
             obs_and_goals, rewards, dones, infos = self.env.step(actions)
             # FN, This line above is the most outer layer call of the wrapper's 'step' function. It calls for GoalConVecFrameStack
             # which in turns calls for GoalConSubprocVecEnv to send the action to the runners/workers to execute.

@@ -1065,7 +1065,6 @@ def worker(remote, env_fn_wrapper):
         NotImplementedError: When given a command from 'remote.recv()' not recognized.
     """
     env = env_fn_wrapper.x()
-    print("env in worker: " +str(env))
     try:
         while True:
             cmd, data = remote.recv()
