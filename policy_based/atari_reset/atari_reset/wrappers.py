@@ -244,7 +244,7 @@ class VecFrameStack(VecWrapper):
         low = np.repeat(wos.low, self.nstack, axis=-1)
         high = np.repeat(wos.high, self.nstack, axis=-1)
         self.stackedobs = np.zeros((venv.num_envs,)+low.shape, low.dtype)
-        self._observation_space = spaces.Box(low=low, high=high)
+        self._observation_space = spaces.Box(low=np.float32(low), high=np.float32(high))
         self._action_space = venv.action_space
         self._goal_space = venv.goal_space
 
@@ -871,7 +871,6 @@ class VideoWriter(MyWrapper):
             #self.video_writer = None
 
     def close(self):
-        print("Closing in VIDEOWRITER: Closing in VIDEOWRITER: Closing in VIDEOWRITER")
         self._finalize_video()
         self.env.close()
 
@@ -1081,7 +1080,6 @@ def worker(remote, env_fn_wrapper):
                 ob = env.reset()
                 remote.send(ob)
             elif cmd == 'close':
-                print("CLOSING")
                 env.close()
                 remote.close()
                 break
