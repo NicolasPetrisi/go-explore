@@ -411,9 +411,9 @@ def _run(**kwargs):
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
 
-            #print("Return success: " + str(return_success_rate))
-            for k in sorted(expl.archive.archive.keys()):
-                print(k)
+            print("Return success: " + str(return_success_rate))
+            #for k in sorted(expl.archive.archive.keys()):
+            #    print(k)
 
             logger.write('it', checkpoint_tracker.n_iters)
             logger.write('score', expl.archive.max_score)
@@ -538,8 +538,10 @@ def _run(**kwargs):
     for y_value in y_values:
         make_plot(log_par.base_path + '/log.txt',x_value,y_value)
 
+    
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
+    expl.close()
 
 
 def find_checkpoint(base_path):
