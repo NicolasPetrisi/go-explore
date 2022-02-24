@@ -135,8 +135,8 @@ class MyAtari(MyWrapper):
         self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
         self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y, level_seed and done are used
         self.pos = self.cell_representation(self)
-        if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
-            print("somethinng wrong, from reset: "+  str(self.pos))
+        #if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
+        #    print("somethinng wrong, from reset: "+  str(self.pos))
         return unprocessed
 
     def get_full_res_image(self):
@@ -201,9 +201,9 @@ class MyAtari(MyWrapper):
 
         #FN, gives a GenericCellRepresentation with the values in this enviroment
         self.pos = self.cell_representation(self)
-        if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
-            print("somethinng wrong, from reset: "+  str(self.pos))
-            #print("went to previous start level by step! with pos: " + str(self.pos))
+        #if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
+        #    print("somethinng wrong, from reset: "+  str(self.pos))
+        #    print("went to previous start level by step! with pos: " + str(self.pos))
 
         return self.unprocessed_state, reward, done, lol
 

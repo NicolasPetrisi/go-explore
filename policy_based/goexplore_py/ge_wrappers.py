@@ -405,6 +405,13 @@ class GoalConGoExploreEnv(MyWrapper):
         #: currently chosen, and this class holds that information.
         self.video_writer: VideoWriter = video_writer
 
+
+        if self.video_writer:
+            self.hasVideoWriter = True
+        else:
+            self.hasVideoWriter = False
+
+
         self.entropy_manager: EntropyManager = entropy_manager
 
         # Options provided to the environment
@@ -624,6 +631,10 @@ class GoalConGoExploreEnv(MyWrapper):
         goal = self.goal_representation.get(self.current_cell, self.goal_cell_rep, self.sub_goal_cell_rep)
         return goal
 
+    
+    tmpCounter = 0
+
+
     def step(self, action: int):
         # Clear cache
         self.archive.clear_cache()
@@ -722,6 +733,12 @@ class GoalConGoExploreEnv(MyWrapper):
         if self.clip_game_reward:
             game_reward = utils.clip(game_reward, self.clip_range[0], self.clip_range[1])
         self.total_reward = game_reward + reached_goal_reward * self.goal_reward_factor
+
+
+        if self.tmpCounter%10 == 0:
+            if self.hasVideoWriter:
+                if self.video_writer is None:
+                    print("This should NOT be None: " + str(self.video_writer))
 
         if self.video_writer:
             self.video_writer.add_frame()
