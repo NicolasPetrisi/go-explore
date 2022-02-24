@@ -47,7 +47,7 @@ class GoalConVecFrameStack(VecWrapper):
         ob_low = np.repeat(observation_space.low, self.nstack, axis=-1)
         ob_high = np.repeat(observation_space.high, self.nstack, axis=-1)
         self.stacked_obs = np.zeros((venv.num_envs,) + ob_low.shape, observation_space.dtype)
-        self._observation_space = spaces.Box(low=ob_low, high=ob_high)
+        self._observation_space = spaces.Box(low=np.float32(ob_low), high=np.float32(ob_high))
         self._action_space = venv.action_space
         self._goal_space = venv.goal_space
         self.single_frame_obs_space = observation_space
@@ -106,7 +106,7 @@ class GoalConVecGoalStack(VecWrapper):
         ob_low = np.concatenate([observation_space.low, sheet], axis=-1)
         ob_high = np.concatenate([observation_space.high, sheet], axis=-1)
         self.stacked_obs = np.zeros((venv.num_envs,) + new_shape, observation_space.low.dtype)
-        self._observation_space = spaces.Box(low=ob_low, high=ob_high)
+        self._observation_space = spaces.Box(low=np.float32(ob_low), high=np.float32(ob_high))
         self._action_space = venv.action_space
         self._goal_space = venv.goal_space
 
