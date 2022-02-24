@@ -21,7 +21,7 @@ import tracemalloc
 import pickle
 from typing import Optional, Any
 import goexplore_py.globals as global_const
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 try:
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)

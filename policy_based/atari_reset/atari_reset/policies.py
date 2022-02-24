@@ -3,8 +3,8 @@
 """
 
 import numpy as np
-import tensorflow as tf
-from tensorflow.nn import rnn_cell
+import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1.nn import rnn_cell
 from baselines.common.distributions import make_pdtype
 import logging
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def to2d(x):
     size = 1
     for shapel in x.get_shape()[1:]:
-        size *= shapel.value
+        size *= shapel
     return tf.reshape(x, (-1, size))
 
 
@@ -50,7 +50,7 @@ def ortho_init(scale=1.0):
 
 def fc(x, scope, nout, init_scale=1.0, init_bias=0.0):
     with tf.variable_scope(scope):  # pylint: disable=E1129
-        nin = x.get_shape()[1].value
+        nin = x.get_shape()[1]
         w = tf.get_variable("w", [nin, nout], initializer=normc_init(init_scale))
         b = tf.get_variable("b", [nout], initializer=tf.constant_initializer(init_bias))
         return tf.matmul(x, w) + b
@@ -58,7 +58,7 @@ def fc(x, scope, nout, init_scale=1.0, init_bias=0.0):
 
 def conv(x, scope, noutchannels, filtsize, stride, pad='VALID', init_scale=1.0):
     with tf.variable_scope(scope):
-        nin = x.get_shape()[3].value
+        nin = x.get_shape()[3]
         w = tf.get_variable("w", [filtsize, filtsize, nin, noutchannels], initializer=ortho_init(init_scale))
         b = tf.get_variable("b", [noutchannels], initializer=tf.constant_initializer(0.0))
         z = tf.nn.conv2d(x, w, strides=[1, stride, stride, 1], padding=pad)+b

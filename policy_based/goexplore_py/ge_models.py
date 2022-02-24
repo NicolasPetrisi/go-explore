@@ -6,7 +6,7 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from typing import Any
 import atari_reset.atari_reset.ppo as ppo
 

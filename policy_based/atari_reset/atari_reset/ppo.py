@@ -5,7 +5,7 @@ Proximal policy optimization with a few tricks. Adapted from the implementation 
 """
 import joblib
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import horovod.tensorflow as hvd
 import sys
 import copy

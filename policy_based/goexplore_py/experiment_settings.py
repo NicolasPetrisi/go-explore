@@ -11,7 +11,7 @@ import gym
 import argparse
 import cv2
 import gzip
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import horovod.tensorflow as hvd
 from sys import platform
 from typing import Any
@@ -150,7 +150,7 @@ def get_frame_wrapper(frame_resize):
 
 def set_global_seeds(i):
     try:
-        import tensorflow as local_tf
+        import tensorflow.compat.v1 as local_tf
         local_tf.set_random_seed(i)
     except ImportError:
         # noinspection PyUnusedLocal
@@ -163,12 +163,20 @@ def hrv_and_tf_init(nb_cpu, nb_envs, seed_offset):
     hvd.init()
     master_seed = hvd.rank() * (nb_envs + 1) + seed_offset
     logger.info(f'initialized worker {hvd.rank()} with seed {master_seed}')
+    # import os
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     set_global_seeds(master_seed)
     config = tf.ConfigProto(allow_soft_placement=True,
                             intra_op_parallelism_threads=nb_cpu,
                             inter_op_parallelism_threads=nb_cpu)
-    config.gpu_options.allow_growth = True
-    config.gpu_options.visible_device_list = str(hvd.local_rank())
+    #config.gpu_options.allow_growth = True
+    print("--------------------")
+    print("GPUs available: " + str(len(tf.config.list_physical_devices('GPU'))))
+    print("--------------------")
+    import tensorflow as tf2
+    gpus = tf2.config.list_physical_devices('GPU')
+    for gpu in gpus:
+        tf2.config.experimental.set_memory_growth(gpu, True)
     session = tf.Session(config=config)
     return session, master_seed
 
@@ -1218,7 +1226,7 @@ def parse_arguments():
                         help='Maximum number of COMPUTE frames.')
     parser.add_argument('--max_iterations', type=int, default=DefaultArg(None),
                         help='Maximum number of iterations.')
-    parser.add_argument('--max_hours', '--mh', type=float, default=DefaultArg(0.1),
+    parser.add_argument('--max_hours', '--mh', type=float, default=DefaultArg(0.25),
                         help='Maximum number of hours to run this for.')
     parser.add_argument('--max_cells', type=int, default=DefaultArg(None),
                         help='The maximum number of cells before stopping.')
@@ -1494,7 +1502,7 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
+    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
