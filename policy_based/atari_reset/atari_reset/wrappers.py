@@ -871,6 +871,7 @@ class VideoWriter(MyWrapper):
             #self.video_writer = None
 
     def close(self):
+        print("Closing in VIDEOWRITER: Closing in VIDEOWRITER: Closing in VIDEOWRITER")
         self._finalize_video()
         self.env.close()
 
@@ -1054,14 +1055,14 @@ def flatten_lists(listoflists):
 
 
 def worker(remote, env_fn_wrapper):
-    """recives commands from GoalConSubprocVecEnv
+    """This is the function every worker is running. Recieving commands and performing different actions.
 
     Args:
         remote (_type_): _description_
         env_fn_wrapper (_type_): _description_
 
     Raises:
-        NotImplementedError: _description_
+        NotImplementedError: When given a command from 'remote.recv()' not recognized.
     """
     env = env_fn_wrapper.x()
     print("env in worker: " +str(env))
@@ -1081,6 +1082,7 @@ def worker(remote, env_fn_wrapper):
                 ob = env.reset()
                 remote.send(ob)
             elif cmd == 'close':
+                print("CLOSING")
                 env.close()
                 remote.close()
                 break

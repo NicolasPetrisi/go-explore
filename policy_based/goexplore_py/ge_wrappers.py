@@ -1013,7 +1013,7 @@ class SquareGreyFrame(MyWrapper):
         """Warp frames to 84x84 as done in the Nature paper and later work."""
         MyWrapper.__init__(self, env)
         self.res = 84
-        self.observation_space = spaces.Box(low=0, high=255, shape=(self.res, self.res, 1), dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=(self.res, self.res, 1), dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.dot(obs.astype('float32'), np.array([0.299, 0.587, 0.114], 'float32'))
@@ -1035,7 +1035,7 @@ class RectGreyFrame(MyWrapper):
         MyWrapper.__init__(self, env)
         self.res = (105, 80, 1)
         self.net_res = (self.res[1], self.res[0], self.res[2])
-        self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.net_res, dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.dot(obs.astype('float32'), np.array([0.299, 0.587, 0.114], 'float32'))
@@ -1057,7 +1057,7 @@ class RectColorFrame(MyWrapper):
         MyWrapper.__init__(self, env)
         self.res = (105, 80, 3)
         self.net_res = (self.res[1], self.res[0], self.res[2])
-        self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.net_res, dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.array(Image.fromarray(obs).resize((self.res[0], self.res[1]),
@@ -1078,7 +1078,7 @@ class RectColorFrameProcgen(MyWrapper): # TODO Can we remove this wrapper? Does 
         MyWrapper.__init__(self, env)
         self.res = (64, 64, 3)
         self.net_res = (self.res[1], self.res[0], self.res[2])
-        self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.net_res, dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.array(Image.fromarray(obs).resize((self.res[0], self.res[1]),
@@ -1102,7 +1102,7 @@ class RectColorFrameWithBug(MyWrapper):
         """Warp frames to 105x80"""
         MyWrapper.__init__(self, env)
         self.res = (105, 80, 3)
-        self.observation_space = spaces.Box(low=0, high=255, shape=self.res, dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.res, dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.array(Image.fromarray(obs).resize((self.res[0], self.res[1]),

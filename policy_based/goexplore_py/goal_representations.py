@@ -75,7 +75,7 @@ class ScaledGoalRep(FlatGoalRep):
             self.offset_constants = off_const
 
     def get_goal_space(self):
-        return spaces.Box(low=-float('inf'), high=float('inf'), shape=(self.total_length,), dtype=np.float32)
+        return spaces.Box(low=-np.float32('inf'), high=np.float32('inf'), shape=(self.total_length,), dtype=np.float32)
 
     def _get_goal_rep(self, goal: Any, current_cell: Any, relative: bool):
         goal_rep = np.cast[np.float32](goal.as_array())      
@@ -126,7 +126,7 @@ class OneHotGoalRep(FlatGoalRep):
         super().__init__(rep_type, rel_final_goal, rel_sub_goal, rep_lengths)
 
     def get_goal_space(self):
-        return spaces.Box(low=0, high=1, shape=(self.total_length,), dtype=np.float32)
+        return spaces.Box(low=np.float32(0), high=np.float32(1), shape=(self.total_length,), dtype=np.float32)
 
     def _get_goal_rep(self, goal: Any, current_loc: Any, relative: bool):
         cur_index = 0
@@ -178,7 +178,7 @@ class PosFilterGoalRep(AbstractGoalRepresentation):
         self.pos_only = pos_only
 
     def get_goal_space(self):
-        return spaces.Box(low=0, high=255, shape=self.shape, dtype=np.float32)
+        return spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.shape, dtype=np.float32)
 
     def _get_goal_rep(self, goal: Any):
         goal_rep = np.zeros(self.shape)
