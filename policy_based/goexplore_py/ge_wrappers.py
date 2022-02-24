@@ -790,6 +790,9 @@ class GoalConGoExploreEnv(MyWrapper):
 
 
 class RemoteEnv(object):
+    """Used in initialization to get the program running correctly and to get the most uppdated SIL trajectory. 
+       Will send commads to workers: get spaces, goal_space and reset. Most of it's methods are unused.
+    """
     
     def __init__(self, remote):
         self.remote = remote
