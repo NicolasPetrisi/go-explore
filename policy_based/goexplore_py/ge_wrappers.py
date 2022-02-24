@@ -773,8 +773,6 @@ class GoalConGoExploreEnv(MyWrapper):
 
 
 class RemoteEnv(object):
-    """This is the object sending message to the different workers across the program.
-    """
     
     def __init__(self, remote):
         self.remote = remote
