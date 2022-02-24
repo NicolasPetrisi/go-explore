@@ -62,7 +62,9 @@ class StochasticGatherer:
 
     def gather(self):
         t1 = time.perf_counter()
+        print("----------rank: " +str(hvd.local_rank()) + " in gather() is starting runner.run--------------------")
         self.runner.run()
+        print("----------rank: " +str(hvd.local_rank()) + " in gather() is finishing runner.run--------------------")
         t2 = time.perf_counter()
         if hasattr(self.runner, 'trunc_lst_mb_sil_valid'):
             diff = len(self.runner.trunc_lst_mb_sil_valid) - np.sum(self.runner.trunc_lst_mb_sil_valid)

@@ -1054,7 +1054,17 @@ def flatten_lists(listoflists):
 
 
 def worker(remote, env_fn_wrapper):
+    """recives commands from GoalConSubprocVecEnv
+
+    Args:
+        remote (_type_): _description_
+        env_fn_wrapper (_type_): _description_
+
+    Raises:
+        NotImplementedError: _description_
+    """
     env = env_fn_wrapper.x()
+    print("env in worker: " +str(env))
     try:
         while True:
             cmd, data = remote.recv()
