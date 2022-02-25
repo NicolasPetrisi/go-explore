@@ -94,7 +94,16 @@ class MyAtari(MyWrapper):
     MAX_PIX_VALUE = None
     screen_width = 64
     screen_height = 64
-    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=2, end_on_death=False, cell_representation=None, level_seed=0):
+    x_repeat = 1
+    @staticmethod
+    def get_attr_max(name):
+        if name == 'x':
+            return MyAtari.screen_width
+        elif name == 'y':
+            return MyAtari.screen_height 
+        else:
+            return MyAtari.attr_max[name]
+    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=1, end_on_death=False, cell_representation=None, level_seed=0):
         super(MyAtari, self).__init__(env)
         self.name = name
         self.env.reset()

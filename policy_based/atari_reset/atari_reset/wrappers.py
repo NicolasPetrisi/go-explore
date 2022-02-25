@@ -774,7 +774,8 @@ class VideoWriter(MyWrapper):
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
                 #if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-                self._render_cell(f_out, goal, (255, 0, 0))
+                if self.goal_conditioned_wrapper.goal_explorer.exploration_strategy == 2 or self.goal_conditioned_wrapper.returning: 
+                    self._render_cell(f_out, goal, (255, 0, 0))
         if self.plot_cell_traj:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:

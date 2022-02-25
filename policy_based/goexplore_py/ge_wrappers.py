@@ -160,19 +160,25 @@ def get_neighbor(env, pos, offset, x_range, y_range):
     """
     x = pos.x + offset[0]
     y = pos.y + offset[1]
+
+    x = max(x, x_range[0])
+    x = min(x, x_range[1])
+    y = max(y, y_range[0])
+    y = min(y, y_range[1])
+
     #room = pos.room
     #room_x, room_y = env.recursive_getattr('get_room_xy')(room)
-    if x < x_range[0]:
-        x = x_range[1]
+    # if x < x_range[0]:
+        #x = x_range[1]
         #room_x -= 1
-    elif x > x_range[1]:
-        x = x_range[0]
+    # elif x > x_range[1]:
+        #x = x_range[0]
         #room_x += 1
-    elif y < y_range[0]:
-        y = y_range[1]
+    # elif y < y_range[0]:
+        #y = y_range[1]
         #room_y -= 1
-    elif y > y_range[1]:
-        y = y_range[0]
+    # elif y > y_range[1]:
+        #y = y_range[0]
         #room_y += 1
     #if env.recursive_getattr('get_room_out_of_bounds')(room_x, room_y):
     #    return None
@@ -236,8 +242,10 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         """
         width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat')
         height = go_explore_env.env.recursive_getattr('screen_width')
-        max_cell_x = int((width - (self.x_res / 2)) / self.x_res)
-        max_cell_y = int((height - (self.y_res / 2)) / self.y_res)
+        #max_cell_x = int((width - (self.x_res / 2)) / self.x_res)
+        #max_cell_y = int((height - (self.y_res / 2)) / self.y_res)
+        max_cell_x = int(width - 1) # Works for procgen since we get the observation already 64x64
+        max_cell_y = int(height - 1)
         x_range = (0, max_cell_x)
         y_range = (0, max_cell_y)
         possible_neighbors = []

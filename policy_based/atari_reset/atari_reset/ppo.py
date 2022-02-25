@@ -192,7 +192,7 @@ class ShiftingList(list):
 
 
 class Runner(object):
-    def __init__(self, env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg):
+    def __init__(self, env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg,frame_history):
         self.env = env
         self.model = model
         self.nenv = env.num_envs
@@ -255,7 +255,7 @@ class Runner(object):
         self.ar_mb_traj_index = None
         self.ar_mb_traj_len = None
 
-        self.ar_mb_obs_2 = np.zeros(shape=[self.nenv, self.nsteps + self.num_steps_to_cut_left, 64, 64, 12], # Org 105,80,12
+        self.ar_mb_obs_2 = np.zeros(shape=[self.nenv, self.nsteps + self.num_steps_to_cut_left, 64, 64, 3*frame_history], # Org 105,80,12 
                                     dtype=self.model.train_model.X.dtype.name)
         self.obs_final = None
         self.first_rollout = True
@@ -264,6 +264,7 @@ class Runner(object):
 
     def init_obs(self):
         logger.info('Resetting environments...')
+        print("env is; " +str(self.env))
         obs_and_goals = self.env.reset()
         obs, goals = obs_and_goals
         logger.info('Casting the observation...')

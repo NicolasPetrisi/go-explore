@@ -1344,7 +1344,8 @@ def setup(resolution,
                           gamma=gamma,
                           lam=lam,
                           norm_adv=norm_adv,
-                          subtract_rew_avg=subtract_rew_avg
+                          subtract_rew_avg=subtract_rew_avg,
+                          frame_history = frame_history
                           )
 
     logger.info('Creating gatherer')
@@ -1631,7 +1632,7 @@ def parse_arguments():
     # State representation arguments
     parser.add_argument('--frame_resize', dest='frame_resize', type=str, default=DefaultArg('RectColorFrameProcgen'),
                         help='How to resize the frame, and whether the frame will be color or grey scale.')
-    parser.add_argument('--frame_history', dest='frame_history', type=int, default=DefaultArg(4),
+    parser.add_argument('--frame_history', dest='frame_history', type=int, default=DefaultArg(1),
                         help='How many old frames to show.')
 
     # GO-Explore arguments

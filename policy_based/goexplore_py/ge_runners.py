@@ -11,8 +11,8 @@ import atari_reset.atari_reset.ppo as ppo
 
 
 class RunnerFlexEntSilProper(ppo.Runner):
-    def __init__(self, env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg):
-        super(RunnerFlexEntSilProper, self).__init__(env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg)
+    def __init__(self, env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg,frame_history):
+        super(RunnerFlexEntSilProper, self).__init__(env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg, frame_history)
         self.mb_sil_actions = self.reg_shift_list()
         self.mb_sil_rew = self.reg_shift_list()
         self.mb_sil_valid = self.reg_shift_list()
