@@ -49,7 +49,7 @@ from gym.wrappers import Monitor
 
 
 PROFILER = None
-LEVEL_SEED = 1868515471 # FN, set this to 0 if random levels are wanted.
+LEVEL_SEED = 0 # FN, set this to 0 if random levels are wanted.
 
 master_pid = None
 logger = logging.getLogger(__name__)

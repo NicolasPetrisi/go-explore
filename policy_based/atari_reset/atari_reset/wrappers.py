@@ -835,8 +835,8 @@ class VideoWriter(MyWrapper):
             self.video_writer.append_data(self.process_frame(self.env.get_full_res_image()))
             self.num_frames += 1
 
-            if self.num_frames%10 == 0:
-                print("Adding Frames: " + str(self.num_frames))
+            #if self.num_frames%10 == 0:
+            #    print("Adding Frames: " + str(self.num_frames))
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)

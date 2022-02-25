@@ -264,7 +264,6 @@ class Runner(object):
 
     def init_obs(self):
         logger.info('Resetting environments...')
-        print("env is; " +str(self.env))
         obs_and_goals = self.env.reset()
         obs, goals = obs_and_goals
         logger.info('Casting the observation...')

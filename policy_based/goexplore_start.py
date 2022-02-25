@@ -411,7 +411,7 @@ def _run(**kwargs):
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
 
-            print("Return success: " + str(return_success_rate))
+            #print("Return success: " + str(return_success_rate))
             #for k in sorted(expl.archive.archive.keys()):
             #    print(k)
 
