@@ -550,10 +550,10 @@ def get_env(game_name,
                 #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
                 #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
                 #or reaching the next cheese(where a new level will be used)
-                local_env = gym.make(env_id, start_level=LEVEL_SEED, use_sequential_levels=True, num_levels = 1)
+                local_env = gym.make(env_id, render_mode="rgb_array", start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1)
             else:
                 make_video_local = False
-                local_env = gym.make(env_id, start_level=LEVEL_SEED, use_sequential_levels=True, num_levels = 1)
+                local_env = gym.make(env_id, start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1)
             
             set_action_meanings(local_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)
