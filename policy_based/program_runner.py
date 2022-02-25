@@ -19,9 +19,8 @@ tempPath = '/home/nicolas/temp/'
 
 
 
-
-
-
+# This is used as a check such that the path above 'tempPath' is correct.
+os.listdir(tempPath)
 
 
 
