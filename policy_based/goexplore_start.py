@@ -482,6 +482,7 @@ def _run(**kwargs):
                 local_logger.info(f'Rank: {hvd.rank()} is writing checkpoint: {expl.frames_compute}')
                 filename = f'{log_par.base_path}/{expl.frames_compute:0{log_par.n_digits}}'
 
+
                 # Save pictures
                 if len(log_par.save_pictures) > 0:
                     if screenshot_merge == 'disk':
@@ -533,10 +534,10 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
-    y_values = ["score", "ret_suc"]
+    y_values = ["cells", "ret_suc"]
     x_value = "frames"
     for y_value in y_values:
-        make_plot(log_par.base_path + '/log.txt',x_value,y_value)
+        make_plot(log_par.base_path, x_value, y_value, 0)
 
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')

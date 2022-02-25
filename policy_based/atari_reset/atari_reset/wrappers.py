@@ -788,15 +788,15 @@ class VideoWriter(MyWrapper):
                     self.time_in_cell -= 1
                     self._render_cell(f_out, traj_cell, (255, 255, 0))
 
-        if self.plot_sub_goal:
-            goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
-            if goal is not None:
-                if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-                    #self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
-                    pass
-        for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
-            if self.match_attr(cell, current_cell, 'level') and self.match_attr(cell, current_cell, 'room'):
-                self._render_cell(f_out, cell, (255, 0, 255))
+        #if self.plot_sub_goal: # TODO FN, We can maybe just remove these lines? Montezuma code.
+        #    goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
+        #    if goal is not None:
+        #        if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
+        #            #self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
+        #            pass
+        #for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
+        #    if self.match_attr(cell, current_cell, 'level') and self.match_attr(cell, current_cell, 'room'):
+        #        self._render_cell(f_out, cell, (255, 0, 255))
 
         cv2.addWeighted(f_overlay, 0.5, f_out, 0.5, 0, f_out)
 

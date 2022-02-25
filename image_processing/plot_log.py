@@ -28,17 +28,29 @@ def get_values(filepath, x_name, y_name):
                 y_values.append(float(line[y_index]))
         return x_values,y_values
 
-def plot_values(x_values, y_values, name="plot.png"):
+def plot_values(x_values, y_values, x_label, y_label, seed, name="plot.png"):
     plt.clf()
     plt.plot(x_values, y_values)
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    plt.title("Level Seed = " + str(seed))
     plt.savefig(name)
 
 def main():
-    x, y = get_values(str(sys.argv[1]),"frames","score" )
-    plot_values(x,y,"score_of_frames.png")
-    x, y = get_values(str(sys.argv[1]),"frames","ret_suc" )
+
     if not os.path.isdir('plots'):
         os.mkdir('plots')
-    plot_values(x,y, 'plots/ret_suc_of_frames.png' )
+
+    seed = 0
+    x_axis_label = "frames"
+    y_axis_label = "cells"
+    x, y = get_values(str(sys.argv[1]), x_axis_label, y_axis_label)
+    plot_values(x, y, x_axis_label, y_axis_label, seed, "plots/" + y_axis_label + "_of_" + x_axis_label + ".png")
+
+    seed = 0
+    x_axis_label = "frames"
+    y_axis_label = "ret_suc"
+    x, y = get_values(str(sys.argv[1]), x_axis_label, y_axis_label)
+    plot_values(x, y, x_axis_label, y_axis_label, seed, "plots/" + y_axis_label + "_of_" + x_axis_label + ".png")
 
 main()
