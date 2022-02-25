@@ -7,8 +7,8 @@ from datetime import datetime
 #####################
 gameName = "maze"
 loadPath = "-"
-hoursPerLevel = "0.1"
-levels = 1
+hoursPerLevel = "4.0"
+levels = 5
 #####################
 
 

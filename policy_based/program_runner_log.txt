@@ -3,10 +3,10 @@ gameName=maze
 loadPath=-
 hoursPerLevel=0.1
 levels=1
-dateAndTime=25/02/2022 12:24:35
+dateAndTime=25/02/2022 15:23:45
 
 0.1 hours remaining. Starting new run for loadPath=-
 ----------
 
 
-Run finished successfully at 25/02/2022 12:24:52 with total time in hours of: 0.0.
+Run finished successfully at 25/02/2022 15:23:47 with total time in hours of: 0.0.
