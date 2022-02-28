@@ -7,7 +7,7 @@ from datetime import datetime
 #####################
 gameName = "maze"
 loadPath = "-"
-hoursPerLevel = "4.0"
+hoursPerLevel = "0.01"
 levels = 5
 #####################
 
@@ -45,16 +45,32 @@ nbrErrorHapppened = 0
 
 print("Starting the first run out of " + str(levels) + " runs at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
+list = os.listdir(tempPath)
+list.sort()
+
+#print("Bananer: " + tempPath)
+#print("Kaakor: " + str(list))
+
+
+
+
 for i in range(levels):
-    log.write(str(round((levels - i) * float(hoursPerLevel), 4)) + " hours remaining. Starting new run for loadPath=" + loadPath + "\n")
-    
+    tmp_string = str(round((levels - i) * float(hoursPerLevel), 4)) + " hours remaining. Starting new run for loadPath=" + loadPath + "\n"
+    log.write(tmp_string)
+    print(tmp_string)
+
     os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel)
     
     # Load the next run if this wasn't the last.
     if i < levels - 1:
         prevLoadPath = loadPath
-        loadPath = tempPath + os.listdir(tempPath)[-1] + "/"
+        list = os.listdir(tempPath)
+        list.sort()
+        loadPath = tempPath + list[-1] + "/"
+
+
         files = os.listdir(loadPath)
+
 
         modelFiles = []
         for file in files:
@@ -62,29 +78,37 @@ for i in range(levels):
                 modelFiles.append(file)
 
         if len(modelFiles) > 0:
-            loadPath = loadPath + "/" + modelFiles[-1]
+            loadPath = loadPath + modelFiles[-1]
         else:
             errorHappened = True
             nbrErrorHapppened += 1
-            log.write("<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPath + "\n")
+
+            tmp_string = "<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPath + "\n"
+            log.write(tmp_string)
+            print(tmp_string)
+
             loadPath = prevLoadPath
 
             if nbrErrorHapppened > 2:
-                log.write(str(nbrErrorHapppened) + " errors have occured, aborting run. Something is wrong.")
+                tmp_string = str(nbrErrorHapppened) + " errors have occured, aborting run. Something is wrong."
+                log.write(tmp_string)
+                print(tmp_string)
                 break
 
-            log.write("Using model from previous run instead located at: " + loadPath + "\n")
+            tmp_string = "Using model from previous run instead located at: " + loadPath + "\n"
+            log.write(tmp_string)
+            print(tmp_string)
 
     log.write("----------\n")
 
 timeTaken = round((time.time() - startTime)/3600, 2)
 
 if not errorHappened:
-    finalMessage = "\n\nRun finished successfully at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + " with total time in hours of: " + str(timeTaken) + "."
+    tmp_string = "\n\nRun finished successfully at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + " with total time in hours of: " + str(timeTaken) + "."
 else:
-    finalMessage = "\n\n<<WARNING>>: Run finished at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + " with an error occuring."
-log.write(finalMessage)
-print(finalMessage + " Please see the file '" + logName + "' for more information.")
+    tmp_string = "\n\n<<WARNING>>: Run finished at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + " with an error occuring."
+log.write(tmp_string)
+print(tmp_string + " Please see the file '" + logName + "' for more information.")
 
 log.close()
 
