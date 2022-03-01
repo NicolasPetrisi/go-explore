@@ -537,7 +537,7 @@ def _run(**kwargs):
     y_values = ["cells", "ret_suc"]
     x_value = "frames"
     for y_value in y_values:
-        make_plot(log_par.base_path, x_value, y_value, 0)
+        make_plot(log_par.base_path, x_value, y_value)
 
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')

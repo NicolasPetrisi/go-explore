@@ -89,6 +89,7 @@ class GRUPolicyGoalConSimpleFlexEnt(object):
             #print("a0: " +str(ret[0]) + "vf: " +str(ret[1]))
             #print(f'shape of nn_input: {local_ob.shape} states: {states} mask: {mask} entropy: {entropy} goal: {local_goal}')
             return ret
+            
         def step_fake_action(local_ob, local_goal, local_state, local_mask, local_increase_ent, local_fake_action):
             return sess.run([a0, vf, snew, neglogp0, neg_log_fake_a],
                             {nn_input: local_ob,

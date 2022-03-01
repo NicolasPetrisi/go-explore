@@ -15,6 +15,7 @@ import hashlib
 from contextlib import contextmanager
 import cv2
 
+LEVEL_SEED = -1 # np.random.randint(1,2147483648)  # FN, set this to 0 if random levels are wanted.
 
 class TimedPickle:
     def __init__(self, data, name, enabled=True):
@@ -161,7 +162,7 @@ def plot_values(x_values, y_values, x_label, y_label, seed, name="plot.png"):
     plt.title("Level Seed = " + str(seed))
     plt.savefig(name)
 
-def make_plot(filepath, x_name, y_name, seed):
+def make_plot(filepath, x_name, y_name):
     """makes a plot with x_name as x values and y_name as y values.\n
        The plot will be saved in temp/run_numberandhash/plots/
 
@@ -175,71 +176,28 @@ def make_plot(filepath, x_name, y_name, seed):
         os.mkdir(filepath + "/plots")
 
     x, y = get_values(filepath + '/log.txt', x_name , y_name)
-    plot_values(x, y, x_name, y_name, seed, f'{filepath}/plots/{y_name}_of_{x_name}.png')
+    plot_values(x, y, x_name, y_name, LEVEL_SEED, f'{filepath}/plots/{y_name}_of_{x_name}.png')
 
 
+def get_goal_pos(obs):
+    """get location of pixels unique for the goal
 
+    Args:
+        unprocessed_state (np.array): observation of the enviroment of size (512,512,3)
 
-
-
-
-
-
-
-
-#import matplotlib.pyplot as plt
-#import sys
-#import os
-#
-#def make_sub_list(input_list,seperator):
-#    final = []
-#    for line in input_list:
-#        tmp = line.split(seperator)
-#        almost_final = []
-#        for word in tmp:
-#            almost_final.append(word.strip())
-#        final.append(almost_final)
-#    return final
-#
-#def get_values(filepath, x_name, y_name):
-#    with open(filepath) as f:
-#        lines = f.readlines()
-#        first = make_sub_list(lines, ',')
-#
-#        x_index = first[0].index(x_name)
-#        y_index = first[0].index(y_name)
-#        x_values = []
-#        y_values = []
-#        for line in first[1:]:
-#            y = float(line[y_index])
-#            if y > -0.1:
-#                x_values.append(int(line[x_index]))
-#                y_values.append(float(line[y_index]))
-#        return x_values,y_values
-#
-#def plot_values(x_values, y_values, x_label, y_label, seed, name="plot.png"):
-#    plt.clf()
-#    plt.plot(x_values, y_values)
-#    plt.ylabel(y_label)
-#    plt.xlabel(x_label)
-#    plt.title("Level Seed = " + str(seed))
-#    plt.savefig(name)
-#
-#def main():
-#
-#    if not os.path.isdir('plots'):
-#        os.mkdir('plots')
-#
-#    seed = 0
-#    x_axis_label = "frames"
-#    y_axis_label = "cells"
-#    x, y = get_values(str(sys.argv[1]), x_axis_label, y_axis_label)
-#    plot_values(x, y, x_axis_label, y_axis_label, seed, "plots/" + y_axis_label + "_of_" + x_axis_label + ".png")
-#
-#    seed = 0
-#    x_axis_label = "frames"
-#    y_axis_label = "ret_suc"
-#    x, y = get_values(str(sys.argv[1]), x_axis_label, y_axis_label)
-#    plot_values(x, y, x_axis_label, y_axis_label, seed, "plots/" + y_axis_label + "_of_" + x_axis_label + ".png")
-#
-#main()
+    Returns:
+        tuple: a tuple of the mean of the y and x postions unique for the goal 
+    """
+    COLOR = (253,155,37)
+    if obs is None:
+        print("obs is None, make sure all enviroments have render_mode activated")
+        return (-1,-1)
+    indices = np.where(np.all(obs == COLOR, axis=-1))
+    indexes = zip(indices[0], indices[1])
+    face_pixels = set(indexes)
+    face_pixels = [(y, x) for y, x in face_pixels]
+    if len(face_pixels) == 0:
+        print("found no pixels matching the goal colour, make sure it's the correct rgb-values")
+        return (-1,-1)
+    y, x = np.mean(face_pixels, axis=0)
+    return (x,y)

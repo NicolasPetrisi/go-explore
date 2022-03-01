@@ -44,12 +44,9 @@ from goexplore_py.globals import set_action_meanings, set_master_pid
 from goexplore_py.trajectory_manager import CellTrajectoryManager
 import goexplore_py.mpi_support as mpi
 
-
-from gym.wrappers import Monitor
-
+from goexplore_py.utils import LEVEL_SEED
 
 PROFILER = None
-LEVEL_SEED = 0 # FN, set this to 0 if random levels are wanted.
 
 master_pid = None
 logger = logging.getLogger(__name__)
@@ -550,10 +547,10 @@ def get_env(game_name,
                 #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
                 #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
                 #or reaching the next cheese(where a new level will be used)
-                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1)
+                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
             else:
                 make_video_local = False
-                local_env = gym.make(env_id, distribution_mode="hard", start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1)
+                local_env = gym.make(env_id, distribution_mode="hard",  render_mode="rgb_array", start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
             
             set_action_meanings(local_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)
@@ -780,7 +777,8 @@ def setup(resolution,
           final_goal_reward,
           low_prob_traj_tresh,
           reset_on_update,
-          weight_based_skew):
+          weight_based_skew,
+          level_seed):
     """Sets up everything needed to start running the experiment.
 
     Args:
@@ -903,6 +901,7 @@ def setup(resolution,
         low_prob_traj_tresh (_type_): _description_
         reset_on_update (_type_): _description_
         weight_based_skew (_type_): _description_
+        level_seed (int): the level seed for procgen
 
     Raises:
         NotImplementedError: When an unknown argument for a parameter is used.
@@ -928,6 +927,9 @@ def setup(resolution,
     reset_on_update = bool(reset_on_update)
     weight_based_skew = bool(weight_based_skew)
     rew_clip_range = [float(x) for x in rew_clip_range.split(',')]
+    
+    global LEVEL_SEED
+    LEVEL_SEED = level_seed
 
     if max_hours:
         max_time = max_hours * 3600
@@ -963,7 +965,7 @@ def setup(resolution,
         max_pix_value = None
 
     # Get the cell representation
-    generic_game = False
+    targeted_exploration = False
     logger.info('Creating cell representation')
     if cell_representation_name == 'level_room_keys_x_y':
         cell_representation = cell_representations.CellRepresentationFactory(cell_representations.MontezumaPosLevel)
@@ -979,7 +981,7 @@ def setup(resolution,
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
-         generic_game = True
+         targeted_exploration = True
          #should be generic and work for all atari games, do we really need next line?
          #assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     else:
@@ -1119,9 +1121,8 @@ def setup(resolution,
 
     #TODO should choose Dom or Generic depending on input
     
-    if generic_game:
-        #goal_explorer = ge_wrappers.GenericGoalExplorer(random_exp_prob, random_explorer)
-        goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
+    if targeted_exploration:
+        goal_explorer = ge_wrappers.TargetedGoalExplorer(random_exp_prob, random_explorer)
     else:
         goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     
@@ -1827,6 +1828,11 @@ def parse_arguments():
     parser.add_argument('--log_files', dest='log_files',
                         type=str, default=DefaultArg(''),
                         help='From which files we should log information. Example: atari_reset.atari_reset.policies')
+    
+
+    parser.add_argument('--level_seed', dest='level_seed',
+                        type=int, default=DefaultArg(1),
+                        help='What game level to run, max is 2^31 - 1. If 0 is put, all workers will have different levels but share archive')
 
     args = parser.parse_args()
 

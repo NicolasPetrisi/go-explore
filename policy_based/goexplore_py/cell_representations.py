@@ -168,13 +168,10 @@ class Generic(CellRepresentationBase):
     def __lt__(self, other):
         if not isinstance(other, Generic):
             return False
-        if other._level_seed == self._level_seed:
-            if other._x == self._x:
-                return other._y < self._y
-            else:
-                return other._x < self._x
-        else: 
-            return other._level_seed < self._level_seed
+        if other._x == self._x:
+            return other._y < self._y
+        else:
+            return other._x < self._x
 
 
 class CellRepresentationFactory:
@@ -199,7 +196,7 @@ class CellRepresentationFactory:
         if env is not None:
             for dimension in self.grid_resolution:
                 if dimension.div != 1:
-                    value = getattr(cell_representation, dimension.attr) * 8
+                    value = getattr(cell_representation, dimension.attr)
                     value = (int(value / dimension.div))
                     setattr(cell_representation, dimension.attr, value)
 

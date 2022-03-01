@@ -216,14 +216,13 @@ class GoalExplorer:
     def choose(self, go_explore_env):
         raise NotImplementedError('GoalExplorers need to implement a choose method.')
 
-class GenericGoalExplorer(GoalExplorer):
+class TargetedGoalExplorer(GoalExplorer):
     def __init__(self, random_exp_prob, random_explorer):
-        super(GenericGoalExplorer,self).__init__(random_exp_prob, random_explorer)
+        super(TargetedGoalExplorer,self).__init__(random_exp_prob, random_explorer)
 
     def choose(self, go_explore_env):
-        target_cell = go_explore_env.select_cell_from_archive()
-        go_explore_env.last_reached_cell = target_cell
-        return target_cell
+        goal_cell = go_explore_env.env.recursive_getattr('goal_cell')
+        return goal_cell
 
 class DomKnowNeighborGoalExplorer(GoalExplorer):
     def __init__(self, x_res, y_res, random_exp_prob, random_explorer):
@@ -943,7 +942,6 @@ class GoalConSubprocVecEnv(object):
         for remote in self.remotes:
             remote.send(('reset', None))
         obs_and_goals = [self._recv(remote) for remote in self.remotes]
-
         obs, goals = zip(*obs_and_goals)
         obs_and_goals = np.stack(obs), np.stack(goals)
 

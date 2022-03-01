@@ -22,8 +22,9 @@ import typing
 from atari_reset.atari_reset.wrappers import MyWrapper
 import numpy as np
 import cv2
+import goexplore_py.utils
 
-from goexplore_py.utils import bytes2floatArr
+from goexplore_py.utils import bytes2floatArr, get_goal_pos
 
 
 def convert_state(state, target_shape, max_pix_value):
@@ -95,6 +96,7 @@ class MyAtari(MyWrapper):
     screen_width = 64
     screen_height = 64
     x_repeat = 1
+    
     @staticmethod
     def get_attr_max(name):
         if name == 'x':
@@ -103,6 +105,7 @@ class MyAtari(MyWrapper):
             return MyAtari.screen_height 
         else:
             return MyAtari.attr_max[name]
+
     def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=1, end_on_death=False, cell_representation=None, level_seed=0):
         super(MyAtari, self).__init__(env)
         self.name = name
@@ -138,14 +141,23 @@ class MyAtari(MyWrapper):
         """
         #unprocessed, reward, done, lol = self.env.reset()
         unprocessed = self.env.reset()
+        self.done = 0
         self.level_seed = self.org_seed
         self.unprocessed_state = unprocessed
-        self.pos_from_unprocessed_state(self.get_face_pixels(unprocessed))
-        self.state = [convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)]
-        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value)) #currently unused, only x,y, level_seed and done are used
+        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
         self.pos = self.cell_representation(self)
-        #if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
-        #    print("somethinng wrong, from reset: "+  str(self.pos))
+
+
+        goal = get_goal_pos(self.get_full_res_image())
+        oldx = self.x
+        oldy = self.y
+        self.x = goal[0]
+        self.y = goal[1]
+        self.done = 1
+        self.goal_cell = self.cell_representation(self)
+        self.done = 0
+        self.x = oldx
+        self.y = oldy
         return unprocessed
 
     def get_full_res_image(self):
@@ -201,18 +213,18 @@ class MyAtari(MyWrapper):
             lol (dict): level inormation after taking the action
         """
         self.unprocessed_state, reward, done, lol = self.env.step(action)
+        self.done = done
         self.level_seed = lol['level_seed']
         prev_level = lol['prev_level_seed']
-        self.pos_from_unprocessed_state(self.get_face_pixels(self.unprocessed_state))
-        self.state.append(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
-        self.state.pop(0)
-        self.image = bytes2floatArr(convert_state(self.unprocessed_state, self.target_shape, self.max_pix_value))
 
-        #FN, gives a GenericCellRepresentation with the values in this enviroment
+        # FN assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
+        # This is because procgen end the episodes before the agent actaully enters the goal space
+        if reward > 0:
+            self.pos = self.goal_cell
+            return self.unprocessed_state, reward, done, lol
+
+        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
         self.pos = self.cell_representation(self)
-        #if self.level_seed == self.org_seed and (self.pos.x < 10 or self.pos.x > 13 or self.pos.y <11 or self.pos.y > 13):
-        #    print("somethinng wrong, from reset: "+  str(self.pos))
-        #    print("went to previous start level by step! with pos: " + str(self.pos))
 
         return self.unprocessed_state, reward, done, lol
 

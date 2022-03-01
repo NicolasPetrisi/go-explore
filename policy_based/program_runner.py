@@ -1,21 +1,22 @@
 import os
 import time
 from datetime import datetime
-
+import numpy as np
 
 # Set any unwished arguments (except gameName) to "-" if they are not desired.
 #####################
 gameName = "maze"
 loadPath = "-"
-hoursPerLevel = "0.01"
-levels = 5
+hoursPerLevel = "0.1"
+levels = 3
+levelSeed = str(np.random.randint(1,2147483648))
 #####################
 
 
 # Set this to the path to your 'temp' folder where the models are stored.
 # In ubuntu WSL it would probably be '/home/USERNAME/temp/'
 # If 'levels' it set to 1, this variable will not be used and does not have to be changed.
-tempPath = '/home/nicolas/temp/' 
+tempPath = '/home/fredrik/temp/' 
 
 
 
@@ -35,6 +36,7 @@ log.write("Starting program_runner for: \ngameName=" + gameName +
     "\nhoursPerLevel=" + hoursPerLevel + 
     "\nlevels=" + str(levels) + 
     "\ndateAndTime=" + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + 
+    "\nlevelSeed="+ levelSeed +
     "\n\n")
 
 startTime = time.time()
@@ -55,12 +57,15 @@ list.sort()
 
 
 for i in range(levels):
+    log.write("----------\n")
     tmp_string = str(round((levels - i) * float(hoursPerLevel), 4)) + " hours remaining. Starting new run for loadPath=" + loadPath + "\n"
     log.write(tmp_string)
+    log.write("levelSeed=" + levelSeed + "\n")
+    print("############################################")
+    print("############################################")
     print(tmp_string)
 
-    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel)
-    
+    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel + " " + levelSeed)
     # Load the next run if this wasn't the last.
     if i < levels - 1:
         prevLoadPath = loadPath
@@ -89,7 +94,7 @@ for i in range(levels):
 
             loadPath = prevLoadPath
 
-            if nbrErrorHapppened > 2:
+            if nbrErrorHapppened > 4:
                 tmp_string = str(nbrErrorHapppened) + " errors have occured, aborting run. Something is wrong."
                 log.write(tmp_string)
                 print(tmp_string)
@@ -98,8 +103,8 @@ for i in range(levels):
             tmp_string = "Using model from previous run instead located at: " + loadPath + "\n"
             log.write(tmp_string)
             print(tmp_string)
-
-    log.write("----------\n")
+        levelSeed = str(np.random.randint(1,2147483648))  
+    log.flush()
 
 timeTaken = round((time.time() - startTime)/3600, 2)
 
@@ -111,4 +116,3 @@ log.write(tmp_string)
 print(tmp_string + " Please see the file '" + logName + "' for more information.")
 
 log.close()
-

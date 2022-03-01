@@ -46,7 +46,6 @@ class RandomSelector(Selector):
         chosen = np.random.choice(to_choose, size=size)
         return chosen
 
-
 class IterativeSelector(Selector):
     def __init__(self):
         self.i = 0
@@ -693,6 +692,10 @@ class WeightedSelector(Selector):
 
         assert len(archive) == len(self.all_weights)
         total = np.sum(self.all_weights)
+        if total == 0.0:
+            print(f'total weights where 0')
+            probabilities = [1 / len(self.all_weights) for w in self.all_weights]
+            return probabilities
         probabilities = [w / total for w in self.all_weights]
         return probabilities
 
