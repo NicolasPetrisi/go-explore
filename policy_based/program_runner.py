@@ -64,8 +64,10 @@ for i in range(levels):
     print("############################################")
     print("############################################")
     print(tmp_string)
+    log.flush()
 
     os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel + " " + levelSeed)
+    
     # Load the next run if this wasn't the last.
     if i < levels - 1:
         prevLoadPath = loadPath
