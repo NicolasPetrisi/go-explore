@@ -58,7 +58,6 @@ MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
 
-LEVEL_SEED = -1 # np.random.randint(1,2147483648)  # FN, set this to 0 if random levels are wanted.
 
 
 CHECKPOINT_ABBREVIATIONS = {

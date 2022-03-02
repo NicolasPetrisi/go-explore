@@ -91,8 +91,12 @@ class AbstractWeight:
 
 
 class MaxScoreCell(AbstractWeight):
-    def __init__(self):
+    def __init__(self, attr, weight, power, scalar):
         self.max_score: float = -float('inf')
+        self.attr: str = attr
+        self.weight: float = weight
+        self.power: float = power
+        self.scalar: float = scalar
 
     def update_weights(self, archive, update_all):
         max_cell = None
@@ -703,7 +707,6 @@ class WeightedSelector(Selector):
         assert len(archive) == len(self.all_weights)
         total = np.sum(self.all_weights)
         if total == 0.0:
-            print(f'total weights where 0')
             probabilities = [1 / len(self.all_weights) for w in self.all_weights]
             return probabilities
         probabilities = [w / total for w in self.all_weights]

@@ -1032,31 +1032,31 @@ def setup(resolution,
             weight = randselectors.SubGoalFailWeight()
             selector_weights_list.append(weight)
         elif selector_weight_name == 'attr':
+            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             name = params[1]
             weight = float(params[2])
             power = float(params[3])
             scalar = float(params[4])
-            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             weight = randselectors.AttrWeight(name, weight, power, scalar)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'mult':
+            assert len(params) == 4, 'Incorrect number of selector-weight parameters provided'
             name = params[1]
             power = float(params[2])
             scalar = float(params[3])
-            assert len(params) == 4, 'Incorrect number of selector-weight parameters provided'
             weight = randselectors.MultWeight(name, scalar, power)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'level':
-            low_level_weight = float(params[1])
             assert len(params) == 2, 'Incorrect number of selector-weight parameters provided'
+            low_level_weight = float(params[1])
             weight = randselectors.LevelWeights(low_level_weight)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'neighbor':
+            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             horiz = float(params[1])
             vert = float(params[2])
             score_low = float(params[3])
             score_high = float(params[4])
-            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             weight = randselectors.NeighborWeights(game_class, horiz, vert, score_low, score_high)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'max_score_reset':
@@ -1073,8 +1073,13 @@ def setup(resolution,
                 weight = randselectors.MaxScoreOnlyNoScore(str(params[1]))
                 selector_special_attribute_list.append(weight)
         elif selector_weight_name == 'max_score_cell':
-            assert len(params) == 1, 'Incorrect number of selector-weight parameters provided'
-            weight = randselectors.MaxScoreCell()
+            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
+            name = params[1]
+            weight = float(params[2])
+            power = float(params[3])
+            scalar = float(params[4])
+
+            weight = randselectors.MaxScoreCell(name, weight, power, scalar)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'target_cell':
             assert len(params) % 2 == 1, 'Incorrect number of selector-weight parameters provided'
