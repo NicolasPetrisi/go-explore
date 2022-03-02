@@ -19,3 +19,4 @@ to_kill
 image_processing/video/*
 policy_based/video/*
 policy_based/program_runner_log.txt
+procgen/procgen/.build/*
