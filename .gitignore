@@ -6,7 +6,6 @@ results
 .ipynb_checkpoints
 .DS_Store
 demos_*
-*.png
 *.mp4
 to_do
 to_kill
