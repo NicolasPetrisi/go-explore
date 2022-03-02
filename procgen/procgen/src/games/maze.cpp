@@ -56,7 +56,6 @@ class MazeGame : public BasicAbstractGame {
         BasicAbstractGame::game_reset();
 
         grid_step = true;
-        std::cout << "C++ masterrace is reseting to it's former glory!";
         maze_dim = rand_gen.randn((world_dim - 1) / 2) * 2 + 3;
         int margin = (world_dim - maze_dim) / 2;
 
@@ -69,22 +68,33 @@ class MazeGame : public BasicAbstractGame {
         agent->ry = .5;
         agent->x = margin + .5;
         agent->y = margin + .5;
-
         maze_gen->generate_maze();
         maze_gen->place_objects(GOAL, 1);
 
         for (int i = 0; i < grid_size; i++) {
             set_obj(i, WALL_OBJ);
         }
+        std::vector< std::tuple<int,int> > free_spaces;
 
         for (int i = 0; i < maze_dim; i++) {
             for (int j = 0; j < maze_dim; j++) {
                 int type = maze_gen->grid.get(i + MAZE_OFFSET, j + MAZE_OFFSET);
-
+                //type 100 is empty space, 51 wall and 2 the goal
+                if (type == 100){
+                    free_spaces.push_back( std::tuple<int, int>(i,j) );
+                }
                 set_obj(margin + i, margin + j, type);
             }
         }
-
+        
+        std::cout << "vector size is: " << free_spaces.size() << "random number chosen: " << rand() % free_spaces.size() << "\n" << std::flush;
+        int index = rand() % free_spaces.size();
+        int startx = std::get<0> (free_spaces[index]);
+        int starty = std::get<1> (free_spaces[index]);
+        agent->x = margin + startx + 0.5;
+        agent->y = margin + starty + 0.5;
+        std::cout << "maze_dim is: " << maze_dim << " world_dim is: " << world_dim << "\n" << std::flush;
+        std::cout << "agent->x: " << agent->x << " agent->y: " << agent->y << " world_dim - agent->y: " << world_dim -agent->y << "\n" << std::flush;
         if (margin > 0) {
             for (int i = 0; i < maze_dim + 2; i++) {
                 set_obj(margin - 1, margin + i - 1, WALL_OBJ);
