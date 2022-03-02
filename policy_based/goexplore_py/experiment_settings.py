@@ -44,7 +44,6 @@ from goexplore_py.globals import set_action_meanings, set_master_pid
 from goexplore_py.trajectory_manager import CellTrajectoryManager
 import goexplore_py.mpi_support as mpi
 
-from goexplore_py.utils import LEVEL_SEED
 
 PROFILER = None
 
@@ -65,7 +64,8 @@ def get_game(game,
              seed_low,
              seed_high,
              cell_representation,
-             end_on_death):
+             end_on_death,
+             level_seed):
     """Creates the inner most environment for the Wrapper being built around the gym environment.
 
     Args:
@@ -134,7 +134,7 @@ def get_game(game,
         game_class.MAX_PIX_VALUE = max_pix_value
         game_args = dict(name=game.split('_')[1],
             cell_representation=cell_representation,
-            level_seed=LEVEL_SEED)
+            level_seed=level_seed)
         grid_resolution = (
             #GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
             GridDimension('x', x_res), GridDimension('y', y_res)
@@ -465,7 +465,8 @@ def get_env(game_name,
             cell_selection_modifier,
             traj_modifier,
             fail_ent_inc,
-            final_goal_reward
+            final_goal_reward,
+            level_seed
             ):
     """Creates all environments for all workers to run with Horovod.
 
@@ -519,6 +520,7 @@ def get_env(game_name,
         traj_modifier (_type_): _description_
         fail_ent_inc (_type_): _description_
         final_goal_reward (_type_): _description_
+        level_seed (int): The seed of the starting level for the game.
 
     Returns:
         MyWrapper: The final environment with all Wrappers applied.
@@ -530,7 +532,7 @@ def get_env(game_name,
     temp_env = gym.make("procgen:procgen-" + str(game_name) + "-v0", render_mode="rgb_array")
     set_action_meanings(temp_env.unwrapped.env.env.get_combos())
 
-    def make_env(rank, local_rank):
+    def make_env(rank, local_rank, level_seed):
         def env_fn():
             logger.debug(f'Process seed set to: {rank} seed: {seed + rank}')
             set_global_seeds(seed + rank)
@@ -547,10 +549,10 @@ def get_env(game_name,
                 #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
                 #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
                 #or reaching the next cheese(where a new level will be used)
-                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
+                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
             else:
                 make_video_local = False
-                local_env = gym.make(env_id, distribution_mode="hard",  render_mode="rgb_array", start_level=LEVEL_SEED, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
+                local_env = gym.make(env_id, distribution_mode="hard",  render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
             
             set_action_meanings(local_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)
@@ -621,8 +623,8 @@ def get_env(game_name,
             return local_env
         return env_fn
     logger.info(f'Creating: {nb_envs} environments.')
-    a = hvd.local_rank()
-    env_factories = [make_env(i + nb_envs * hvd.rank(), a) for i in range(nb_envs)]
+    local_rank = hvd.local_rank() # FN, this is because calling hvd.local_rank() from the threads inside make_env() causes a crash in MPI4, this works however.
+    env_factories = [make_env(i + nb_envs * hvd.rank(), local_rank, level_seed) for i in range(nb_envs)]
     env = ge_wrappers.GoalConSubprocVecEnv(env_factories, start_method)
     env = ge_wrappers.GoalConVecFrameStack(env, frame_history)
     if 'filter' in goal_representation_name:
@@ -928,8 +930,6 @@ def setup(resolution,
     weight_based_skew = bool(weight_based_skew)
     rew_clip_range = [float(x) for x in rew_clip_range.split(',')]
     
-    global LEVEL_SEED
-    LEVEL_SEED = level_seed
 
     if max_hours:
         max_time = max_hours * 3600
@@ -986,7 +986,6 @@ def setup(resolution,
          #assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
-    #TODO allow for a generic cell represenation (score and frame)
 
     # Get game
     game_name, game_class, game_args, grid_resolution = get_game(game=game,
@@ -1002,7 +1001,8 @@ def setup(resolution,
                                                                  seed_low=seed_low,
                                                                  seed_high=seed_high,
                                                                  cell_representation=cell_representation,
-                                                                 end_on_death=end_on_death)
+                                                                 end_on_death=end_on_death,
+                                                                 level_seed=level_seed)
 
     logger.info('Obtaining selector special attributes')
     selector_special_attribute_list = []
@@ -1119,7 +1119,6 @@ def setup(resolution,
     # Get goal explorer
     logger.info('Creating goal explorer')
 
-    #TODO should choose Dom or Generic depending on input
     
     if targeted_exploration:
         goal_explorer = ge_wrappers.TargetedGoalExplorer(random_exp_prob, random_explorer)
@@ -1276,7 +1275,8 @@ def setup(resolution,
                   cell_selection_modifier=cell_selection_modifier,
                   traj_modifier=traj_modifier,
                   fail_ent_inc=fail_ent_inc,
-                  final_goal_reward=final_goal_reward
+                  final_goal_reward=final_goal_reward,
+                  level_seed=level_seed
                   )
 
     # Get the policy

@@ -15,7 +15,6 @@ import hashlib
 from contextlib import contextmanager
 import cv2
 
-LEVEL_SEED = -1 # np.random.randint(1,2147483648)  # FN, set this to 0 if random levels are wanted.
 
 class TimedPickle:
     def __init__(self, data, name, enabled=True):
@@ -162,7 +161,7 @@ def plot_values(x_values, y_values, x_label, y_label, seed, name="plot.png"):
     plt.title("Level Seed = " + str(seed))
     plt.savefig(name)
 
-def make_plot(filepath, x_name, y_name):
+def make_plot(filepath, x_name, y_name, level_seed):
     """makes a plot with x_name as x values and y_name as y values.\n
        The plot will be saved in temp/run_numberandhash/plots/
 
@@ -172,11 +171,12 @@ def make_plot(filepath, x_name, y_name):
         y_name (string): name of the atribute to be used as y value.
         seed (int): the seed used to generate the level used in the run.
     """
+
     if not os.path.isdir(filepath + "/plots"):
         os.mkdir(filepath + "/plots")
 
     x, y = get_values(filepath + '/log.txt', x_name , y_name)
-    plot_values(x, y, x_name, y_name, LEVEL_SEED, f'{filepath}/plots/{y_name}_of_{x_name}.png')
+    plot_values(x, y, x_name, y_name, level_seed, f'{filepath}/plots/{y_name}_of_{x_name}.png')
 
 
 def get_goal_pos(obs):

@@ -58,6 +58,9 @@ MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
 
+LEVEL_SEED = -1 # np.random.randint(1,2147483648)  # FN, set this to 0 if random levels are wanted.
+
+
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
     'archive': ARCHIVE_POSTFIX + compress_suffix,
@@ -537,7 +540,7 @@ def _run(**kwargs):
     y_values = ["cells", "ret_suc"]
     x_value = "frames"
     for y_value in y_values:
-        make_plot(log_par.base_path, x_value, y_value)
+        make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
 
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
