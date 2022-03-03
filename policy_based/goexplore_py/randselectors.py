@@ -46,7 +46,6 @@ class RandomSelector(Selector):
         chosen = np.random.choice(to_choose, size=size)
         return chosen
 
-
 class IterativeSelector(Selector):
     def __init__(self):
         self.i = 0
@@ -92,8 +91,12 @@ class AbstractWeight:
 
 
 class MaxScoreCell(AbstractWeight):
-    def __init__(self):
+    def __init__(self, attr, weight, power, scalar):
         self.max_score: float = -float('inf')
+        self.attr: str = attr
+        self.weight: float = weight
+        self.power: float = power
+        self.scalar: float = scalar
 
     def update_weights(self, archive, update_all):
         max_cell = None
@@ -105,6 +108,16 @@ class MaxScoreCell(AbstractWeight):
 
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
+
+        # FN, If there has been no score found so far, choose a cell based on the count visit instead of just a random.
+        if self.max_score == 0:
+            if self.attr in special_attributes[cell_key]:
+                value = special_attributes[cell_key][self.attr]
+            else:
+                value = getattr(cell, self.attr)
+            return self.weight * ((1 / (1 + self.scalar*value)) ** self.power)
+
+        # FN, Otherwise, pick the cell which has the highest score.
         if cell.score == self.max_score:
             logger.debug(f'max cell found: {self.max_score} cell: {cell_key}')
             return 1
@@ -693,6 +706,9 @@ class WeightedSelector(Selector):
 
         assert len(archive) == len(self.all_weights)
         total = np.sum(self.all_weights)
+        if total == 0.0:
+            probabilities = [1 / len(self.all_weights) for w in self.all_weights]
+            return probabilities
         probabilities = [w / total for w in self.all_weights]
         return probabilities
 

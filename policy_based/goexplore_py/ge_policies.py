@@ -44,7 +44,7 @@ class GRUPolicyGoalConSimpleFlexEnt(object):
             logger.info(f'h3.shape: {h3.shape}')
             h3 = po.to2d(h3)
             logger.info(f'h3.shape: {h3.shape}')
-            g1 = tf.cast(goal, tf.float32)
+            g1 = tf.cast(goal, tf.float32)              #Goal is a tuple of (nenv * nstep , goal_space)
             logger.info(f'g1.shape: {g1.shape}')
             h3 = tf.concat([h3, g1], axis=1)
             logger.info(f'h3.shape: {h3.shape}')
@@ -52,7 +52,6 @@ class GRUPolicyGoalConSimpleFlexEnt(object):
                                               activation_fn=tf.nn.relu)
             logger.info(f'h4.shape: {h4.shape}')
             h5 = tf.reshape(h4, [nenv, nsteps, memsize])
-
             m = tf.reshape(mask, [nenv, nsteps, 1])
             cell = po.GRUCell(memsize, 'gru1', nin=memsize)
             h6, snew = tf.nn.dynamic_rnn(cell, (h5, m), dtype=tf.float32, time_major=False,
@@ -82,10 +81,15 @@ class GRUPolicyGoalConSimpleFlexEnt(object):
         neg_log_fake_a = self.pd.neglogp(fake_actions)
 
         def step(local_ob, local_goal, local_state, local_mask, local_increase_ent):
-            return sess.run([a0, vf, snew, neglogp0],
+
+
+            ret = sess.run([a0, vf, snew, neglogp0],
                             {nn_input: local_ob, states: local_state, mask: local_mask, entropy: local_increase_ent,
                              goal: local_goal})
-
+            #print("a0: " +str(ret[0]) + "vf: " +str(ret[1]))
+            #print(f'shape of nn_input: {local_ob.shape} states: {states} mask: {mask} entropy: {entropy} goal: {local_goal}')
+            return ret
+            
         def step_fake_action(local_ob, local_goal, local_state, local_mask, local_increase_ent, local_fake_action):
             return sess.run([a0, vf, snew, neglogp0, neg_log_fake_a],
                             {nn_input: local_ob,

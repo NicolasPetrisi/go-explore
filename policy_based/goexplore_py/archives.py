@@ -37,7 +37,7 @@ class StochasticArchive:
         self.cell_selector = cell_selector
         self.max_score: float = -float('inf')
         self.frames: int = 0
-        self.frame_skip: int = 4
+        self.frame_skip: int = 1
 
         # Temporary data
         # This information is reset every iteration, so it does not need to be restored
@@ -50,7 +50,6 @@ class StochasticArchive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
 
         cell_set = set(self.cell_id_to_key_dict.values())
-        #print(cell_set)
         for key in self.archive:
             assert key in cell_set, 'key:' + str(key) + ' has no inverse id!'
 

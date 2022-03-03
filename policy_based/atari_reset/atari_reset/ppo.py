@@ -192,7 +192,7 @@ class ShiftingList(list):
 
 
 class Runner(object):
-    def __init__(self, env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg):
+    def __init__(self, env, model, nsteps, gamma, lam, norm_adv, subtract_rew_avg,frame_history):
         self.env = env
         self.model = model
         self.nenv = env.num_envs
@@ -255,7 +255,7 @@ class Runner(object):
         self.ar_mb_traj_index = None
         self.ar_mb_traj_len = None
 
-        self.ar_mb_obs_2 = np.zeros(shape=[self.nenv, self.nsteps + self.num_steps_to_cut_left, 80, 105, 12],
+        self.ar_mb_obs_2 = np.zeros(shape=[self.nenv, self.nsteps + self.num_steps_to_cut_left, 64, 64, 3*frame_history], # Org 105,80,12 
                                     dtype=self.model.train_model.X.dtype.name)
         self.obs_final = None
         self.first_rollout = True
@@ -266,14 +266,12 @@ class Runner(object):
         logger.info('Resetting environments...')
         obs_and_goals = self.env.reset()
         obs, goals = obs_and_goals
-
         logger.info('Casting the observation...')
         self.obs_final = np.cast[self.model.train_model.X.dtype.name](obs)
         logger.info(f'Assigning the observation to a slice of our observation array: {self.obs_final.shape}')
         self.ar_mb_obs_2[:, 0, ...] = self.obs_final
-
         logger.info('Casting the goal...')
-        self.mb_goals.append(np.cast[self.model.train_model.goal.dtype.name](goals))
+        self.mb_goals.append(np.cast[self.model.train_model.goal.dtype.name](goals))    
         logger.info(f'Creating entropy array of size: {self.nenv}')
         self.mb_increase_ent.append(np.ones(self.nenv, dtype=np.float32))
         logger.info(f'Creating random-reset array of size: {self.nenv}')
@@ -339,7 +337,10 @@ class Runner(object):
                                                                   self.mb_dones,
                                                                   self.mb_increase_ent)
             obs_and_goals, rewards, dones, infos = self.env.step(actions)
-            self.append_mb_data(actions, values, states, neglogpacs, obs_and_goals, rewards, dones, infos)
+            # FN, This line above is the most outer layer call of the wrapper's 'step' function. It calls for GoalConVecFrameStack
+            # which in turns calls for GoalConSubprocVecEnv to send the action to the runners/workers to execute.
+
+            self.append_mb_data(actions, values, states, neglogpacs, obs_and_goals, rewards, dones, infos) 
 
         self.mb_advs = [np.zeros_like(self.mb_values[0])] * (len(self.mb_rewards) + 1)
         for t in reversed(range(len(self.mb_rewards))):

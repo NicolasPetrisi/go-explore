@@ -13,10 +13,20 @@ from .globals import get_action_meaning, get_trajectory
 
 
 class RandomExplorer:
+    """Explorer which takes only random actions.
+    """
     def init_seed(self):
         pass
 
     def get_action(self, env):
+        """Picks a random action to take.
+
+        Args:
+            env (MyWrapper): The game environment
+
+        Returns:
+            int: Which action to take.
+        """
         return random.randint(0, env.action_space.n - 1)
 
     def __repr__(self):

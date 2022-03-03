@@ -40,6 +40,7 @@ import contextlib
 
 # Go-Explore imports
 from goexplore_py.utils import get_code_hash
+from goexplore_py.utils import make_plot
 from goexplore_py.experiment_settings import hrv_and_tf_init, parse_arguments, setup, process_defaults, \
     del_out_of_setup_args
 from goexplore_py.logger import SimpleLogger
@@ -56,6 +57,8 @@ compress_kwargs = {'compresslevel': 1}
 MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
+
+
 
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
@@ -409,6 +412,11 @@ def _run(**kwargs):
                 cum_success_rate += success_rate
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
+
+            #print("Return success: " + str(return_success_rate))
+            #for k in sorted(expl.archive.archive.keys()):
+            #    print(k)
+
             logger.write('it', checkpoint_tracker.n_iters)
             logger.write('score', expl.archive.max_score)
             logger.write('cells', len(expl.archive.archive))
@@ -476,6 +484,7 @@ def _run(**kwargs):
                 local_logger.info(f'Rank: {hvd.rank()} is writing checkpoint: {expl.frames_compute}')
                 filename = f'{log_par.base_path}/{expl.frames_compute:0{log_par.n_digits}}'
 
+
                 # Save pictures
                 if len(log_par.save_pictures) > 0:
                     if screenshot_merge == 'disk':
@@ -527,8 +536,15 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
+    y_values = ["cells", "ret_suc"]
+    x_value = "frames"
+    for y_value in y_values:
+        make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
+
+    
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
+    expl.close()
 
 
 def find_checkpoint(base_path):

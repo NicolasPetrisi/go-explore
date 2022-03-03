@@ -6,7 +6,6 @@ results
 .ipynb_checkpoints
 .DS_Store
 demos_*
-*.png
 *.mp4
 to_do
 to_kill
@@ -17,3 +16,9 @@ to_kill
 .unison*
 *.orig
 *~master
+image_processing/video/*
+policy_based/video/*
+policy_based/program_runner_log.txt
+procgen/procgen/.build/*
+.vscode/c_cpp_properties.json
+.vscode/settings.json

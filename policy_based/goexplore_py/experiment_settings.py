@@ -44,6 +44,7 @@ from goexplore_py.globals import set_action_meanings, set_master_pid
 from goexplore_py.trajectory_manager import CellTrajectoryManager
 import goexplore_py.mpi_support as mpi
 
+
 PROFILER = None
 
 master_pid = None
@@ -63,7 +64,36 @@ def get_game(game,
              seed_low,
              seed_high,
              cell_representation,
-             end_on_death):
+             end_on_death,
+             level_seed):
+    """Creates the inner most environment for the Wrapper being built around the gym environment.
+
+    Args:
+        game (string): The game which to create an environment and build the program for.
+        target_shape ((int, int)): What to resize the pixels to in the (x, y) direction for use as a state.
+        max_pix_value (int): The maximum value which a pixel can take.
+        score_objects (_type_): _description_
+        objects_from_pixels (_type_): _description_
+        objects_remember_rooms (bool): If the agent should remember objects present in rooms. Only applicable on Montezuma and Pitfall
+        only_keys (bool): _description_
+        x_res (float): _description_
+        y_res (float): _description_
+        interval_size (_type_): _description_
+        seed_low (_type_): _description_
+        seed_high (_type_): _description_
+        cell_representation (CellRepresentationBase): Which cell representation to use.
+        end_on_death (bool): End episode on death.
+
+    Raises:
+        NotImplementedError: When unknown arguments are used for parameters such as 'game'.
+
+    Returns:
+        game_name (string): The parsed name of the game \n
+        game_class (MyWrapper): The most inner layer of the Wrapper being built around the game environment \n
+        game_args (dict): The arguments to use for the game_class returned.  \n
+        grid_resolution (tuple): The arguments used for the grid resolution in cell_representation. \n
+    """
+    
     game_lowered = game.lower()
     logger.info(f'Loading game: {game_lowered}')
     if game_lowered == 'montezuma' or game_lowered == 'montezumarevenge':
@@ -103,12 +133,12 @@ def get_game(game,
         game_class.TARGET_SHAPE = target_shape
         game_class.MAX_PIX_VALUE = max_pix_value
         game_args = dict(name=game.split('_')[1],
-            cell_representation=cell_representation )
-        #grid_resolution = (
+            cell_representation=cell_representation,
+            level_seed=level_seed)
+        grid_resolution = (
             #GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
-            #GridDimension('x', x_res), GridDimension('y', y_res)
-        #)
-        grid_resolution = ()
+            GridDimension('x', x_res), GridDimension('y', y_res)
+        )
         cell_representation.set_grid_resolution(grid_resolution)
     elif 'robot' in game_lowered:
         game_name = game.split('_')[1]
@@ -127,10 +157,27 @@ def get_game(game,
 
 
 def get_frame_wrapper(frame_resize):
+    """Gets the Wrapper to use to reshape the frame to the desired shape and color.
+
+    Args:
+        frame_resize (string): Which type of frame Wrapper to use.
+
+    Raises:
+        NotImplementedError: If an unknown frame Wrapper type is chosen.
+
+    Returns:
+        frame_resize_wrapper (MyWrapper): The Wrapper type.\n
+        new_height (int): The height of the frame to resize to.\n
+        new_width (int): The width of the frame to resize to.\n
+    """
     if frame_resize == "RectColorFrame":
         frame_resize_wrapper = ge_wrappers.RectColorFrame
         new_height = 105
         new_width = 80
+    if frame_resize == "RectColorFrameProcgen":
+        frame_resize_wrapper = ge_wrappers.RectColorFrameProcgen
+        new_height = 64
+        new_width = 64
     elif frame_resize == "RectGreyFrame":
         frame_resize_wrapper = ge_wrappers.RectGreyFrame
         new_height = 105
@@ -149,6 +196,11 @@ def get_frame_wrapper(frame_resize):
 
 
 def set_global_seeds(i):
+    """_summary_
+
+    Args:
+        i (_type_): _description_
+    """
     try:
         import tensorflow as local_tf
         local_tf.set_random_seed(i)
@@ -160,6 +212,18 @@ def set_global_seeds(i):
 
 
 def hrv_and_tf_init(nb_cpu, nb_envs, seed_offset):
+    """Initialize Horovod and Tensorflow.
+
+    Args:
+        nb_cpu (int): Number of CPUs to use.
+        nb_envs (int): Number of environments 
+        seed_offset (_type_): _description_
+
+    Returns:
+        _type_: _description_
+        session (_type_): _description_
+        master_seed (_type_): _description_
+    """
     hvd.init()
     master_seed = hvd.rank() * (nb_envs + 1) + seed_offset
     logger.info(f'initialized worker {hvd.rank()} with seed {master_seed}')
@@ -181,6 +245,24 @@ def get_archive(archive_names,
                 cell_trajectory_manager=None,
                 max_failed: int = None,
                 reset_on_update: bool = False):
+    """Creates the Archive to use to store cells and other relevant information for Go-Explore when running.
+
+    Args:
+        archive_names (_type_): _description_
+        optimize_score (_type_): _description_
+        grid_resolution (_type_): _description_
+        pre_fill_archive (str, optional): _description_. Defaults to None.
+        selector (_type_, optional): _description_. Defaults to None.
+        cell_trajectory_manager (_type_, optional): _description_. Defaults to None.
+        max_failed (int, optional): _description_. Defaults to None.
+        reset_on_update (bool, optional): _description_. Defaults to False.
+
+    Raises:
+        NotImplementedError: When using an unknown archive pre-fill.
+
+    Returns:
+        _type_: _description_
+    """
     local_archives = []
 
     domain_knowledge_archive = None
@@ -241,12 +323,32 @@ def get_goal_rep(goal_representation_name: str,
                  cell_representation: Any,
                  new_width: int,
                  new_height: int,
-                 x_res: int,
-                 y_res: int,
+                 x_res: float,
+                 y_res: float,
                  goal_value: int,
                  rep_type: str,
                  rel_final_goal: bool,
                  rel_sub_goal: bool):
+    """_summary_
+
+    Args:
+        goal_representation_name (str): _description_
+        cell_representation (Any): _description_
+        new_width (int): _description_
+        new_height (int): _description_
+        x_res (float): _description_
+        y_res (float): _description_
+        goal_value (int): _description_
+        rep_type (str): _description_
+        rel_final_goal (bool): _description_
+        rel_sub_goal (bool): _description_
+
+    Raises:
+        NotImplementedError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     if goal_representation_name == 'raw':
         goal_representation = goal_rep.ScaledGoalRep(
             rep_type,
@@ -363,28 +465,99 @@ def get_env(game_name,
             cell_selection_modifier,
             traj_modifier,
             fail_ent_inc,
-            final_goal_reward
+            final_goal_reward,
+            level_seed
             ):
-    logger.info(f'Creating environment for game: {game_name}')
-    temp_env = gym.make(game_name + 'NoFrameskip-v4')
-    set_action_meanings(temp_env.unwrapped.get_action_meanings())
+    """Creates all environments for all workers to run with Horovod.
 
-    def make_env(rank, local_rank):
+    Args:
+        game_name (string): Name of the game to create environments for.
+        game_class (MyWrapper): The game Wrapper to wrap around the gym environment.
+        game_args (dict): The arguments for the game_class.
+        clip_rewards (_type_): _description_
+        frame_resize_wrapper (MyWrapper): The frame Wrapper to use.
+        scale_rewards (_type_): _description_
+        ignore_negative_rewards (bool): If to ignore negative rewards or not.
+        sticky (bool): If sticky actions are wanted or not.
+        archive_collection (_type_): _description_
+        goal_representation (_type_): _description_
+        done_on_return (bool): If to only return, but not explore.
+        nb_envs (int): Number of environments per worker.
+        goal_representation_name (_type_): _description_
+        x_res (float): The size in x dimension for the grid cells.
+        y_res (float): The size in y dimension for the grid cells.
+        make_video (bool): If videos of the run should be created.
+        save_path (_type_): _description_
+        plot_goal (_type_): _description_
+        plot_return_prob (_type_): _description_
+        plot_archive (_type_): _description_
+        one_vid_per_goal (_type_): _description_
+        skip (_type_): _description_
+        goal_explorer (_type_): _description_
+        seed (_type_): _description_
+        trajectory_tracker (_type_): _description_
+        max_exploration_steps (_type_): _description_
+        max_episode_steps (_type_): _description_
+        entropy_manager (_type_): _description_
+        on_done_reward (float): Reward provided for finishing an episode.
+        no_exploration_gradients (_type_): _description_
+        frame_history (_type_): _description_
+        pixel_repetition (_type_): _description_
+        sil (_type_): _description_
+        gamma (_type_): _description_
+        noops (bool): If noops are desired or not.
+        game_reward_factor (_type_): _description_
+        goal_reward_factor (_type_): _description_
+        clip_game_reward (_type_): _description_
+        rew_clip_range (_type_): _description_
+        max_actions_to_goal (_type_): _description_
+        max_actions_to_new_cell (_type_): _description_
+        plot_grid (bool): If the grid should be plotted in the video or not.
+        plot_sub_goal (_type_): _description_
+        cell_reached (_type_): _description_
+        start_method (_type_): _description_
+        cell_selection_modifier (_type_): _description_
+        traj_modifier (_type_): _description_
+        fail_ent_inc (_type_): _description_
+        final_goal_reward (_type_): _description_
+        level_seed (int): The seed of the starting level for the game.
+
+    Returns:
+        MyWrapper: The final environment with all Wrappers applied.
+    """
+    logger.info(f'Creating environment for game: {game_name}')
+    #temp_env = gym.make(game_name + 'NoFrameskip-v4')
+    #set_action_meanings(temp_env.unwrapped.get_action_meanings())
+    #FN, Why do we do this here?
+    temp_env = gym.make("procgen:procgen-" + str(game_name) + "-v0", render_mode="rgb_array")
+    set_action_meanings(temp_env.unwrapped.env.env.get_combos())
+
+    def make_env(rank, local_rank, level_seed):
         def env_fn():
             logger.debug(f'Process seed set to: {rank} seed: {seed + rank}')
             set_global_seeds(seed + rank)
-            env_id = game_name + 'NoFrameskip-v4'
+            #env_id = game_name + 'NoFrameskip-v4'
+            env_id = "procgen:procgen-" + str(game_name) + "-v0"
             if max_episode_steps is not None:
                 gym.spec(env_id).max_episode_steps = max_episode_steps
-            local_env = gym.make(env_id)
-            set_action_meanings(local_env.unwrapped.get_action_meanings())
-            local_env = game_class(local_env, **game_args)
+            #local_env = gym.make(env_id)
+            #set_action_meanings(local_env.unwrapped.get_action_meanings())
             # Even if make video is true, only define it for one of our environments
             if make_video and rank % nb_envs == 0 and local_rank == 0:
                 make_video_local = True
+                #FN, procgen enviroment. env_id is the name, render_mode to allow videos, start level the seed for levels. 
+                #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
+                #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
+                #or reaching the next cheese(where a new level will be used)
+                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
             else:
                 make_video_local = False
+                local_env = gym.make(env_id, distribution_mode="hard",  render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
             
+            set_action_meanings(local_env.unwrapped.env.env.get_combos())
+            local_env = game_class(local_env, **game_args)
+            
+
             video_file_prefix = save_path + '/vids/' + game_name
             video_writer = wrappers.VideoWriter(
                 local_env,
@@ -435,7 +608,9 @@ def get_env(game_name,
                 fail_ent_inc=fail_ent_inc,
                 final_goal_reward=final_goal_reward
             )
-            video_writer.goal_conditioned_wrapper = local_env
+
+            if video_writer:
+                video_writer.goal_conditioned_wrapper = local_env
 
             if sil != 'none':
                 local_env = ge_wrappers.SilEnv(
@@ -448,8 +623,8 @@ def get_env(game_name,
             return local_env
         return env_fn
     logger.info(f'Creating: {nb_envs} environments.')
-    a = hvd.local_rank()
-    env_factories = [make_env(i + nb_envs * hvd.rank(), a) for i in range(nb_envs)]
+    local_rank = hvd.local_rank() # FN, this is because calling hvd.local_rank() from the threads inside make_env() causes a crash in MPI4, this works however.
+    env_factories = [make_env(i + nb_envs * hvd.rank(), local_rank, level_seed) for i in range(nb_envs)]
     env = ge_wrappers.GoalConSubprocVecEnv(env_factories, start_method)
     env = ge_wrappers.GoalConVecFrameStack(env, frame_history)
     if 'filter' in goal_representation_name:
@@ -458,11 +633,28 @@ def get_env(game_name,
 
 
 def get_policy(policy_name):
+    """_summary_
+
+    Args:
+        policy_name (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     policy = {'gru_simple_goal': ge_policies.GRUPolicyGoalConSimpleFlexEnt}[policy_name]
     return policy
 
 
+
 def process_defaults(kwargs):
+    """_summary_
+
+    Args:
+        kwargs (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     for key in kwargs:
         if isinstance(kwargs[key], DefaultArg):
             kwargs[key] = kwargs[key].v
@@ -587,11 +779,142 @@ def setup(resolution,
           final_goal_reward,
           low_prob_traj_tresh,
           reset_on_update,
-          weight_based_skew):
+          weight_based_skew,
+          level_seed):
+    """Sets up everything needed to start running the experiment.
+
+    Args:
+        resolution (_type_): _description_
+        score_objects (_type_): _description_
+        base_path (_type_): _description_
+        game (_type_): _description_
+        objects_from_pixels (_type_): _description_
+        objects_remember_rooms (_type_): _description_
+        only_keys (_type_): _description_
+        optimize_score (_type_): _description_
+        use_real_pos (_type_): _description_
+        resize_x (_type_): _description_
+        resize_y (_type_): _description_
+        max_pix_value (_type_): _description_
+        interval_size (_type_): _description_
+        seed_low (_type_): _description_
+        seed_high (_type_): _description_
+        goal_rep_names (_type_): _description_
+        pre_fill_archive (_type_): _description_
+        archive_to_load (_type_): _description_
+        done_on_return (_type_): _description_
+        nb_envs (_type_): _description_
+        goal_value (_type_): _description_
+        inc_ent_fac (_type_): _description_
+        end_on_death (_type_): _description_
+        archive_names (_type_): _description_
+        selector_name (_type_): _description_
+        frame_resize (_type_): _description_
+        clip_rewards (_type_): _description_
+        scale_rewards (_type_): _description_
+        ignore_negative_rewards (_type_): _description_
+        sticky (_type_): _description_
+        num_steps (_type_): _description_
+        lam (_type_): _description_
+        gamma (_type_): _description_
+        entropy_coef (_type_): _description_
+        vf_coef (_type_): _description_
+        l2_coef (_type_): _description_
+        clip_range (_type_): _description_
+        model_path (_type_): _description_
+        test_mode (_type_): _description_
+        nb_of_epochs (_type_): _description_
+        learning_rate (_type_): _description_
+        seed (_type_): _description_
+        make_video (_type_): _description_
+        skip (_type_): _description_
+        freeze_network (_type_): _description_
+        n_digits (_type_): _description_
+        checkpoint_game (_type_): _description_
+        checkpoint_compute (_type_): _description_
+        max_game_steps (_type_): _description_
+        max_compute_steps (_type_): _description_
+        max_hours (_type_): _description_
+        max_iterations (_type_): _description_
+        max_cells (_type_): _description_
+        max_score (_type_): _description_
+        save_pictures (_type_): _description_
+        clear_pictures (_type_): _description_
+        trajectory_tracker_name (_type_): _description_
+        checkpoint_it (_type_): _description_
+        selector_weights_str (_type_): _description_
+        special_attribute_str (_type_): _description_
+        max_exploration_steps (_type_): _description_
+        ret_inc_ent_thresh (_type_): _description_
+        expl_inc_ent_thresh (_type_): _description_
+        entropy_strategy (_type_): _description_
+        ent_inc_power (_type_): _description_
+        ret_inc_ent_fac (_type_): _description_
+        rep_type (_type_): _description_
+        rel_final_goal (_type_): _description_
+        rel_sub_goal (_type_): _description_
+        on_done_reward (_type_): _description_
+        no_exploration_gradients (_type_): _description_
+        frame_history (_type_): _description_
+        expl_ent_reset (_type_): _description_
+        pixel_repetition (_type_): _description_
+        max_episode_steps (_type_): _description_
+        sil (_type_): _description_
+        sil_coef (_type_): _description_
+        sil_vf_coef (_type_): _description_
+        sil_ent_coef (_type_): _description_
+        max_traj_candidates (_type_): _description_
+        exchange_sil_traj (_type_): _description_
+        random_exp_prob (_type_): _description_
+        mean_repeat (_type_): _description_
+        checkpoint_first_iteration (_type_): _description_
+        checkpoint_last_iteration (_type_): _description_
+        save_archive (_type_): _description_
+        save_model (_type_): _description_
+        disable_hvd (_type_): _description_
+        noops (_type_): _description_
+        cell_representation_name (_type_): _description_
+        game_reward_factor (_type_): _description_
+        goal_reward_factor (_type_): _description_
+        clip_game_reward (_type_): _description_
+        one_vid_per_goal (_type_): _description_
+        rew_clip_range (_type_): _description_
+        max_actions_to_goal (_type_): _description_
+        max_actions_to_new_cell (_type_): _description_
+        plot_archive (_type_): _description_
+        plot_goal (_type_): _description_
+        plot_grid (_type_): _description_
+        plot_sub_goal (_type_): _description_
+        cell_reached_name (_type_): _description_
+        soft_traj_track_window_size (_type_): _description_
+        expl_state (_type_): _description_
+        cell_trajectories_file (_type_): _description_
+        start_method (_type_): _description_
+        cell_selection_modifier (_type_): _description_
+        traj_modifier (_type_): _description_
+        checkpoint_time (_type_): _description_
+        base_weight (_type_): _description_
+        delay (_type_): _description_
+        max_failed (_type_): _description_
+        legacy_entropy (_type_): _description_
+        fail_ent_inc (_type_): _description_
+        temp_dir (_type_): _description_
+        final_goal_reward (_type_): _description_
+        low_prob_traj_tresh (_type_): _description_
+        reset_on_update (_type_): _description_
+        weight_based_skew (_type_): _description_
+        level_seed (int): the level seed for procgen
+
+    Raises:
+        NotImplementedError: When an unknown argument for a parameter is used.
+
+    Returns:
+        Explore: The exploring agent to use in the experiment.
+    """
     global master_pid
     logger.info('Starting setup')
     set_master_pid(os.getpid())
-    res = [int(x) for x in resolution.split(',')]
+    res = [float(x) for x in resolution.split(',')]
     if len(res) == 2:
         x_res, y_res = res
     elif len(res) == 1:
@@ -606,6 +929,7 @@ def setup(resolution,
     reset_on_update = bool(reset_on_update)
     weight_based_skew = bool(weight_based_skew)
     rew_clip_range = [float(x) for x in rew_clip_range.split(',')]
+    
 
     if max_hours:
         max_time = max_hours * 3600
@@ -641,7 +965,7 @@ def setup(resolution,
         max_pix_value = None
 
     # Get the cell representation
-    generic_game = False
+    targeted_exploration = False
     logger.info('Creating cell representation')
     if cell_representation_name == 'level_room_keys_x_y':
         cell_representation = cell_representations.CellRepresentationFactory(cell_representations.MontezumaPosLevel)
@@ -657,12 +981,11 @@ def setup(resolution,
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
-         generic_game = True
+         targeted_exploration = True
          #should be generic and work for all atari games, do we really need next line?
          #assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
-    #TODO allow for a generic cell represenation (score and frame)
 
     # Get game
     game_name, game_class, game_args, grid_resolution = get_game(game=game,
@@ -678,7 +1001,8 @@ def setup(resolution,
                                                                  seed_low=seed_low,
                                                                  seed_high=seed_high,
                                                                  cell_representation=cell_representation,
-                                                                 end_on_death=end_on_death)
+                                                                 end_on_death=end_on_death,
+                                                                 level_seed=level_seed)
 
     logger.info('Obtaining selector special attributes')
     selector_special_attribute_list = []
@@ -708,31 +1032,31 @@ def setup(resolution,
             weight = randselectors.SubGoalFailWeight()
             selector_weights_list.append(weight)
         elif selector_weight_name == 'attr':
+            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             name = params[1]
             weight = float(params[2])
             power = float(params[3])
             scalar = float(params[4])
-            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             weight = randselectors.AttrWeight(name, weight, power, scalar)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'mult':
+            assert len(params) == 4, 'Incorrect number of selector-weight parameters provided'
             name = params[1]
             power = float(params[2])
             scalar = float(params[3])
-            assert len(params) == 4, 'Incorrect number of selector-weight parameters provided'
             weight = randselectors.MultWeight(name, scalar, power)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'level':
-            low_level_weight = float(params[1])
             assert len(params) == 2, 'Incorrect number of selector-weight parameters provided'
+            low_level_weight = float(params[1])
             weight = randselectors.LevelWeights(low_level_weight)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'neighbor':
+            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             horiz = float(params[1])
             vert = float(params[2])
             score_low = float(params[3])
             score_high = float(params[4])
-            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
             weight = randselectors.NeighborWeights(game_class, horiz, vert, score_low, score_high)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'max_score_reset':
@@ -749,8 +1073,13 @@ def setup(resolution,
                 weight = randselectors.MaxScoreOnlyNoScore(str(params[1]))
                 selector_special_attribute_list.append(weight)
         elif selector_weight_name == 'max_score_cell':
-            assert len(params) == 1, 'Incorrect number of selector-weight parameters provided'
-            weight = randselectors.MaxScoreCell()
+            assert len(params) == 5, 'Incorrect number of selector-weight parameters provided'
+            name = params[1]
+            weight = float(params[2])
+            power = float(params[3])
+            scalar = float(params[4])
+
+            weight = randselectors.MaxScoreCell(name, weight, power, scalar)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'target_cell':
             assert len(params) % 2 == 1, 'Incorrect number of selector-weight parameters provided'
@@ -789,20 +1118,21 @@ def setup(resolution,
         raise NotImplementedError('Unknown selector: ' + selector_name)
 
     logger.info('Creating random explorer')
-    random_explorer = explorers.RepeatedRandomExplorer(mean_repeat)
+    #random_explorer = explorers.RepeatedRandomExplorer(mean_repeat)
+    random_explorer = explorers.RandomExplorer()
 
     # Get goal explorer
     logger.info('Creating goal explorer')
 
-    #TODO should choose Dom or Generic depending on input
     
-    if generic_game:
-        goal_explorer = ge_wrappers.GenericGoalExplorer(random_exp_prob, random_explorer)
+    if targeted_exploration:
+        goal_explorer = ge_wrappers.TargetedGoalExplorer(random_exp_prob, random_explorer)
     else:
         goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     
     # Get frame wrapper
     logger.info('Obtaining frame wrapper')
+
     frame_resize_wrapper, new_height, new_width = get_frame_wrapper(frame_resize)
 
     logger.info('Obtaining cell trajectory manager')
@@ -950,7 +1280,8 @@ def setup(resolution,
                   cell_selection_modifier=cell_selection_modifier,
                   traj_modifier=traj_modifier,
                   fail_ent_inc=fail_ent_inc,
-                  final_goal_reward=final_goal_reward
+                  final_goal_reward=final_goal_reward,
+                  level_seed=level_seed
                   )
 
     # Get the policy
@@ -1008,7 +1339,8 @@ def setup(resolution,
                           gamma=gamma,
                           lam=lam,
                           norm_adv=norm_adv,
-                          subtract_rew_avg=subtract_rew_avg
+                          subtract_rew_avg=subtract_rew_avg,
+                          frame_history = frame_history
                           )
 
     logger.info('Creating gatherer')
@@ -1093,6 +1425,14 @@ class DefaultArg:
 
 
 def start_logger(kwargs):
+    """_summary_
+
+    Args:
+        kwargs (_type_): _description_
+
+    Raises:
+        ValueError: _description_
+    """
     log_info = kwargs['log_info']
     log_files = kwargs['log_files']
 
@@ -1119,6 +1459,14 @@ def start_logger(kwargs):
 
 
 def del_out_of_setup_args(kwargs):
+    """_summary_
+
+    Args:
+        kwargs (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Process the resize shape argument
     if kwargs['resize_shape']:
         x, y, p = kwargs['resize_shape'].split('x')
@@ -1144,6 +1492,11 @@ def del_out_of_setup_args(kwargs):
 
 
 def parse_arguments():
+    """All standard arguments and their descriptions.
+
+    Returns:
+        Namespace: All standard arguments and their descriptions.
+    """
     global PROFILER
 
     if platform == "darwin":
@@ -1153,7 +1506,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
 
     # General arguments
-    parser.add_argument('--seed', type=int, default=DefaultArg(0),
+    parser.add_argument('--seed', type=int, default=DefaultArg(np.random.randint(0,1000000)),
                         help='The random seed.')
     parser.add_argument('--profile', dest='profile', action='store_true', default=DefaultArg(False),
                         help='Whether or not to enable a profiler.')
@@ -1161,7 +1514,7 @@ def parse_arguments():
                         help='Whether or not to enable a memory allocation trace.')
 
     # Cell representation arguments
-    parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('16,16'),
+    parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('20.48,20.48'),
                         help='Length of the side of a grid cell. A doubled atari frame is 320 by 210.')
     parser.add_argument('--score_objects', dest='score_objects', default=DefaultArg(True), action='store_false',
                         help='Use scores in the cell description. Otherwise objects will be used.')
@@ -1176,9 +1529,9 @@ def parse_arguments():
                              '(because the state encodes the location of the remaining keys anymore), but takes more '
                              'time/memory space, which in practice makes it worse quite often. Using this is better if '
                              'running with --no_optimize_score')
-    parser.add_argument('--resize_x', '--rx', type=int, default=DefaultArg(11),
+    parser.add_argument('--resize_x', '--rx', type=int, default=DefaultArg(64),
                         help='What to resize the pixels to in the x direction for use as a state.')
-    parser.add_argument('--resize_y', '--ry', type=int, default=DefaultArg(8),
+    parser.add_argument('--resize_y', '--ry', type=int, default=DefaultArg(64),
                         help='What to resize the pixels to in the y direction for use as a state.')
     parser.add_argument('--state_is_pixels', '--pix', default=DefaultArg(True), dest='use_real_pos',
                         action='store_false',
@@ -1272,9 +1625,9 @@ def parse_arguments():
                         help='Whether the sub goal should be relative to the agents current cell.')
 
     # State representation arguments
-    parser.add_argument('--frame_resize', dest='frame_resize', type=str, default=DefaultArg('RectColorFrame'),
+    parser.add_argument('--frame_resize', dest='frame_resize', type=str, default=DefaultArg('RectColorFrameProcgen'),
                         help='How to resize the frame, and whether the frame will be color or grey scale.')
-    parser.add_argument('--frame_history', dest='frame_history', type=int, default=DefaultArg(4),
+    parser.add_argument('--frame_history', dest='frame_history', type=int, default=DefaultArg(1),
                         help='How many old frames to show.')
 
     # GO-Explore arguments
@@ -1395,7 +1748,7 @@ def parse_arguments():
                         type=int, default=DefaultArg(1),
                         help='Whether to clip (1) the game reward or not (0)')
     parser.add_argument('--one_vid_per_goal', dest='one_vid_per_goal',
-                        type=int, default=DefaultArg(1),
+                        type=int, default=DefaultArg(0),
                         help='Whether to create only one video per goal (1) or not (0)')
     parser.add_argument('--rew_clip_range', dest='rew_clip_range',
                         type=str, default=DefaultArg('-1,1'),
@@ -1404,7 +1757,7 @@ def parse_arguments():
                         help='Placeholder for providing no option')
     parser.add_argument('--max_actions_to_goal', dest='max_actions_to_goal',
                         type=int, default=DefaultArg(-1),
-                        help='The maximum number of actions the agent gets to reach a chosen goal')
+                        help='The maximum number of actions the agent gets to reach a chosen goal. When using gym3, early reset is not allowed hence this should not be used for Procgen.')
     parser.add_argument('--max_actions_to_new_cell', dest='max_actions_to_new_cell',
                         type=int, default=DefaultArg(-1),
                         help='The maximum number of actions the agent gets to reach a new cell')
@@ -1430,7 +1783,7 @@ def parse_arguments():
                         default=DefaultArg(False), action='store_true',
                         help='Whether to create a log immediately after performing a warm up (for debugging purpose).')
     parser.add_argument('--start_method', dest='start_method',
-                        type=str, default=DefaultArg('spawn'),
+                        type=str, default=DefaultArg('fork'), #TODO we changed this, original value was "spawn" the error descibed in next line didn't happen (yet)
                         help='Currently, fork causes a deadlock when loading checkpoints.')
     parser.add_argument('--cell_selection_modifier', dest='cell_selection_modifier',
                         type=str, default=DefaultArg('none'),
@@ -1480,6 +1833,11 @@ def parse_arguments():
     parser.add_argument('--log_files', dest='log_files',
                         type=str, default=DefaultArg(''),
                         help='From which files we should log information. Example: atari_reset.atari_reset.policies')
+    
+
+    parser.add_argument('--level_seed', dest='level_seed',
+                        type=int, default=DefaultArg(1),
+                        help='What game level to run, max is 2^31 - 1. If 0 is put, all workers will have different levels but share archive')
 
     args = parser.parse_args()
 
@@ -1494,16 +1852,15 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(True)) #TODO Changed here
+    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))
     safe_set_argument(args, 'make_video', DefaultArg(True)) #TODO changed here!
-    safe_set_argument(args, 'skip', DefaultArg(4))
+    safe_set_argument(args, 'skip', DefaultArg(1))
     safe_set_argument(args, 'pixel_repetition', DefaultArg(1))
     safe_set_argument(args, 'plot_archive', DefaultArg(True))
     safe_set_argument(args, 'plot_goal', DefaultArg(True))
     safe_set_argument(args, 'plot_grid', DefaultArg(True))
     safe_set_argument(args, 'plot_sub_goal', DefaultArg(True))
-    
     return args

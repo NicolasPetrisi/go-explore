@@ -36,49 +36,100 @@ class CellRepresentationBase:
     def as_array(self) -> np.ndarray:
         raise NotImplementedError('Cell representation needs to implement as_array')
 
+
+
 class Generic(CellRepresentationBase):
-    __slots__ = ['_image','_done', 'tuple'] 
-    attributes = ('image',  'done') 
-    array_length = 89 #TODO change in program flow to allow it to be generic
+    """Class to represent Cell used by Fredrik and Nicolas.
+       Cells are representated by the x and y position and the done boolean
+    """
+    __slots__ = ['_x', '_y', '_level_seed', '_done', 'tuple']   
+    attributes = ('x', 'y', 'level_seed', 'done') 
+    array_length = 3 #TODO change in program flow to allow it to be generic
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):
-        self._image =None
         self._done = None
+        self._x = None
+        self._y = None
+        self._level_seed = None
         self.tuple = None
-        #self._x = None
-        #self._y = None
 
         if atari_env is not None:
-            self._image = atari_env.image
             self._done = atari_env.done
-            #self._x = 1
-            #self._y = 1
-            #self.array_length = len(self._image.flatten()) + 1 #TODO Not used now, see todo above, plus one is for the done value
+            self._x = atari_env.x
+            self._y = atari_env.y
+            self._level_seed = atari_env.level_seed
             self.set_tuple()
-
-    @property
-    def x(self):
-        return 1
-
-    @property
-    def y(self):
-        return 1
-
-    @x.setter
-    def x(self, value):
-        pass
-
-    @y.setter
-    def y(self, value):
-        pass
-
-    def set_tuple(self):
-        self.tuple = (self._image, self._done)
+            
 
     @staticmethod
     def make(env=None) -> Any:
-        return Generic(env)
+        """reurns an instance of Generic
+
+        Args:
+            env (_type_, optional): enviroment in the the class. Defaults to None.
+
+        Returns:
+            Generic: an instance of Generic
+        """
+        return Generic(env)        
+
+    @property
+    def x(self):
+        """to be able to reach the x attribute nicly
+            NOTE if objcted was not created from CellRepresentationFactory and using it's __call__ method 
+            this can be a flot, otherwise it's allways an int
+
+        Returns:
+            int: x postion
+
+        """
+        return self._x
+
+    @x.setter
+    def x(self, value): 
+        """setting the x-value
+
+        Args:
+            value (any): The value to set the x postion to
+        """
+        self._x = value
+        self.set_tuple()
+
+
+    @property
+    def y(self):
+        """to be able to reach the y attribute nicly
+            NOTE if objcted was not created from CellRepresentationFactory and using it's __call__ method 
+            this can be a flot, otherwise it's allways an int
+
+        Returns:
+            int: y postion
+
+        """
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        """setting the x-value
+
+        Args:
+            value (any): The value to set the y postion to
+        """
+        self._y = value
+        self.set_tuple()
+
+    @property
+    def level_seed(self):
+        return self._level_seed
+
+    @level_seed.setter
+    def level_seed(self, value):
+        self._level_seed = value
+
+    def set_tuple(self):
+        self.tuple = (self._x, self._y, self._done)
+
 
     @staticmethod
     def get_array_length() -> int:
@@ -86,42 +137,42 @@ class Generic(CellRepresentationBase):
 
     @staticmethod
     def get_attributes() -> List[str]:
-        #raise NotImplementedError('Cell representation needs to implement get_attributes')
         return Generic.attributes
 
     @staticmethod
     def get_attr_max(name) -> int:
-        #should not have to be used
-        return 2 #for the done variable, but preferably not used at all
-        #raise NotImplementedError('generic should not need say attr values')
-
+        #FN, used in the program to get the one-hot representations, the value is not used for procgen so its just a dummy function now
+        return 2 
+        
     def as_array(self) -> np.ndarray:
-        ar =  self._image.flatten()
-        ar = np.append(ar + [(float(self._done))], 0)
-        return ar
+        return np.array(self.tuple)
     
     def __getstate__(self):
         return self.tuple
 
     def __hash__(self):
-        tmp = (floatArr2bytes(self._image), self._done)
-        return hash(tmp)
+        return hash(self.tuple)
 
     def __eq__(self, other):
         if not isinstance(other, Generic):
             return False
-        return self._cmptuple(other)
+        return self.tuple == other.tuple
     
-    def _cmptuple(self, other):
-        return  np.array_equal(self._image, other._image) and self._done == other._done
-
     def __setstate__(self, d):
-        self._image, self._done = d
+        self._x, self._y, self._done = d
         self.tuple = d
-
-    #TODO printing entire image too much?
+        
     def __repr__(self):
-        return f'image={self._image} done={self._done}'
+        return f'x={self._x} y={self._y} done={self._done}'
+    
+    def __lt__(self, other):
+        if not isinstance(other, Generic):
+            return False
+        if other._x == self._x:
+            return other._y < self._y
+        else:
+            return other._x < self._x
+
 
 class CellRepresentationFactory:
     def __init__(self, cell_rep_class: Type[CellRepresentationBase]):
@@ -132,8 +183,16 @@ class CellRepresentationFactory:
         self.max_values = None
 
     def __call__(self, env=None):
-        cell_representation = self.cell_rep_class.make(env)
+        """function that is called when a CellRepresentation is called as a function i.e. as cell_representation(self)
+           It calles make which calls the init function in the CellRepresentation and then sets atrributes acording to the grid resolution 
 
+        Args:
+            env (_type_, optional): enviroment. Defaults to None.
+
+        Returns:
+            CellRepresentation: a new cell representation  
+        """
+        cell_representation = self.cell_rep_class.make(env)
         if env is not None:
             for dimension in self.grid_resolution:
                 if dimension.div != 1:

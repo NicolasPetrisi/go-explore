@@ -73,9 +73,131 @@ def clip(value, low, high):
 
 
 def bytes2floatArr(array):
+    """gives a np.array from a byte array of an image.
+
+    Args:
+        array (byteArray): byte array representation of the image.
+
+    Returns:
+        _type_: np.array represenatation of the image.
+    """
     return cv2.imdecode(np.frombuffer(array, np.uint8), 0).astype(np.float32)
 
 def floatArr2bytes(array):
+    """gives a byte array from a np.array representation of an image.
+
+    Args:
+        array (np.array): np.array representation of the image.
+
+    Returns:
+        byteArray: byte array representation of the image.
+    """
     return cv2.imencode('.png', array, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
+import matplotlib.pyplot as plt
+import sys
 
+
+def make_sub_list(input_list,seperator):
+    """Help method to make plots. transform a list of strings sperated by commas to \n
+       a list of list of the string, splitted at the commas.
+
+    Args:
+        input_list (list): list of strings, taken from log.txt.
+        seperator (string/char): sperator sign.
+
+    Returns:
+        list: list of list of strings.
+    """
+    final = []
+    for line in input_list:
+        tmp = line.split(seperator)
+        almost_final = []
+        for word in tmp:
+            almost_final.append(word.strip())
+        final.append(almost_final)
+    return final
+
+def get_values(filepath, x_name, y_name):
+    """extract the x and y values from log.txt file to be used when plotting the graph.
+
+    Args:
+        filepath (string): filepth to the log file.
+        x_name (string): name of the attribue in the log file to be used as x-value.
+        y_name (_type_): name of the attribue in the log file to be used as y-value.
+
+    Returns:
+        x_values (list): x-values to be used in the graph.
+        y_values (list): y-values to be used in the graph.
+    """
+    with open(filepath) as f:
+        lines = f.readlines()
+        first = make_sub_list(lines, ',')
+
+        x_index = first[0].index(x_name)
+        y_index = first[0].index(y_name)
+        x_values = []
+        y_values = []
+        for line in first[1:]:
+            if line[y_index] != 'nan':
+                y = float(line[y_index])
+                if y > -0.1:
+                    x_values.append(int(line[x_index]))
+                    y_values.append(float(line[y_index]))
+        return x_values,y_values
+
+def plot_values(x_values, y_values, x_label, y_label, seed, name="plot.png"):
+    """Plots the x and y values to a graph and saves it.
+
+    Args:
+        x_values (list): x-values in the graph.
+        y_values (list): y-values in the graph.
+        name (str, optional): name of the saved graph. Defaults to "plot.png".
+    """
+    plt.clf()
+    plt.plot(x_values, y_values)
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    plt.title("Level Seed = " + str(seed))
+    plt.savefig(name)
+
+def make_plot(filepath, x_name, y_name, level_seed):
+    """makes a plot with x_name as x values and y_name as y values.\n
+       The plot will be saved in temp/run_numberandhash/plots/
+
+    Args:
+        filepath (string): filepath to the folder of the run, i.e where the log.txt is located.
+        x_name (string): name of the atribute to be used as x value.
+        y_name (string): name of the atribute to be used as y value.
+        seed (int): the seed used to generate the level used in the run.
+    """
+
+    if not os.path.isdir(filepath + "/plots"):
+        os.mkdir(filepath + "/plots")
+
+    x, y = get_values(filepath + '/log.txt', x_name , y_name)
+    plot_values(x, y, x_name, y_name, level_seed, f'{filepath}/plots/{y_name}_of_{x_name}.png')
+
+
+def get_goal_pos(obs):
+    """get location of pixels unique for the goal
+
+    Args:
+        unprocessed_state (np.array): observation of the enviroment of size (512,512,3)
+
+    Returns:
+        tuple: a tuple of the mean of the y and x postions unique for the goal 
+    """
+    COLOR = (253,155,37)
+    if obs is None:
+        print("obs is None, make sure all enviroments have render_mode activated")
+        return (-1,-1)
+    indices = np.where(np.all(obs == COLOR, axis=-1))
+    indexes = zip(indices[0], indices[1])
+    face_pixels = set(indexes)
+    face_pixels = [(y, x) for y, x in face_pixels]
+    if len(face_pixels) == 0:
+        print("found no pixels matching the goal colour, make sure it's the correct rgb-values")
+        return (-1,-1)
+    y, x = np.mean(face_pixels, axis=0)
+    return (x,y)

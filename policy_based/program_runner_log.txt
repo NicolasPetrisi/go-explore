@@ -1,0 +1,18 @@
+Starting program_runner for: 
+gameName=maze
+loadPath=-
+hoursPerLevel=0.01
+levels=3
+dateAndTime=01/03/2022 15:09:19
+levelSeed=1193867179
+
+----------
+0.03 hours remaining. Starting new run for loadPath=-
+levelSeed=1193867179
+<<ERROR>>: Could not find any '.joblib' file at the location: /home/fredrik/temp/0211_4bc280a097514191b39561be8942d838/
+Using model from previous run instead located at: -
+----------
+0.02 hours remaining. Starting new run for loadPath=-
+levelSeed=1044757191
+<<ERROR>>: Could not find any '.joblib' file at the location: /home/fredrik/temp/0212_be593d5ae5024822a32d7ff7992955cd/
+Using model from previous run instead located at: -

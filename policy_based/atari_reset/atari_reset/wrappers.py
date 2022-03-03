@@ -126,6 +126,9 @@ class VecWrapper(object):
     def get_envs(self):
         return self.venv.get_envs()
 
+# This class is wrapper of the enviroment. subclasses are ex. recColorFrame, genericAtariEnv, NoopsEnv etc
+# the ColourFrame classes reshape the observation to the desied form, when changing to new enviroment where observation is not the
+# same as in atari, this can yield unwanted results. 
 
 class MyWrapper(gym.Wrapper):
     def __init__(self, env):
@@ -226,6 +229,9 @@ class MyWrapper(gym.Wrapper):
     def restore(self, state):
         return self.env.restore(state)
 
+    def get_full_res_image(self):
+        return self.env.get_full_res_image()
+
 
 class VecFrameStack(VecWrapper):
     """
@@ -238,7 +244,7 @@ class VecFrameStack(VecWrapper):
         low = np.repeat(wos.low, self.nstack, axis=-1)
         high = np.repeat(wos.high, self.nstack, axis=-1)
         self.stackedobs = np.zeros((venv.num_envs,)+low.shape, low.dtype)
-        self._observation_space = spaces.Box(low=low, high=high)
+        self._observation_space = spaces.Box(low=np.float32(low), high=np.float32(high))
         self._action_space = venv.action_space
         self._goal_space = venv.goal_space
 
@@ -560,7 +566,7 @@ class MaxAndSkipEnv(MyWrapper):
             obs, reward, done, info = self.env.step(action)
             self._obs_buffer.append(obs)
             total_reward += reward
-            combined_info['skip_env.executed_actions'].append(info['sticky_env.executed_action'])
+            #combined_info['skip_env.executed_actions'].append(info['sticky_env.executed_action'])
             combined_info.update(info)
             if done:
                 break
@@ -677,8 +683,8 @@ class PreventSlugEnv(MyWrapper):
 class VideoWriter(MyWrapper):
     def __init__(self, env, file_prefix,
                  plot_goal=False,
-                 x_res=16,
-                 y_res=16,
+                 x_res=64,
+                 y_res=64,
                  plot_archive=False,
                  plot_return_prob=True,
                  one_vid_per_goal=False,
@@ -720,11 +726,11 @@ class VideoWriter(MyWrapper):
         self.local_archive = set()
 
     def _render_cell(self, canvas, cell, color, overlay=None):
-        x_min = cell.x * self.x_res
-        y_min = cell.y * self.y_res
-        cv2.rectangle(canvas, (x_min, y_min), (x_min + self.x_res, y_min + self.y_res), color, -1)
+        x_min = int(cell.x * self.x_res)
+        y_min = int(cell.y * self.y_res)
+        cv2.rectangle(canvas, (x_min, y_min), (x_min + int(self.x_res), y_min + int(self.y_res)), color, -1)
         if overlay is not None:
-            cv2.rectangle(overlay, (x_min, y_min), (x_min + self.x_res, y_min + self.y_res), color, 1)
+            cv2.rectangle(overlay, (x_min, y_min), (x_min + int(self.x_res), y_min + int(self.y_res)), color, 1)
 
     def match_attr(self, cell_1, cell_2, attr_name):
         matches = True
@@ -732,22 +738,25 @@ class VideoWriter(MyWrapper):
             matches = getattr(cell_1, attr_name) == getattr(cell_2, attr_name)
         return matches
 
+
+    # FN, main function when making videos. The resolution is hard coded, we use 512,512,3 for procgen for the enchanced 
+    # frame frome procgen to speare our eyes. The grid, goal and subgoals and some text are added here depending on options used.
     def process_frame(self, frame):
-        f_out = np.zeros((210, 160, 3), dtype=np.uint8)
+        f_out = np.zeros((512, 512, 3), dtype=np.uint8) #TODO org (210, 160,3)
         f_out[:, :, 0:3] = np.cast[np.uint8](frame)[:, :, :]
-        f_out = f_out.repeat(2, axis=1)
+        #f_out = f_out.repeat(2, axis=1)
         f_overlay = copy.copy(f_out)
 
         if self.plot_grid:
             for y in np.arange(self.y_res, f_out.shape[0], self.y_res):
-                cv2.line(f_out, (0, 0 + y), (0 + f_out.shape[1], 0 + y), (127, 127, 127), 1)
+                cv2.line(f_out, (0, 0 + int(y)), (0 + f_out.shape[1], 0 + int(y)), (127, 127, 127), 1)
             for x in np.arange(self.x_res, f_out.shape[1], self.x_res):
-                cv2.line(f_out, (0 + x, 0), (0 + x, 0 + f_out.shape[0]), (127, 127, 127), 1)
+                cv2.line(f_out, (0 + int(x), 0), (0 + int(x), 0 + f_out.shape[0]), (127, 127, 127), 1)
 
         current_cell = self.goal_conditioned_wrapper.archive.get_cell_from_env(self.goal_conditioned_wrapper.env)
         if self.plot_archive:
             for cell_key in self.local_archive:
-                if self.match_attr(cell_key, current_cell, 'level') and self.match_attr(cell_key, current_cell, 'room'):
+                if self.match_attr(cell_key, current_cell, 'level_seed'): # and self.match_attr(cell_key, current_cell, 'room'):
                     base_brightness = 50
                     if self.plot_return_prob:
                         reached = self.goal_conditioned_wrapper.archive.cells_reached_dict.get(cell_key, [])
@@ -764,7 +773,8 @@ class VideoWriter(MyWrapper):
         if self.plot_goal:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
-                if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
+                #if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
+                if self.goal_conditioned_wrapper.goal_explorer.exploration_strategy == 2 or self.goal_conditioned_wrapper.returning: 
                     self._render_cell(f_out, goal, (255, 0, 0))
         if self.plot_cell_traj:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
@@ -776,22 +786,35 @@ class VideoWriter(MyWrapper):
                         self.time_in_cell = traj[self.cell_traj_index][1]
                     traj_cell = traj[self.cell_traj_index][0]
                     self.time_in_cell -= 1
-
                     self._render_cell(f_out, traj_cell, (255, 255, 0))
 
-        if self.plot_sub_goal:
-            goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
-            if goal is not None:
-                if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-                    self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
-        for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
-            if self.match_attr(cell, current_cell, 'level') and self.match_attr(cell, current_cell, 'room'):
-                self._render_cell(f_out, cell, (255, 0, 255))
+        #if self.plot_sub_goal: # TODO FN, We can maybe just remove these lines? Montezuma code.
+        #    goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
+        #    if goal is not None:
+        #        if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
+        #            #self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
+        #            pass
+        #for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
+        #    if self.match_attr(cell, current_cell, 'level') and self.match_attr(cell, current_cell, 'room'):
+        #        self._render_cell(f_out, cell, (255, 0, 255))
 
         cv2.addWeighted(f_overlay, 0.5, f_out, 0.5, 0, f_out)
 
-        f_out = f_out.repeat(self.pixel_repetition, axis=0)
-        f_out = f_out.repeat(self.pixel_repetition, axis=1)
+        #f_out = f_out.repeat(self.pixel_repetition, axis=0)
+        #f_out = f_out.repeat(self.pixel_repetition, axis=1)
+
+        d = {-1:"exp_ini",
+             0:"exp None",
+             1:"random", 
+             2:"policy"} # To translate explorer numbers into readable values
+        if self.goal_conditioned_wrapper.returning:
+            text = "state: return"
+        else:
+            text = "state: exploration (" + str(d[self.goal_conditioned_wrapper.goal_explorer.exploration_strategy]) + ")"
+        f_out = cv2.putText(f_out, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
+        text = "level_seed: " + str(getattr(current_cell,'level_seed'))
+        f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
+
 
         if self.draw_text:
             if 'increase_entropy' in self.goal_conditioned_wrapper.info:
@@ -806,11 +829,14 @@ class VideoWriter(MyWrapper):
             im.save(filename)
         return f_out
 
+    #Adding a frame for the video
     def add_frame(self):
         if self.video_writer:
-            #print("self.obs" + str(self.obs.shape)) 
-            self.video_writer.append_data(self.process_frame(self.obs))
+            self.video_writer.append_data(self.process_frame(self.env.get_full_res_image()))
             self.num_frames += 1
+
+            #if self.num_frames%10 == 0:
+            #    print("Adding Frames: " + str(self.num_frames))
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
@@ -840,11 +866,13 @@ class VideoWriter(MyWrapper):
                 self.num_frames = 0
                 os.makedirs(self.directory, exist_ok=True)
                 self.current_file_name = self._get_file_name()
-                self.video_writer = imageio.get_writer(self.current_file_name, mode='I', fps=30)
+                self.video_writer = imageio.get_writer(self.current_file_name, mode='I', fps=15)
             else:
-                self.video_writer = None
+                #self.video_writer = None
+                pass
         else:
-            self.video_writer = None
+            assert self.video_writer == None, "If make_video is false then there should be no video_writer" #FN, we added this. If video_writer isn't already None then there's a bug.
+            #self.video_writer = None
 
     def close(self):
         self._finalize_video()
@@ -855,7 +883,7 @@ class VideoWriter(MyWrapper):
             self.video_writer.close()
             if self.make_video and self.num_frames > self.min_video_length:
                 self.goals_processed.add(self.goal)
-                print('Score achieved:', self.recursive_getattr('cur_score'))
+                #print('Score achieved:', self.recursive_getattr('cur_score')) # We commented this out because "cur_score" attribute does not exist in procgen.
                 print('Video for goal:', self.goal, 'is considered finished.')
             else:
                 print('Video for goal:', self.goal, 'considered too short, deleting...')
@@ -914,7 +942,7 @@ def my_wrapper(env,
                sticky=True,
                skip=4,
                noops=False):
-    assert 'NoFrameskip' in env.spec.id
+    #assert 'NoFrameskip' in env.spec.id
     assert not (clip_rewards and scale_rewards), "Clipping and scaling rewards makes no sense"
     if scale_rewards is not None:
         env = ScaledRewardEnv(env, scale_rewards)
@@ -1030,6 +1058,15 @@ def flatten_lists(listoflists):
 
 
 def worker(remote, env_fn_wrapper):
+    """This is the function every worker is running. Recieving commands and performing different actions.
+
+    Args:
+        remote (_type_): _description_
+        env_fn_wrapper (_type_): _description_
+
+    Raises:
+        NotImplementedError: When given a command from 'remote.recv()' not recognized.
+    """
     env = env_fn_wrapper.x()
     try:
         while True:

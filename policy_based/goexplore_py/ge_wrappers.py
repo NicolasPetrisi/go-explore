@@ -24,6 +24,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+#def convert_state(state, target_shape, max_pix_value): # TODO remove this??
+#    if target_shape is None:
+#        return None
+#    import cv2
+#    #resized_state = cv2.resize(cv2.cvtColor(state),
+#        #target_shape,
+#        #interpolation=cv2.INTER_AREA)
+#    img =  ((state / 255.0) * max_pix_value).astype(np.uint8)
+#    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
+
 class GoalConVecFrameStack(VecWrapper):
     """
     Vectorized environment base class
@@ -37,7 +47,7 @@ class GoalConVecFrameStack(VecWrapper):
         ob_low = np.repeat(observation_space.low, self.nstack, axis=-1)
         ob_high = np.repeat(observation_space.high, self.nstack, axis=-1)
         self.stacked_obs = np.zeros((venv.num_envs,) + ob_low.shape, observation_space.dtype)
-        self._observation_space = spaces.Box(low=ob_low, high=ob_high)
+        self._observation_space = spaces.Box(low=np.float32(ob_low), high=np.float32(ob_high))
         self._action_space = venv.action_space
         self._goal_space = venv.goal_space
         self.single_frame_obs_space = observation_space
@@ -96,7 +106,7 @@ class GoalConVecGoalStack(VecWrapper):
         ob_low = np.concatenate([observation_space.low, sheet], axis=-1)
         ob_high = np.concatenate([observation_space.high, sheet], axis=-1)
         self.stacked_obs = np.zeros((venv.num_envs,) + new_shape, observation_space.low.dtype)
-        self._observation_space = spaces.Box(low=ob_low, high=ob_high)
+        self._observation_space = spaces.Box(low=np.float32(ob_low), high=np.float32(ob_high))
         self._action_space = venv.action_space
         self._goal_space = venv.goal_space
 
@@ -136,34 +146,51 @@ class GoalConVecGoalStack(VecWrapper):
 
 
 def get_neighbor(env, pos, offset, x_range, y_range):
+    """get a neighbouring cell of the current cell(pos)
+    
+    Args:
+        env : unused
+        pos (CellRepresentation): Current Cell, assumed to have x and y coordinates
+        offset (_type_): x and y offset to look for neighbour from, ex [0,1]
+        x_range (_type_): max x value
+        y_range (_type_): max y value
+
+    Returns:
+        _type_: neighbouring Cell
+    """
     x = pos.x + offset[0]
     y = pos.y + offset[1]
-    room = pos.room
-    room_x, room_y = env.recursive_getattr('get_room_xy')(room)
-    if x < x_range[0]:
-        x = x_range[1]
-        room_x -= 1
-    elif x > x_range[1]:
-        x = x_range[0]
-        room_x += 1
-    elif y < y_range[0]:
-        y = y_range[1]
-        room_y -= 1
-    elif y > y_range[1]:
-        y = y_range[0]
-        room_y += 1
-    if env.recursive_getattr('get_room_out_of_bounds')(room_x, room_y):
-        return None
-    room = env.recursive_getattr('get_room_from_xy')(room_x, room_y)
-    if room == -1:
-        return None
+
+    x = max(x, x_range[0])
+    x = min(x, x_range[1])
+    y = max(y, y_range[0])
+    y = min(y, y_range[1])
+
+    #room = pos.room
+    #room_x, room_y = env.recursive_getattr('get_room_xy')(room)
+    # if x < x_range[0]:
+        #x = x_range[1]
+        #room_x -= 1
+    # elif x > x_range[1]:
+        #x = x_range[0]
+        #room_x += 1
+    # elif y < y_range[0]:
+        #y = y_range[1]
+        #room_y -= 1
+    # elif y > y_range[1]:
+        #y = y_range[0]
+        #room_y += 1
+    #if env.recursive_getattr('get_room_out_of_bounds')(room_x, room_y):
+    #    return None
+    #room = env.recursive_getattr('get_room_from_xy')(room_x, room_y)
+    #if room == -1:
+    #    return None
     new_pos = copy.copy(pos)
-    new_pos.room = room
+    #new_pos.room = room
     new_pos.x = x
     new_pos.y = y
     return new_pos
 
-#TODO Make a generic goalExplorer extending GoalExplorer
 class GoalExplorer:
     def __init__(self, random_exp_prob, random_explorer):
         self.exploration_strategy = global_const.EXP_STRAT_NONE
@@ -189,14 +216,13 @@ class GoalExplorer:
     def choose(self, go_explore_env):
         raise NotImplementedError('GoalExplorers need to implement a choose method.')
 
-class GenericGoalExplorer(GoalExplorer):
+class TargetedGoalExplorer(GoalExplorer):
     def __init__(self, random_exp_prob, random_explorer):
-        super(GenericGoalExplorer,self).__init__(random_exp_prob, random_explorer)
+        super(TargetedGoalExplorer,self).__init__(random_exp_prob, random_explorer)
 
     def choose(self, go_explore_env):
-        target_cell = go_explore_env.select_cell_from_archive()
-        go_explore_env.last_reached_cell = target_cell
-        return target_cell
+        goal_cell = go_explore_env.env.recursive_getattr('goal_cell')
+        return goal_cell
 
 class DomKnowNeighborGoalExplorer(GoalExplorer):
     def __init__(self, x_res, y_res, random_exp_prob, random_explorer):
@@ -205,10 +231,20 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         self.y_res = y_res
 
     def choose(self, go_explore_env):
-        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat') #TODO this line crashes when running generic_atari_game
+        """Choose cell to be the next goal in goal-condition exploration
+
+        Args:
+            go_explore_env (_type_): enviroment eg. GenericAtariEnv?
+
+        Returns:
+            _type_: Next goal cell
+        """
+        width = go_explore_env.env.recursive_getattr('screen_width') * go_explore_env.env.recursive_getattr('x_repeat')
         height = go_explore_env.env.recursive_getattr('screen_width')
-        max_cell_x = int((width - (self.x_res / 2)) / self.x_res)
-        max_cell_y = int((height - (self.y_res / 2)) / self.y_res)
+        #max_cell_x = int((width - (self.x_res / 2)) / self.x_res)
+        #max_cell_y = int((height - (self.y_res / 2)) / self.y_res)
+        max_cell_x = int(width - 1) # Works for procgen since we get the observation already 64x64
+        max_cell_y = int(height - 1)
         x_range = (0, max_cell_x)
         y_range = (0, max_cell_y)
         possible_neighbors = []
@@ -375,6 +411,13 @@ class GoalConGoExploreEnv(MyWrapper):
         #: The only reason this pointer is provided is because the video writer needs information about which goals are
         #: currently chosen, and this class holds that information.
         self.video_writer: VideoWriter = video_writer
+
+
+        if self.video_writer:
+            self.hasVideoWriter = True
+        else:
+            self.hasVideoWriter = False
+
 
         self.entropy_manager: EntropyManager = entropy_manager
 
@@ -595,6 +638,10 @@ class GoalConGoExploreEnv(MyWrapper):
         goal = self.goal_representation.get(self.current_cell, self.goal_cell_rep, self.sub_goal_cell_rep)
         return goal
 
+    
+    tmpCounter = 0
+
+
     def step(self, action: int):
         # Clear cache
         self.archive.clear_cache()
@@ -694,6 +741,12 @@ class GoalConGoExploreEnv(MyWrapper):
             game_reward = utils.clip(game_reward, self.clip_range[0], self.clip_range[1])
         self.total_reward = game_reward + reached_goal_reward * self.goal_reward_factor
 
+
+        if self.tmpCounter%10 == 0:
+            if self.hasVideoWriter:
+                if self.video_writer is None:
+                    print("This should NOT be None: " + str(self.video_writer))
+
         if self.video_writer:
             self.video_writer.add_frame()
 
@@ -744,6 +797,10 @@ class GoalConGoExploreEnv(MyWrapper):
 
 
 class RemoteEnv(object):
+    """Used in initialization to get the program running correctly and to get the most uppdated SIL trajectory. 
+       Will send commads to workers: get spaces, goal_space and reset. Most of it's methods are unused.
+    """
+    
     def __init__(self, remote):
         self.remote = remote
         self.waiting = False
@@ -841,7 +898,7 @@ class GoalConSubprocVecEnv(object):
         envs: list of gym environments to run in subprocesses
         """
         nenvs = len(env_fns)
-        mp_context = mp.get_context(start_method)
+        mp_context = mp.get_context(start_method) 
         self.remotes, self.work_remotes = zip(*[mp_context.Pipe(duplex=True) for _ in range(nenvs)])
         self.ps = [mp_context.Process(target=worker, args=(work_remote, CloudpickleWrapper(env_fn)), daemon=True)
                    for (work_remote, env_fn) in zip(self.work_remotes, env_fns)]
@@ -849,9 +906,8 @@ class GoalConSubprocVecEnv(object):
             p.start()
         # From this moment on, we have to close the environment in order to let the program end
         logger.debug(f'[master] sending command: get_spaces')
-
         self.remotes[0].send(('get_spaces', None))
-        self.action_space, self.observation_space = self._recv(self.remotes[0])
+        self.action_space, self.observation_space = self._recv(self.remotes[0]) #TODO this craches when running procgen
         self.remotes[0].send(('recursive_getattr', 'goal_space'))
         self.goal_space = self._recv(self.remotes[0])
         self.waiting = False
@@ -886,7 +942,6 @@ class GoalConSubprocVecEnv(object):
         for remote in self.remotes:
             remote.send(('reset', None))
         obs_and_goals = [self._recv(remote) for remote in self.remotes]
-
         obs, goals = zip(*obs_and_goals)
         obs_and_goals = np.stack(obs), np.stack(goals)
 
@@ -984,7 +1039,7 @@ class SquareGreyFrame(MyWrapper):
         """Warp frames to 84x84 as done in the Nature paper and later work."""
         MyWrapper.__init__(self, env)
         self.res = 84
-        self.observation_space = spaces.Box(low=0, high=255, shape=(self.res, self.res, 1), dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=(self.res, self.res, 1), dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.dot(obs.astype('float32'), np.array([0.299, 0.587, 0.114], 'float32'))
@@ -1006,7 +1061,7 @@ class RectGreyFrame(MyWrapper):
         MyWrapper.__init__(self, env)
         self.res = (105, 80, 1)
         self.net_res = (self.res[1], self.res[0], self.res[2])
-        self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.net_res, dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.dot(obs.astype('float32'), np.array([0.299, 0.587, 0.114], 'float32'))
@@ -1028,7 +1083,28 @@ class RectColorFrame(MyWrapper):
         MyWrapper.__init__(self, env)
         self.res = (105, 80, 3)
         self.net_res = (self.res[1], self.res[0], self.res[2])
-        self.observation_space = spaces.Box(low=0, high=255, shape=self.net_res, dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.net_res, dtype=np.uint8)
+
+    def reshape_obs(self, obs):
+        obs = np.array(Image.fromarray(obs).resize((self.res[0], self.res[1]),
+                                                   resample=Image.BILINEAR), dtype=np.uint8)
+        return obs
+
+    def reset(self):
+        return self.reshape_obs(self.env.reset())
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        return self.reshape_obs(obs), reward, done, info
+
+
+class RectColorFrameProcgen(MyWrapper): # TODO Can we remove this wrapper? Does it have to be added?
+    def __init__(self, env):
+        """Warp frames to 64x64"""
+        MyWrapper.__init__(self, env)
+        self.res = (64, 64, 3)
+        self.net_res = (self.res[1], self.res[0], self.res[2])
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.net_res, dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.array(Image.fromarray(obs).resize((self.res[0], self.res[1]),
@@ -1052,7 +1128,7 @@ class RectColorFrameWithBug(MyWrapper):
         """Warp frames to 105x80"""
         MyWrapper.__init__(self, env)
         self.res = (105, 80, 3)
-        self.observation_space = spaces.Box(low=0, high=255, shape=self.res, dtype=np.uint8)
+        self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.res, dtype=np.uint8)
 
     def reshape_obs(self, obs):
         obs = np.array(Image.fromarray(obs).resize((self.res[0], self.res[1]),
