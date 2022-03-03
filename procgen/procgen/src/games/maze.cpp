@@ -15,7 +15,7 @@ class MazeGame : public BasicAbstractGame {
 
     MazeGame()
         : BasicAbstractGame(NAME) {
-        timeout = 500;
+        timeout = 5000;
         random_agent_start = false;
         has_useful_vel_info = false;
 
@@ -87,14 +87,11 @@ class MazeGame : public BasicAbstractGame {
             }
         }
         
-        std::cout << "vector size is: " << free_spaces.size() << "random number chosen: " << rand() % free_spaces.size() << "\n" << std::flush;
         int index = rand() % free_spaces.size();
         int startx = std::get<0> (free_spaces[index]);
         int starty = std::get<1> (free_spaces[index]);
         agent->x = margin + startx + 0.5;
         agent->y = margin + starty + 0.5;
-        std::cout << "maze_dim is: " << maze_dim << " world_dim is: " << world_dim << "\n" << std::flush;
-        std::cout << "agent->x: " << agent->x << " agent->y: " << agent->y << " world_dim - agent->y: " << world_dim -agent->y << "\n" << std::flush;
         if (margin > 0) {
             for (int i = 0; i < maze_dim + 2; i++) {
                 set_obj(margin - 1, margin + i - 1, WALL_OBJ);

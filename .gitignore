@@ -20,3 +20,5 @@ image_processing/video/*
 policy_based/video/*
 policy_based/program_runner_log.txt
 procgen/procgen/.build/*
+.vscode/c_cpp_properties.json
+.vscode/settings.json

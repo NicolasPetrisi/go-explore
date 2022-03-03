@@ -1757,7 +1757,7 @@ def parse_arguments():
                         help='Placeholder for providing no option')
     parser.add_argument('--max_actions_to_goal', dest='max_actions_to_goal',
                         type=int, default=DefaultArg(-1),
-                        help='The maximum number of actions the agent gets to reach a chosen goal')
+                        help='The maximum number of actions the agent gets to reach a chosen goal. When using gym3, early reset is not allowed hence this should not be used for Procgen.')
     parser.add_argument('--max_actions_to_new_cell', dest='max_actions_to_new_cell',
                         type=int, default=DefaultArg(-1),
                         help='The maximum number of actions the agent gets to reach a new cell')
