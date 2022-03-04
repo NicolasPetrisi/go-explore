@@ -1,6 +1,6 @@
 #!/bin/bash
 #Scrip to download all the requiremnets for policy-basde go explore into a conda enviroment called go-explore
-#This bash scrip require that miniconda is installed and located at ~/miniconda3
+#This bash scrip require that miniconda is installed
 #to run do:
 #chmod a+x init.sh
 #./init.sh
@@ -11,8 +11,9 @@ sudo apt-get install build-essential -y
 sudo apt install mesa-common-dev libglu1-mesa-dev -y
 #Package to get mpi4py to run on ubuntu 20.04 on wsl2
 sudo apt install libopenmpi-dev -y
-#To be able to reach conda 
-source ~/miniconda3/etc/profile.d/conda.sh
+#To be able to reach conda
+CONDA_BASE=$(conda info --base)
+source ${CONDA_BASE}/etc/profile.d/conda.sh
 #create and activate the procgen enviroment, needed to be able to run modified procgen enviroments
 cd procgen
 conda env update --name go-explore --file environment.yml
