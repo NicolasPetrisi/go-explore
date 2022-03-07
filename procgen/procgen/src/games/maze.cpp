@@ -18,7 +18,6 @@ class MazeGame : public BasicAbstractGame {
         timeout = 5000;
         random_agent_start = false;
         has_useful_vel_info = false;
-
         out_of_bounds_object = WALL_OBJ;
         visibility = 8.0;
     }
@@ -87,11 +86,14 @@ class MazeGame : public BasicAbstractGame {
             }
         }
         
-        int index = rand() % free_spaces.size();
-        int startx = std::get<0> (free_spaces[index]);
-        int starty = std::get<1> (free_spaces[index]);
-        agent->x = margin + startx + 0.5;
-        agent->y = margin + starty + 0.5;
+        if (random_agent_start){
+            int index = rand() % free_spaces.size();
+            int startx = std::get<0> (free_spaces[index]);
+            int starty = std::get<1> (free_spaces[index]);
+            agent->x = margin + startx + 0.5;
+            agent->y = margin + starty + 0.5;
+        }
+
         if (margin > 0) {
             for (int i = 0; i < maze_dim + 2; i++) {
                 set_obj(margin - 1, margin + i - 1, WALL_OBJ);
