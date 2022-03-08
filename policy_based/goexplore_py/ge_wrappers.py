@@ -594,7 +594,7 @@ class GoalConGoExploreEnv(MyWrapper):
         self.steps_to_previous = 0
         self.steps_to_current = 0
         
-        print("Chosen goal: " + str(self.goal_cell_rep))
+        #print("Chosen goal: " + str(self.goal_cell_rep))
         
         if self.cell_reached(self.current_cell, self.goal_cell_rep):
             self._return_success()

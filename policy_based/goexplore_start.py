@@ -578,10 +578,11 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
-    y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean"]
-    x_value = "frames"
-    for y_value in y_values:
-        make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
+    if hvd.rank() == 0:
+        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean"]
+        x_value = "frames"
+        for y_value in y_values:
+            make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
 
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')

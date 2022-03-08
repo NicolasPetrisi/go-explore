@@ -71,6 +71,8 @@ void Game::parse_options(std::string name, VecOptions opts) {
     opts.consume_int("debug_mode", &options.debug_mode);
     opts.consume_int("game_type", &game_type);
 
+    opts.consume_int("pos_seed", &options.pos_seed);
+    
     opts.ensure_empty();
 }
 
@@ -219,6 +221,7 @@ void Game::serialize(WriteBuffer *b) {
     b->write_int(cur_time);
     b->write_int(is_waiting_for_step);
 
+    b->write_int(options.pos_seed);
     // don't serialize these, since they are pointers, and will likely have incorrect values
     // if deserialized into another game object
     // int32_t *action_ptr;
@@ -275,4 +278,6 @@ void Game::deserialize(ReadBuffer *b) {
 
     cur_time = b->read_int();
     is_waiting_for_step = b->read_int();
+
+    options.pos_seed = b->read_int();
 }

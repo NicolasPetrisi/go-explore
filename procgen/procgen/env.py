@@ -215,6 +215,7 @@ class ProcgenGym3Env(BaseProcgenEnv):
         use_generated_assets=False,
         paint_vel_info=False,
         distribution_mode="hard",
+        pos_seed=0,
         **kwargs,
     ):
         assert (
@@ -242,6 +243,7 @@ class ProcgenGym3Env(BaseProcgenEnv):
                 "use_backgrounds": bool(use_backgrounds),
                 "paint_vel_info": bool(paint_vel_info),
                 "distribution_mode": distribution_mode,
+                "pos_seed":pos_seed
             }
         super().__init__(num, env_name, options, **kwargs)
         

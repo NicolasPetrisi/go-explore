@@ -86,13 +86,18 @@ class MazeGame : public BasicAbstractGame {
             }
         }
         
-        if (random_agent_start){
-            int index = rand() % free_spaces.size();
-            int startx = std::get<0> (free_spaces[index]);
-            int starty = std::get<1> (free_spaces[index]);
-            agent->x = margin + startx + 0.5;
-            agent->y = margin + starty + 0.5;
+        int selector = 0;
+        if(options.pos_seed == -1){
+            selector = rand();
         }
+        else {
+            selector = options.pos_seed;
+        }
+        int index = selector % free_spaces.size();
+        int startx = std::get<0> (free_spaces[index]);
+        int starty = std::get<1> (free_spaces[index]);
+        agent->x = margin + startx + 0.5;
+        agent->y = margin + starty + 0.5;
 
         if (margin > 0) {
             for (int i = 0; i < maze_dim + 2; i++) {

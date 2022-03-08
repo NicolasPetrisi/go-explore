@@ -110,6 +110,12 @@ def main():
         default=False,
         help="use monochromatic rectangles instead of human designed assets",
     )
+    advanced_group.add_argument(
+        "--pos-seed",
+        action="store_true",
+        default=False,
+        help="postion to start at",
+    )
 
     args = parser.parse_args()
 
@@ -120,6 +126,7 @@ def main():
         "use_backgrounds": not args.disable_backgrounds,
         "restrict_themes": args.restrict_themes,
         "use_monochrome_assets": args.use_monochrome_assets,
+        "pos_seed":args.pos_seed
     }
     if args.env_name != "coinrun_old":
         kwargs["distribution_mode"] = args.distribution_mode

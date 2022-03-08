@@ -10,6 +10,7 @@ loadPath = "-"
 hoursPerLevel = "0.1"
 levels = 3
 levelSeed = str(np.random.randint(1,2147483648))
+posSeed = str(np.random.randint(0,623*1000))
 #####################
 
 
@@ -37,6 +38,7 @@ log.write("Starting program_runner for: \ngameName=" + gameName +
     "\nlevels=" + str(levels) + 
     "\ndateAndTime=" + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + 
     "\nlevelSeed="+ levelSeed +
+    "\nposSeed=" + posSeed +
     "\n\n")
 
 startTime = time.time()
@@ -59,12 +61,13 @@ for i in range(levels):
     tmp_string = str(round((levels - i) * float(hoursPerLevel), 4)) + " hours remaining. Starting new run for loadPath=" + loadPath + "\n"
     log.write(tmp_string)
     log.write("levelSeed=" + levelSeed + "\n")
+    log.write("posSeed=" + posSeed + "\n")
     print("############################################")
     print("############################################")
     print(tmp_string)
     log.flush()
 
-    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel + " " + levelSeed)
+    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel + " " + levelSeed + " " + posSeed)
     
     # Load the next run if this wasn't the last.
     if i < levels - 1:
@@ -103,7 +106,8 @@ for i in range(levels):
             tmp_string = "Using model from previous run instead located at: " + loadPath + "\n"
             log.write(tmp_string)
             print(tmp_string)
-        levelSeed = str(np.random.randint(1,2147483648))  
+        levelSeed = str(np.random.randint(1,2147483648))
+        posSeed = str(np.random.randint(0,623*1000))
     log.flush()
 
 timeTaken = round((time.time() - startTime)/3600, 2)

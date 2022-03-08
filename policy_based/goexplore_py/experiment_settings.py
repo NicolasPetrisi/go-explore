@@ -466,7 +466,8 @@ def get_env(game_name,
             traj_modifier,
             fail_ent_inc,
             final_goal_reward,
-            level_seed
+            level_seed,
+            pos_seed
             ):
     """Creates all environments for all workers to run with Horovod.
 
@@ -521,6 +522,7 @@ def get_env(game_name,
         fail_ent_inc (_type_): _description_
         final_goal_reward (_type_): _description_
         level_seed (int): The seed of the starting level for the game.
+        pos_seed (int): The seed for the start postion of the agent
 
     Returns:
         MyWrapper: The final environment with all Wrappers applied.
@@ -529,10 +531,10 @@ def get_env(game_name,
     #temp_env = gym.make(game_name + 'NoFrameskip-v4')
     #set_action_meanings(temp_env.unwrapped.get_action_meanings())
     #FN, Why do we do this here?
-    temp_env = gym.make("procgen:procgen-" + str(game_name) + "-v0", render_mode="rgb_array")
+    temp_env = gym.make("procgen:procgen-" + str(game_name) + "-v0", render_mode="rgb_array", pos_seed = pos_seed)
     set_action_meanings(temp_env.unwrapped.env.env.get_combos())
 
-    def make_env(rank, local_rank, level_seed):
+    def make_env(rank, local_rank, level_seed, pos_seed):
         def env_fn():
             logger.debug(f'Process seed set to: {rank} seed: {seed + rank}')
             set_global_seeds(seed + rank)
@@ -549,10 +551,10 @@ def get_env(game_name,
                 #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
                 #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
                 #or reaching the next cheese(where a new level will be used)
-                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
+                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True, pos_seed = pos_seed)
             else:
                 make_video_local = False
-                local_env = gym.make(env_id, distribution_mode="hard",  render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True)
+                local_env = gym.make(env_id, distribution_mode="hard",  render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True, pos_seed = pos_seed)
             
             set_action_meanings(local_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)
@@ -624,7 +626,7 @@ def get_env(game_name,
         return env_fn
     logger.info(f'Creating: {nb_envs} environments.')
     local_rank = hvd.local_rank() # FN, this is because calling hvd.local_rank() from the threads inside make_env() causes a crash in MPI4, this works however.
-    env_factories = [make_env(i + nb_envs * hvd.rank(), local_rank, level_seed) for i in range(nb_envs)]
+    env_factories = [make_env(i + nb_envs * hvd.rank(), local_rank, level_seed,pos_seed) for i in range(nb_envs)]
     env = ge_wrappers.GoalConSubprocVecEnv(env_factories, start_method)
     env = ge_wrappers.GoalConVecFrameStack(env, frame_history)
     if 'filter' in goal_representation_name:
@@ -780,7 +782,8 @@ def setup(resolution,
           low_prob_traj_tresh,
           reset_on_update,
           weight_based_skew,
-          level_seed):
+          level_seed,
+          pos_seed):
     """Sets up everything needed to start running the experiment.
 
     Args:
@@ -904,6 +907,7 @@ def setup(resolution,
         reset_on_update (_type_): _description_
         weight_based_skew (_type_): _description_
         level_seed (int): the level seed for procgen
+        pos_seed (int): the seed for the start position of the agent
 
     Raises:
         NotImplementedError: When an unknown argument for a parameter is used.
@@ -1281,7 +1285,8 @@ def setup(resolution,
                   traj_modifier=traj_modifier,
                   fail_ent_inc=fail_ent_inc,
                   final_goal_reward=final_goal_reward,
-                  level_seed=level_seed
+                  level_seed=level_seed,
+                  pos_seed = pos_seed
                   )
 
     # Get the policy
@@ -1838,6 +1843,11 @@ def parse_arguments():
     parser.add_argument('--level_seed', dest='level_seed',
                         type=int, default=DefaultArg(1),
                         help='What game level to run, max is 2^31 - 1. If 0 is put, all workers will have different levels but share archive')
+    parser.add_argument('--pos_seed', dest='pos_seed',
+                        type=int, default=DefaultArg(0),
+                        help='What postion to start the agent at, 0 is for the standard position, -1 a random potion on every reset \
+                            and otherwise should be a random int specifiying the seed for start postion \
+                            that is the same through the ENTIRE experiment')
 
     args = parser.parse_args()
 
