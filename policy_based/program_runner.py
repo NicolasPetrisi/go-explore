@@ -50,8 +50,6 @@ print("Starting the first run out of " + str(levels) + " runs at " + str(datetim
 list = os.listdir(tempPath)
 list.sort()
 
-#print("Bananer: " + tempPath)
-#print("Kaakor: " + str(list))
 
 
 

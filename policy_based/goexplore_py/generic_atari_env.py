@@ -248,7 +248,6 @@ class MyAtari(MyWrapper):
         face_pixels = [(y, x) for y, x in face_pixels] #  * self.x_repeat
         if len(face_pixels) == 0:
             assert self.pos is not None, 'No face pixel and no previous pos'
-            #print("old pos  used in seed: " + str(self.pos))
             return self.pos  # Simply re-use the same position
         y, x = np.mean(face_pixels, axis=0)
         self.x = x

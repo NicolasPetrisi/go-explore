@@ -343,6 +343,10 @@ def _run(**kwargs):
         checkpoint_tracker.log_warmup = log_after_warm_up
         local_logger.info('Performing warm up cycles... done')
     
+
+    start_coords = (-1, -1)
+    optmial_length = -1
+
     while checkpoint_tracker.should_continue():
         # Run one iteration
         if hvd.rank() == 0:
@@ -414,20 +418,58 @@ def _run(**kwargs):
 
 
             #print("Return success: " + str(return_success_rate))
-            #for k in sorted(expl.archive.archive.keys()):
-            #    print(k)
 
-            logger.write('it', checkpoint_tracker.n_iters)
-            logger.write('score', expl.archive.max_score)
-            logger.write('cells', len(expl.archive.archive))
-            logger.write('ret_suc', return_success_rate)
-            logger.write('exp_suc', exploration_success_rate)
-            logger.write('rew_mean', gatherer.reward_mean)
-            logger.write('len_mean', gatherer.length_mean)
-            logger.write('ep', gatherer.nb_of_episodes)
-            logger.write('arch_suc', mean_success_rate)
-            logger.write('cum_suc', cum_success_rate)
-            logger.write('frames', expl.frames_compute)
+
+            if expl.archive.max_score > 0 and start_coords == (-1, -1):
+                # FN, This loop below is because sometimes the agent takes a step at the same time as it resets, causing the starting position to shift with 1 step sometimes.
+                # Doing this will take the most probable start position, with a small risk of having an incorrect starting position with 1 step off.
+                tmp_list = []
+                for k, v in expl.archive.archive.items():
+                    cell_id = expl.archive.cell_trajectory_manager.cell_trajectories[v.cell_traj_id].cell_ids[0]
+                    tmp_x = expl.archive.cell_id_to_key_dict[cell_id].x
+                    tmp_y = expl.archive.cell_id_to_key_dict[cell_id].y
+                    tmp_list.append((tmp_x, tmp_y))
+
+                tmp_list.sort()
+                start_coords = tmp_list[int(len(tmp_list)/2)]
+
+                def depth_first(current_pos, previous_pos, depth):
+                    for cell, info in expl.archive.archive.items():
+                        if (cell.x, cell.y) != previous_pos and \
+                                (((cell.x == current_pos[0] + 1 or cell.x == current_pos[0] - 1) and cell.y == current_pos[1]) or \
+                                (cell.x == current_pos[0] and (cell.y == current_pos[1] + 1 or cell.y == current_pos[1] - 1))):
+                            if info.score > 0:
+                                return depth
+                            tmp = depth_first((cell.x, cell.y), current_pos, depth + 1)
+                            if not tmp is None:
+                                return tmp
+        
+
+                # NOTE: FN, this assumes that there are no loops possible in the path!
+                optmial_length = depth_first(start_coords, (-1, -1), 1)
+
+
+            dist_from_opt_traj = -1
+            for k,v in expl.archive.archive.items():
+                if v.score > 0:
+                    dist_from_opt_traj = max(v.trajectory_len - optmial_length, 0) # FN, this is because of the error margin of 1 where the starting location is identified as.
+                    break
+                    
+
+
+            logger.write('it', checkpoint_tracker.n_iters)      # FN, the current iteration number.
+            logger.write('cells', len(expl.archive.archive))    # FN, the number of cells found so far.
+            logger.write('ret_suc', return_success_rate)        # FN, how often the agent successfully returned to the chosen cell.
+            logger.write('opt_len', optmial_length)             # FN, the shortest possible number of steps to the goal.
+            logger.write('len_mean', gatherer.length_mean)      # FN, the average number of frames per episode.
+            logger.write('dist_from_opt', dist_from_opt_traj)   # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
+            logger.write('frames', expl.frames_compute)         # FN, the number of frames that has been processed so far.
+            logger.write('rew_mean', gatherer.reward_mean)      # FN, the mean reward across all episodes.
+            logger.write('exp_suc', exploration_success_rate)   # FN, how often the agent successfully reached the cell chosen for exploration.
+            logger.write('score', expl.archive.max_score)       # FN, the maximum score aquired so far.
+            logger.write('ep', gatherer.nb_of_episodes)         # FN, (don't know yet)
+            logger.write('arch_suc', mean_success_rate)         # FN, (don't know yet)
+            logger.write('cum_suc', cum_success_rate)           # FN, (don't know yet)
 
             if len(gatherer.loss_values) > 0:
                 loss_values = np.mean(gatherer.loss_values, axis=0)
@@ -536,7 +578,7 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
-    y_values = ["cells", "ret_suc"]
+    y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean"]
     x_value = "frames"
     for y_value in y_values:
         make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])

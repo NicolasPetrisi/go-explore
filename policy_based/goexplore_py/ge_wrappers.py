@@ -593,6 +593,9 @@ class GoalConGoExploreEnv(MyWrapper):
                                                                self.goal_cell_rep)
         self.steps_to_previous = 0
         self.steps_to_current = 0
+        
+        print("Chosen goal: " + str(self.goal_cell_rep))
+        
         if self.cell_reached(self.current_cell, self.goal_cell_rep):
             self._return_success()
             self._choose_exploration_goal()
@@ -741,11 +744,6 @@ class GoalConGoExploreEnv(MyWrapper):
             game_reward = utils.clip(game_reward, self.clip_range[0], self.clip_range[1])
         self.total_reward = game_reward + reached_goal_reward * self.goal_reward_factor
 
-
-        if self.tmpCounter%10 == 0:
-            if self.hasVideoWriter:
-                if self.video_writer is None:
-                    print("This should NOT be None: " + str(self.video_writer))
 
         if self.video_writer:
             self.video_writer.add_frame()
