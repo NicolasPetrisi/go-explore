@@ -467,7 +467,8 @@ def get_env(game_name,
             fail_ent_inc,
             final_goal_reward,
             level_seed,
-            pos_seed
+            pos_seed,
+            video_all_ep
             ):
     """Creates all environments for all workers to run with Horovod.
 
@@ -522,7 +523,8 @@ def get_env(game_name,
         fail_ent_inc (_type_): _description_
         final_goal_reward (_type_): _description_
         level_seed (int): The seed of the starting level for the game.
-        pos_seed (int): The seed for the start postion of the agent
+        pos_seed (int): The seed for the start postion of the agent.
+        video_all_ep (bool): If a video for every single episode is desired.
 
     Returns:
         MyWrapper: The final environment with all Wrappers applied.
@@ -573,7 +575,8 @@ def get_env(game_name,
                 make_video=make_video_local,
                 directory=save_path + video_folder,
                 plot_grid=plot_grid,
-                plot_sub_goal=plot_sub_goal)
+                plot_sub_goal=plot_sub_goal,
+                video_all_ep=video_all_ep)
             local_env = video_writer
 
             local_env = wrappers.my_wrapper(
@@ -782,7 +785,8 @@ def setup(resolution,
           reset_on_update,
           weight_based_skew,
           level_seed,
-          pos_seed):
+          pos_seed,
+          video_all_ep):
     """Sets up everything needed to start running the experiment.
 
     Args:
@@ -905,8 +909,9 @@ def setup(resolution,
         low_prob_traj_tresh (_type_): _description_
         reset_on_update (_type_): _description_
         weight_based_skew (_type_): _description_
-        level_seed (int): the level seed for procgen
-        pos_seed (int): the seed for the start position of the agent
+        level_seed (int): The level seed for procgen.
+        pos_seed (int): The seed for the start position of the agent.
+        video_all_ep (bool): If a video for every single episode is desired.
 
     Raises:
         NotImplementedError: When an unknown argument for a parameter is used.
@@ -1285,7 +1290,8 @@ def setup(resolution,
                   fail_ent_inc=fail_ent_inc,
                   final_goal_reward=final_goal_reward,
                   level_seed=level_seed,
-                  pos_seed = pos_seed
+                  pos_seed = pos_seed,
+                  video_all_ep=video_all_ep
                   )
 
     # Get the policy
@@ -1847,6 +1853,15 @@ def parse_arguments():
                         help='What postion to start the agent at, 0 is for the standard position, -1 a random potion on every reset \
                             and otherwise should be a random int specifiying the seed for start postion \
                             that is the same through the ENTIRE experiment')
+    parser.add_argument('--video_all_ep', dest='video_all_ep',
+                        type=bool, default=DefaultArg(False),
+                        help='Set this to True if a vidoe for every single episode is desired. Not recommended \
+                            for longer runs. If false then a video every 2^N (1, 2, 4, 8, 16...) episode will be created up to every\
+                            1000th episode.')
+
+
+
+                            
 
     args = parser.parse_args()
 

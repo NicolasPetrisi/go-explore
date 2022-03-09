@@ -693,7 +693,8 @@ class VideoWriter(MyWrapper):
                  make_video=False,
                  directory='.',
                  plot_grid=True,
-                 plot_sub_goal=True):
+                 plot_sub_goal=True,
+                 video_all_ep=False):
         """Contains all functionality to record the frames and put them together as a video.
 
         Args:
@@ -709,6 +710,7 @@ class VideoWriter(MyWrapper):
             directory (str, optional): The directory to save the videos in. Defaults to '.'.
             plot_grid (bool, optional): If the grid should be plotted in the video. Defaults to True.
             plot_sub_goal (bool, optional): If sub goals should be plotted in the video. Defaults to True.
+            video_all_ep (bool, optional): If a video for every single episode is desired. Defaults to False.
         """
         MyWrapper.__init__(self, env)
         self.file_prefix = file_prefix
@@ -742,6 +744,7 @@ class VideoWriter(MyWrapper):
         self.local_archive = set()
         self.local_ep = 0
         self.video_counter = 0
+        self.video_all_ep = video_all_ep
 
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = int(cell.x * self.x_res)
@@ -914,6 +917,9 @@ class VideoWriter(MyWrapper):
         Returns:
             bool: If a video should be made this episode.
         """
+        if self.video_all_ep:
+            return True
+
         if ep > 1000:
             return True
         if ep >= 2**self.video_counter:
@@ -956,9 +962,9 @@ class VideoWriter(MyWrapper):
             self.video_writer = None
             if self.make_video and self.num_frames > self.min_video_length:
                 self.goals_processed.add(self.goal)
-                print('Video for goal:', self.goal, 'is considered finished.')
+                print('Video in episode', self.local_ep, 'for goal:', self.goal, 'is considered finished.')
             else:
-                print('Video for goal:', self.goal, 'considered too short, deleting...')
+                print('Video in episode', self.local_ep, 'for goal:', self.goal, 'considered too short, deleting...')
                 os.remove(self.current_file_name)
             self.counter += 1
 
@@ -970,7 +976,7 @@ class VideoWriter(MyWrapper):
         """
         goal = self.goal_conditioned_wrapper.goal_cell_rep
         info = self.goal_conditioned_wrapper.goal_cell_info
-        print('Starting video for goal:', goal, info)
+        print('Starting video in episode', self.local_ep,'for goal:', goal, info)
         rand_val = self.local_ep
         if goal is not None:
             if hasattr(goal, 'level'):
