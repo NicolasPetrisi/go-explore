@@ -22,7 +22,8 @@ tempPath = '/home/fredrik/temp/'
 
 
 # This is used as a check such that the path above 'tempPath' is correct.
-os.listdir(tempPath)
+if levels != 1:
+    os.listdir(tempPath)
 
 
 
@@ -49,8 +50,9 @@ nbrErrorHapppened = 0
 
 print("Starting the first run out of " + str(levels) + " runs at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-list = os.listdir(tempPath)
-list.sort()
+if levels != 1:
+    list = os.listdir(tempPath)
+    list.sort()
 
 
 
