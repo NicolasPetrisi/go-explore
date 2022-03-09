@@ -681,18 +681,35 @@ class PreventSlugEnv(MyWrapper):
 
 
 class VideoWriter(MyWrapper):
+    """Contains all functionality to record the frames and put them together as a video.
+    """
     def __init__(self, env, file_prefix,
                  plot_goal=False,
-                 x_res=64,
-                 y_res=64,
-                 plot_archive=False,
+                 x_res=20.48,
+                 y_res=20.48,
+                 plot_archive=True,
                  plot_return_prob=True,
                  one_vid_per_goal=False,
                  make_video=False,
                  directory='.',
-                 pixel_repetition=1,
                  plot_grid=True,
                  plot_sub_goal=True):
+        """Contains all functionality to record the frames and put them together as a video.
+
+        Args:
+            env (MyWrapper): The wrapped game environment to wrap around.
+            file_prefix (string): The prefix for the file to save as.
+            plot_goal (bool, optional): If the goal cell should be plotted in the video. Defaults to False.
+            x_res (float, optional): How many pixels in width the grid should have per square. Defaults to 20.48.
+            y_res (float, optional): How many pixels in height the grid should have per square. Defaults to 20.48.
+            plot_archive (bool, optional): If the visited cells should be plotted in the video. Defaults to True.
+            plot_return_prob (bool, optional): _description_. Defaults to True.
+            one_vid_per_goal (bool, optional): If True a video will not be made for a goal if that goal already have gotten a video. Defaults to False.
+            make_video (bool, optional): It video is to be created at all. Defaults to False.
+            directory (str, optional): The directory to save the videos in. Defaults to '.'.
+            plot_grid (bool, optional): If the grid should be plotted in the video. Defaults to True.
+            plot_sub_goal (bool, optional): If sub goals should be plotted in the video. Defaults to True.
+        """
         MyWrapper.__init__(self, env)
         self.file_prefix = file_prefix
         self.video_writer = None
@@ -717,7 +734,6 @@ class VideoWriter(MyWrapper):
         self.directory = directory
         self.plot_cell_traj: bool = False
         self.plot_sub_goal: bool = plot_sub_goal
-        self.pixel_repetition: int = pixel_repetition
         self.goal = None
         self.min_video_length = 4
         self.current_file_name = None
@@ -735,6 +751,16 @@ class VideoWriter(MyWrapper):
             cv2.rectangle(overlay, (x_min, y_min), (x_min + int(self.x_res), y_min + int(self.y_res)), color, 1)
 
     def match_attr(self, cell_1, cell_2, attr_name):
+        """Checks if the chosen attribute is the same between the two cells.
+
+        Args:
+            cell_1 (CellRepresentationBase): First cell to compare.
+            cell_2 (CellRepresentationBase): Second cell to compare against.
+            attr_name (string): Which attribute in the cells to compare.
+
+        Returns:
+            _type_: _description_
+        """
         matches = True
         if hasattr(cell_1, attr_name) and hasattr(cell_2, attr_name):
             matches = getattr(cell_1, attr_name) == getattr(cell_2, attr_name)
@@ -742,8 +768,16 @@ class VideoWriter(MyWrapper):
 
 
     # FN, main function when making videos. The resolution is hard coded, we use 512,512,3 for procgen for the enchanced 
-    # frame frome procgen to speare our eyes. The grid, goal and subgoals and some text are added here depending on options used.
+    # frame frome procgen to spare our eyes. The grid, goal and subgoals and some text are added here depending on options used.
     def process_frame(self, frame):
+        """Process the given frame to add visuals.
+
+        Args:
+            frame (numpy.ndarray): The frame which to edit.
+
+        Returns:
+            numpy.ndarray: The resulting frame.
+        """
         f_out = np.zeros((512, 512, 3), dtype=np.uint8) #TODO org (210, 160,3)
         f_out[:, :, 0:3] = np.cast[np.uint8](frame)[:, :, :]
         #f_out = f_out.repeat(2, axis=1)
@@ -790,7 +824,10 @@ class VideoWriter(MyWrapper):
                     self.time_in_cell -= 1
                     self._render_cell(f_out, traj_cell, (255, 255, 0))
 
-        #if self.plot_sub_goal: # TODO FN, We can maybe just remove these lines? Montezuma code.
+        # FN, NOTE: This code will never run on Procgen's game 'Maze' since we never have any sub-goals.
+        # But in case sub-goals are ever wanted in the future due to transition screens where the goal is not
+        # in the current game stage, this would be how to add it to the video.
+        #if self.plot_sub_goal:
         #    goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
         #    if goal is not None:
         #        if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
@@ -801,9 +838,6 @@ class VideoWriter(MyWrapper):
         #        self._render_cell(f_out, cell, (255, 0, 255))
 
         cv2.addWeighted(f_overlay, 0.5, f_out, 0.5, 0, f_out)
-
-        #f_out = f_out.repeat(self.pixel_repetition, axis=0)
-        #f_out = f_out.repeat(self.pixel_repetition, axis=1)
 
         d = {-1:"exp_ini",
              0:"exp None",
@@ -831,13 +865,22 @@ class VideoWriter(MyWrapper):
             im.save(filename)
         return f_out
 
-    #Adding a frame for the video
     def add_frame(self):
+        """Add a frame to the current video being made. Does nothing if self.video_writer is None.
+        """
         if self.video_writer:
             self.video_writer.append_data(self.process_frame(self.env.get_full_res_image()))
             self.num_frames += 1
 
     def step(self, action):
+        """Propagate a step through the wrappers.
+
+        Args:
+            action (numpy.int64): The action to take.
+
+        Returns:
+            (mutliple types): observation, reward, done, info.
+        """
         obs, reward, done, info = self.env.step(action)
         self.obs = obs
         self.cur_step += 1
@@ -848,6 +891,11 @@ class VideoWriter(MyWrapper):
         return obs, reward, done, info
 
     def reset(self):
+        """Propagates a reset through the wrappers and finalizes any video currently in the making.
+
+        Returns:
+            _type_: _description_
+        """
         self._finalize_video()
         self.score = 0
         self.cur_step = 0
@@ -858,6 +906,14 @@ class VideoWriter(MyWrapper):
         return res
     
     def make_current_ep_video(self, ep):
+        """Only make a video every now and then to save memory in longer runs.
+
+        Args:
+            ep (int): Current episode number.
+
+        Returns:
+            bool: If a video should be made this episode.
+        """
         if ep > 1000:
             return True
         if ep >= 2**self.video_counter:
@@ -866,6 +922,11 @@ class VideoWriter(MyWrapper):
         return False
 
     def start_video(self, ep):
+        """Starts a video for the current episode. Does nothing if self.make_video is false.
+
+        Args:
+            ep (int): Current episode number.
+        """
         self.goal = self.goal_conditioned_wrapper.goal_cell_rep
         self.local_archive = set()
         if self.make_video:
@@ -879,20 +940,22 @@ class VideoWriter(MyWrapper):
             else:
                 assert self.video_writer == None, "Tried to start a new video without closing the old. Set 'self.video_writer' to None when closing it before attempting to start a new video!"
         else:
-            assert self.video_writer == None, "If make_video is false then there should be no video_writer" #FN, we added this. If video_writer isn't already None then there's a bug.
-            #self.video_writer = None
+            assert self.video_writer == None, "If make_video is false then there should never be a video_writer" #FN, we added this. If video_writer isn't already None then there's a bug.
 
     def close(self):
+        """Finalizes the current video, if any, and propagates a close through the wrappers.
+        """
         self._finalize_video()
         self.env.close()
 
     def _finalize_video(self):
+        """Closes the video in progress.
+        """
         if self.video_writer is not None:
             self.video_writer.close()
             self.video_writer = None
             if self.make_video and self.num_frames > self.min_video_length:
                 self.goals_processed.add(self.goal)
-                #print('Score achieved:', self.recursive_getattr('cur_score')) # We commented this out because "cur_score" attribute does not exist in procgen.
                 print('Video for goal:', self.goal, 'is considered finished.')
             else:
                 print('Video for goal:', self.goal, 'considered too short, deleting...')
@@ -900,10 +963,14 @@ class VideoWriter(MyWrapper):
             self.counter += 1
 
     def _get_file_name(self):
+        """Calculates what the next file name should be.
+
+        Returns:
+            _type_: _description_
+        """
         goal = self.goal_conditioned_wrapper.goal_cell_rep
         info = self.goal_conditioned_wrapper.goal_cell_info
         print('Starting video for goal:', goal, info)
-        rand_val = random.randint(0, 1000000)
         rand_val = self.local_ep
         if goal is not None:
             if hasattr(goal, 'level'):

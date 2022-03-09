@@ -559,8 +559,8 @@ def get_env(game_name,
             set_action_meanings(local_env.unwrapped.env.env.get_combos())
             local_env = game_class(local_env, **game_args)
             
-
-            video_file_prefix = save_path + '/vids/' + game_name
+            video_folder = '/vids/'
+            video_file_prefix = save_path + video_folder + game_name
             video_writer = wrappers.VideoWriter(
                 local_env,
                 video_file_prefix,
@@ -571,8 +571,7 @@ def get_env(game_name,
                 plot_return_prob=plot_return_prob,
                 one_vid_per_goal=one_vid_per_goal,
                 make_video=make_video_local,
-                directory=save_path + '/vids',
-                pixel_repetition=pixel_repetition,
+                directory=save_path + video_folder,
                 plot_grid=plot_grid,
                 plot_sub_goal=plot_sub_goal)
             local_env = video_writer
