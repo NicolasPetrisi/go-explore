@@ -725,6 +725,7 @@ class VideoWriter(MyWrapper):
         self.draw_text = False
         self.local_archive = set()
         self.local_ep = 0
+        self.video_counter = 0
 
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = int(cell.x * self.x_res)
@@ -836,9 +837,6 @@ class VideoWriter(MyWrapper):
             self.video_writer.append_data(self.process_frame(self.env.get_full_res_image()))
             self.num_frames += 1
 
-            #if self.num_frames%10 == 0:
-            #    print("Adding Frames: " + str(self.num_frames))
-
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
         self.obs = obs
@@ -858,20 +856,28 @@ class VideoWriter(MyWrapper):
         res = self.env.reset()
         self.obs = res
         return res
+    
+    def make_current_ep_video(self, ep):
+        if ep > 1000:
+            return True
+        if ep >= 2**self.video_counter:
+            self.video_counter += 1
+            return True
+        return False
 
     def start_video(self, ep):
         self.goal = self.goal_conditioned_wrapper.goal_cell_rep
         self.local_archive = set()
         if self.make_video:
-            self.local_ep = ep
-            if self.goal not in self.goals_processed or not self.one_vid_per_goal:
-                self.num_frames = 0
-                os.makedirs(self.directory, exist_ok=True)
-                self.current_file_name = self._get_file_name()
-                self.video_writer = imageio.get_writer(self.current_file_name, mode='I', fps=15)
+            if self.make_current_ep_video(ep):
+                self.local_ep = ep
+                if self.goal not in self.goals_processed or not self.one_vid_per_goal:
+                    self.num_frames = 0
+                    os.makedirs(self.directory, exist_ok=True)
+                    self.current_file_name = self._get_file_name()
+                    self.video_writer = imageio.get_writer(self.current_file_name, mode='I', fps=15)
             else:
-                #self.video_writer = None
-                pass
+                assert self.video_writer == None, "Tried to start a new video without closing the old. Set 'self.video_writer' to None when closing it before attempting to start a new video!"
         else:
             assert self.video_writer == None, "If make_video is false then there should be no video_writer" #FN, we added this. If video_writer isn't already None then there's a bug.
             #self.video_writer = None
@@ -883,6 +889,7 @@ class VideoWriter(MyWrapper):
     def _finalize_video(self):
         if self.video_writer is not None:
             self.video_writer.close()
+            self.video_writer = None
             if self.make_video and self.num_frames > self.min_video_length:
                 self.goals_processed.add(self.goal)
                 #print('Score achieved:', self.recursive_getattr('cur_score')) # We commented this out because "cur_score" attribute does not exist in procgen.

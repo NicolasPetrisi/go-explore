@@ -788,13 +788,14 @@ class GoalConGoExploreEnv(MyWrapper):
         # Return return information
         goal = self._get_nn_goal_rep()
         obs_and_goal = (obs, goal)
-        if self.video_writer and self.ep:
-            if hvd.rank() == 0:
-                print("episode in Goalcon: " +str(self.ep))
+        if self.video_writer:
             self.video_writer.start_video(self.ep)
             self.video_writer.add_frame()
         self.ep += 1
         return obs_and_goal
+
+    
+
 
 
 class RemoteEnv(object):
