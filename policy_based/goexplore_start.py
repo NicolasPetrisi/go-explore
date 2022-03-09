@@ -457,7 +457,7 @@ def _run(**kwargs):
                     
 
 
-            logger.write('it', checkpoint_tracker.n_iters)      # FN, the current iteration number.
+            logger.write('it', checkpoint_tracker.n_iters)      # FN, the current cycle number.
             logger.write('cells', len(expl.archive.archive))    # FN, the number of cells found so far.
             logger.write('ret_suc', return_success_rate)        # FN, how often the agent successfully returned to the chosen cell.
             logger.write('opt_len', optmial_length)             # FN, the shortest possible number of steps to the goal.
@@ -467,7 +467,7 @@ def _run(**kwargs):
             logger.write('rew_mean', gatherer.reward_mean)      # FN, the mean reward across all episodes.
             logger.write('exp_suc', exploration_success_rate)   # FN, how often the agent successfully reached the cell chosen for exploration.
             logger.write('score', expl.archive.max_score)       # FN, the maximum score aquired so far.
-            logger.write('ep', gatherer.nb_of_episodes)         # FN, (don't know yet)
+            logger.write('ep', gatherer.nb_of_episodes)         # FN, the current episode number.
             logger.write('arch_suc', mean_success_rate)         # FN, (don't know yet)
             logger.write('cum_suc', cum_success_rate)           # FN, (don't know yet)
 
