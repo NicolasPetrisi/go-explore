@@ -158,6 +158,8 @@ class MyAtari(MyWrapper):
         self.done = 0
         self.x = oldx
         self.y = oldy
+        if self.x == 6 and self.y == 18 and self.done ==1:
+            print("wrong from reset")
         return unprocessed
 
     def get_full_res_image(self):
@@ -219,13 +221,16 @@ class MyAtari(MyWrapper):
 
         # FN assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
         # This is because procgen end the episodes before the agent actaully enters the goal space
-        if reward > 0:
+        if reward > 0 or done == 1:
             self.pos = self.goal_cell
             return self.unprocessed_state, reward, done, lol
+        #if self.score > 0:
+        #    self.score = reward
 
         self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
         self.pos = self.cell_representation(self)
-
+        if self.x == 6 and self.y == 18 and self.done ==1:
+            print("wrong from step")
         return self.unprocessed_state, reward, done, lol
 
     def get_pos(self):

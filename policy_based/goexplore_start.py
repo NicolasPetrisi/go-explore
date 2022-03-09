@@ -461,8 +461,8 @@ def _run(**kwargs):
             logger.write('cells', len(expl.archive.archive))    # FN, the number of cells found so far.
             logger.write('ret_suc', return_success_rate)        # FN, how often the agent successfully returned to the chosen cell.
             logger.write('opt_len', optmial_length)             # FN, the shortest possible number of steps to the goal.
-            logger.write('len_mean', gatherer.length_mean)      # FN, the average number of frames per episode.
             logger.write('dist_from_opt', dist_from_opt_traj)   # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
+            logger.write('len_mean', gatherer.length_mean)      # FN, the average number of frames per episode.
             logger.write('frames', expl.frames_compute)         # FN, the number of frames that has been processed so far.
             logger.write('rew_mean', gatherer.reward_mean)      # FN, the mean reward across all episodes.
             logger.write('exp_suc', exploration_success_rate)   # FN, how often the agent successfully reached the cell chosen for exploration.

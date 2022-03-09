@@ -4,7 +4,7 @@
 # For the full experiment settings, change each setting to each "full experiment" value.
 
 # Full experiment: 16
-NB_MPI_WORKERS=4
+NB_MPI_WORKERS=2
 # Full experiment: 16
 NB_ENVS_PER_WORKER=2
 

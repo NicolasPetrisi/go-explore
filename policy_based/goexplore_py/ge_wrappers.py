@@ -21,6 +21,7 @@ from goexplore_py.trajectory_trackers import TrajectoryTracker
 import goexplore_py.utils as utils
 import goexplore_py.globals as global_const
 import logging
+import horovod.tensorflow as hvd
 logger = logging.getLogger(__name__)
 
 
@@ -497,6 +498,7 @@ class GoalConGoExploreEnv(MyWrapper):
         self.steps_to_current: int = 0
         self.info: Dict[str, Any] = {}
         self.total_reward: float = 0
+        self.ep = 0
 
     def set_archive(self, archive):
         assert isinstance(archive, dict)
@@ -641,8 +643,6 @@ class GoalConGoExploreEnv(MyWrapper):
         goal = self.goal_representation.get(self.current_cell, self.goal_cell_rep, self.sub_goal_cell_rep)
         return goal
 
-    
-    tmpCounter = 0
 
 
     def step(self, action: int):
@@ -788,9 +788,12 @@ class GoalConGoExploreEnv(MyWrapper):
         # Return return information
         goal = self._get_nn_goal_rep()
         obs_and_goal = (obs, goal)
-        if self.video_writer:
-            self.video_writer.start_video()
+        if self.video_writer and self.ep:
+            if hvd.rank() == 0:
+                print("episode in Goalcon: " +str(self.ep))
+            self.video_writer.start_video(self.ep)
             self.video_writer.add_frame()
+        self.ep += 1
         return obs_and_goal
 
 
@@ -1170,7 +1173,7 @@ class SilEnv(MyWrapper):
         self.sil_invalid = sil_invalid
 
     def step(self, *args, **kwargs):
-        if not self.sil_on:
+        if not self.sil_on or hvd.rank() == 0:
             obs_and_goal, reward, done, info = self.env.step(*args, **kwargs)
             return obs_and_goal, reward, done, info
         else:
@@ -1207,7 +1210,7 @@ class SilEnv(MyWrapper):
 
     def reset(self):
         self.sil_ready_for_next = True
-        if self.next_trajectory is None:
+        if self.next_trajectory is None or hvd.rank() == 0:
             self.sil_on = False
             return self.env.reset()
         else:

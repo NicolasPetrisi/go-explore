@@ -724,6 +724,7 @@ class VideoWriter(MyWrapper):
         self.num_frames = 0
         self.draw_text = False
         self.local_archive = set()
+        self.local_ep = 0
 
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = int(cell.x * self.x_res)
@@ -814,7 +815,7 @@ class VideoWriter(MyWrapper):
         f_out = cv2.putText(f_out, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
         text = "level_seed: " + str(getattr(current_cell,'level_seed'))
         f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
-
+        f_out = cv2.putText(f_out, str(self.local_ep), (20, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
 
         if self.draw_text:
             if 'increase_entropy' in self.goal_conditioned_wrapper.info:
@@ -858,10 +859,11 @@ class VideoWriter(MyWrapper):
         self.obs = res
         return res
 
-    def start_video(self):
+    def start_video(self, ep):
         self.goal = self.goal_conditioned_wrapper.goal_cell_rep
         self.local_archive = set()
         if self.make_video:
+            self.local_ep = ep
             if self.goal not in self.goals_processed or not self.one_vid_per_goal:
                 self.num_frames = 0
                 os.makedirs(self.directory, exist_ok=True)
@@ -895,6 +897,7 @@ class VideoWriter(MyWrapper):
         info = self.goal_conditioned_wrapper.goal_cell_info
         print('Starting video for goal:', goal, info)
         rand_val = random.randint(0, 1000000)
+        rand_val = self.local_ep
         if goal is not None:
             if hasattr(goal, 'level'):
                 postfix = f'_{goal.level}_{goal.room}_{goal.objects}_{goal.y:0>2}_{goal.x:0>2}_{self.counter}.mp4'
