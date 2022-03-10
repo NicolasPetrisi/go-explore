@@ -215,13 +215,13 @@ class MyAtari(MyWrapper):
             lol (dict): level inormation after taking the action
         """
         self.unprocessed_state, reward, done, lol = self.env.step(action)
-        self.done = done
+
         self.level_seed = lol['level_seed']
         prev_level = lol['prev_level_seed']
 
         # FN assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
         # This is because procgen end the episodes before the agent actaully enters the goal space
-        if reward > 0 or done == 1:
+        if reward > 0:
             self.pos = self.goal_cell
             return self.unprocessed_state, reward, done, lol
         #if self.score > 0:
@@ -229,8 +229,6 @@ class MyAtari(MyWrapper):
 
         self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
         self.pos = self.cell_representation(self)
-        if self.x == 6 and self.y == 18 and self.done ==1:
-            print("wrong from step")
         return self.unprocessed_state, reward, done, lol
 
     def get_pos(self):
