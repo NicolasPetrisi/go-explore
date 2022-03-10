@@ -127,7 +127,7 @@ class MyAtari(MyWrapper):
 
         self.x = 0
         self.y = 0
-        self.org_seed = level_seed
+        self.org_seed = level_seed #This is if sequentall levels are used to check if we are ack on the startring level
         self.level_seed = level_seed
 
     def __getattr__(self, e):
@@ -139,7 +139,7 @@ class MyAtari(MyWrapper):
         Returns:
             np.ndarray: observation of the start frame (64,64,3) in procgen
         """
-        #unprocessed, reward, done, lol = self.env.reset()
+        self.env = gym.make("procgen:procgen-" + "maze" + "-v0", distribution_mode="hard", render_mode="rgb_array", start_level=self.org_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True, pos_seed = 0)
         unprocessed = self.env.reset()
         self.done = 0
         self.level_seed = self.org_seed
@@ -215,20 +215,19 @@ class MyAtari(MyWrapper):
             lol (dict): level inormation after taking the action
         """
         self.unprocessed_state, reward, done, lol = self.env.step(action)
-
         self.level_seed = lol['level_seed']
-        prev_level = lol['prev_level_seed']
 
         # FN assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
         # This is because procgen end the episodes before the agent actaully enters the goal space
+        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
+        self.pos = self.cell_representation(self)
         if reward > 0:
-            self.pos = self.goal_cell
+            self.done = done
+            print(f'x and y pos when found cheese: {self.pos.x}, {self.pos.y}')
             return self.unprocessed_state, reward, done, lol
         #if self.score > 0:
         #    self.score = reward
 
-        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
-        self.pos = self.cell_representation(self)
         return self.unprocessed_state, reward, done, lol
 
     def get_pos(self):

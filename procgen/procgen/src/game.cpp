@@ -142,10 +142,10 @@ void Game::step() {
     }
 
     prev_level_seed = current_level_seed;
-
-    if (step_data.done) {
-        reset();
-    }
+    
+    // if (step_data.done) {
+    //     reset();
+    // }
 
     if (options.use_sequential_levels && step_data.level_complete) {
         step_data.done = false;
