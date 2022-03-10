@@ -65,7 +65,8 @@ def get_game(game,
              seed_high,
              cell_representation,
              end_on_death,
-             level_seed):
+             level_seed,
+             pos_seed):
     """Creates the inner most environment for the Wrapper being built around the gym environment.
 
     Args:
@@ -132,9 +133,19 @@ def get_game(game,
         game_class = generic_atari_env.MyAtari
         game_class.TARGET_SHAPE = target_shape
         game_class.MAX_PIX_VALUE = max_pix_value
-        game_args = dict(name=game.split('_')[1],
+        #FN, procgen enviroment. env_id is the name, render_mode to allow videos, start level the seed for levels. 
+        #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
+        #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
+        #or reaching the next cheese(where a new level will be used)
+        game_args = dict(name="procgen:procgen-" + game.split('_')[1] + "-v0",
             cell_representation=cell_representation,
-            level_seed=level_seed)
+            level_seed=level_seed,
+            pos_seed = pos_seed,
+            distribution_mode="hard",
+            use_sequential_levels=False,
+            num_levels = 1,
+            restrict_themes = True
+            )
         grid_resolution = (
             #GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
             GridDimension('x', x_res), GridDimension('y', y_res)
@@ -530,35 +541,27 @@ def get_env(game_name,
         MyWrapper: The final environment with all Wrappers applied.
     """
     logger.info(f'Creating environment for game: {game_name}')
-    #temp_env = gym.make(game_name + 'NoFrameskip-v4')
-    #set_action_meanings(temp_env.unwrapped.get_action_meanings())
-    #FN, Why do we do this here?
-    temp_env = gym.make("procgen:procgen-" + str(game_name) + "-v0", render_mode="rgb_array", pos_seed = pos_seed)
+    
+    #FN, this is dummy enviroment just to get the action meanings
+    temp_env = gym.make("procgen:procgen-" + str(game_name) + "-v0")
     set_action_meanings(temp_env.unwrapped.env.env.get_combos())
 
-    def make_env(rank, local_rank, level_seed, pos_seed):
+    def make_env(rank):
         def env_fn():
             logger.debug(f'Process seed set to: {rank} seed: {seed + rank}')
             set_global_seeds(seed + rank)
-            #env_id = game_name + 'NoFrameskip-v4'
             env_id = "procgen:procgen-" + str(game_name) + "-v0"
             if max_episode_steps is not None:
                 gym.spec(env_id).max_episode_steps = max_episode_steps
-            #local_env = gym.make(env_id)
-            #set_action_meanings(local_env.unwrapped.get_action_meanings())
-            # Even if make video is true, only define it for one of our environments
-            if make_video and rank % nb_envs == 0 and local_rank == 0:
-                make_video_local = True
-                #FN, procgen enviroment. env_id is the name, render_mode to allow videos, start level the seed for levels. 
-                #use_sequential_levels determine if a new level should be started when reaching the cheese or returning, and num_levels numer of
-                #unique levels used. Note that when num_levels=1 and use_sequential_levels=True, whne reaching the cheese  different level will be played untill returning
-                #or reaching the next cheese(where a new level will be used)
-                local_env = gym.make(env_id, distribution_mode="hard", render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True, pos_seed = pos_seed)
-            else:
-                make_video_local = False
-                local_env = gym.make(env_id, distribution_mode="hard",  render_mode="rgb_array", start_level=level_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True, pos_seed = pos_seed)
             
+            # Even if make video is true, only define it for one of our environments
+            make_video_local = make_video and rank % nb_envs == 0 and hvd.local_rank() == 0
+
+            #FN, this is dummy enviroment just to get the action meanings
+            local_env = gym.make(env_id)
             set_action_meanings(local_env.unwrapped.env.env.get_combos())
+            local_env = None
+
             local_env = game_class(local_env, **game_args)
             
             video_folder = '/vids/'
@@ -627,8 +630,7 @@ def get_env(game_name,
             return local_env
         return env_fn
     logger.info(f'Creating: {nb_envs} environments.')
-    local_rank = hvd.local_rank() # FN, this is because calling hvd.local_rank() from the threads inside make_env() causes a crash in MPI4, this works however.
-    env_factories = [make_env(i + nb_envs * hvd.rank(), local_rank, level_seed,pos_seed) for i in range(nb_envs)]
+    env_factories = [make_env(i + nb_envs * hvd.rank()) for i in range(nb_envs)]
     env = ge_wrappers.GoalConSubprocVecEnv(env_factories, start_method)
     env = ge_wrappers.GoalConVecFrameStack(env, frame_history)
     if 'filter' in goal_representation_name:
@@ -990,8 +992,6 @@ def setup(resolution,
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
          targeted_exploration = True
-         #should be generic and work for all atari games, do we really need next line?
-         #assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
 
@@ -1010,7 +1010,8 @@ def setup(resolution,
                                                                  seed_high=seed_high,
                                                                  cell_representation=cell_representation,
                                                                  end_on_death=end_on_death,
-                                                                 level_seed=level_seed)
+                                                                 level_seed=level_seed,
+                                                                 pos_seed=pos_seed)
 
     logger.info('Obtaining selector special attributes')
     selector_special_attribute_list = []

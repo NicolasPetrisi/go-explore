@@ -27,26 +27,6 @@ import goexplore_py.utils
 from goexplore_py.utils import bytes2floatArr, get_goal_pos
 
 
-def convert_state(state, target_shape, max_pix_value):
-    """converts a state to a specified size in grayscale and with a specified max pixel value
-
-    Args:
-        state (_type_): observation of the enviroment
-        target_shape (tuple): target shape (width, height)
-        max_pix_value (int): the maximun pixel value
-
-    Returns:
-        _type_: a compressed bytearray with the specified quallities
-    """
-    if target_shape is None:
-        return None
-    import cv2
-    resized_state = cv2.resize(cv2.cvtColor(state, cv2.COLOR_RGB2GRAY),
-        target_shape,
-        interpolation=cv2.INTER_AREA)
-    img =  ((resized_state / 255.0) * max_pix_value).astype(np.uint8)
-    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
-
 class AtariPosLevel:
     """old code for an atari enviroment, don't think it runs
 
@@ -106,40 +86,44 @@ class MyAtari(MyWrapper):
         else:
             return MyAtari.attr_max[name]
 
-    def __init__(self, env, name, target_shape = (25,25), max_pix_value = 16 , x_repeat=1, end_on_death=False, cell_representation=None, level_seed=0):
-        super(MyAtari, self).__init__(env)
+    def __init__(self, env,  name, distribution_mode="hard", cell_representation=None, level_seed=0, use_sequential_levels=False,  num_levels = 1, restrict_themes = True, pos_seed = 0):
         self.name = name
-        self.env.reset()
-        self.state = []
-        self.x_repeat = x_repeat
-        self.rooms = {}
+        
+        self.state = [] #TODO unused?
         self.unprocessed_state = None
-        self.end_on_death = end_on_death
-        self.prev_lives = 0
-       
+        self.rooms = {}
         self.pos = None
         self.cell_representation = cell_representation
         self.done = 0
 
-        self.image = None
-        self.target_shape = target_shape
-        self.max_pix_value = max_pix_value
-
         self.x = 0
         self.y = 0
-        self.org_seed = level_seed #This is if sequentall levels are used to check if we are ack on the startring level
+        self.org_seed = level_seed # FN, This is if sequentiall levels are used to check if we are ack on the startring level
         self.level_seed = level_seed
+
+        # FN, parameters need when running procgen
+        self.distribution_mode = distribution_mode
+        self.use_sequential_levels = use_sequential_levels
+        self.num_levels = num_levels
+        self.restrict_themes = restrict_themes
+        self.pos_seed = pos_seed
+
+        self.env = self.make_env()
+        super(MyAtari, self).__init__(self.env)
+        self.env.reset()
 
     def __getattr__(self, e):
         return getattr(self.env, e)
 
+    def make_env(self):
+        return gym.make(self.name, distribution_mode=self.distribution_mode, render_mode="rgb_array" , start_level=self.org_seed, use_sequential_levels=self.use_sequential_levels, num_levels = self.num_levels, restrict_themes = self.restrict_themes, pos_seed = self.pos_seed)
     def reset(self) -> np.ndarray:
         """reseting an enviroment to the start state
 
         Returns:
             np.ndarray: observation of the start frame (64,64,3) in procgen
         """
-        self.env = gym.make("procgen:procgen-" + "maze" + "-v0", distribution_mode="hard", render_mode="rgb_array", start_level=self.org_seed, use_sequential_levels=False, num_levels = 1, restrict_themes = True, pos_seed = 0)
+        self.env = self.make_env()
         unprocessed = self.env.reset()
         self.done = 0
         self.level_seed = self.org_seed
