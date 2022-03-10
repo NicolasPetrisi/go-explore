@@ -15,6 +15,8 @@ import hashlib
 from contextlib import contextmanager
 import cv2
 
+GOAL_COLOR = (253,155,37) # FN, NOTE Set these RGB values to one which is unique to the goal in the frame.
+AGENT_COLOR = (187,203,204) # FN, NOTE Set these RGB values to one which is unique to the agent in the frame.
 
 class TimedPickle:
     def __init__(self, data, name, enabled=True):
@@ -188,16 +190,14 @@ def get_goal_pos(obs):
     Returns:
         tuple: a tuple of the mean of the y and x postions unique for the goal 
     """
-    COLOR = (253,155,37)
     if obs is None:
         print("obs is None, make sure all enviroments have render_mode activated")
         return (-1,-1)
-    indices = np.where(np.all(obs == COLOR, axis=-1))
+    indices = np.where(np.all(obs == GOAL_COLOR, axis=-1))
     indexes = zip(indices[0], indices[1])
     face_pixels = set(indexes)
     face_pixels = [(y, x) for y, x in face_pixels]
     if len(face_pixels) == 0:
-        print("found no pixels matching the goal colour, make sure it's the correct rgb-values")
         return (-1,-1)
     y, x = np.mean(face_pixels, axis=0)
     return (x,y)

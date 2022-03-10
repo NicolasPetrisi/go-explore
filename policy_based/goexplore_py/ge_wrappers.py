@@ -146,7 +146,7 @@ class GoalConVecGoalStack(VecWrapper):
         return self.venv.num_envs
 
 
-def get_neighbor(env, pos, offset, x_range, y_range):
+def get_neighbor(pos, offset, x_range, y_range):
     """get a neighbouring cell of the current cell(pos)
     
     Args:
@@ -167,27 +167,8 @@ def get_neighbor(env, pos, offset, x_range, y_range):
     y = max(y, y_range[0])
     y = min(y, y_range[1])
 
-    #room = pos.room
-    #room_x, room_y = env.recursive_getattr('get_room_xy')(room)
-    # if x < x_range[0]:
-        #x = x_range[1]
-        #room_x -= 1
-    # elif x > x_range[1]:
-        #x = x_range[0]
-        #room_x += 1
-    # elif y < y_range[0]:
-        #y = y_range[1]
-        #room_y -= 1
-    # elif y > y_range[1]:
-        #y = y_range[0]
-        #room_y += 1
-    #if env.recursive_getattr('get_room_out_of_bounds')(room_x, room_y):
-    #    return None
-    #room = env.recursive_getattr('get_room_from_xy')(room_x, room_y)
-    #if room == -1:
-    #    return None
+
     new_pos = copy.copy(pos)
-    #new_pos.room = room
     new_pos.x = x
     new_pos.y = y
     return new_pos
@@ -251,8 +232,7 @@ class DomKnowNeighborGoalExplorer(GoalExplorer):
         possible_neighbors = []
         unknown_neighbors = []
         for offset in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
-            possible_neighbor = get_neighbor(go_explore_env.env,
-                                             go_explore_env.last_reached_cell,
+            possible_neighbor = get_neighbor(go_explore_env.last_reached_cell,
                                              offset,
                                              x_range,
                                              y_range)
@@ -412,12 +392,6 @@ class GoalConGoExploreEnv(MyWrapper):
         #: The only reason this pointer is provided is because the video writer needs information about which goals are
         #: currently chosen, and this class holds that information.
         self.video_writer: VideoWriter = video_writer
-
-
-        if self.video_writer:
-            self.hasVideoWriter = True
-        else:
-            self.hasVideoWriter = False
 
 
         self.entropy_manager: EntropyManager = entropy_manager

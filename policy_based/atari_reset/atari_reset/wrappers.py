@@ -781,9 +781,8 @@ class VideoWriter(MyWrapper):
         Returns:
             numpy.ndarray: The resulting frame.
         """
-        f_out = np.zeros((512, 512, 3), dtype=np.uint8) #TODO org (210, 160,3)
+        f_out = np.zeros((512, 512, 3), dtype=np.uint8)
         f_out[:, :, 0:3] = np.cast[np.uint8](frame)[:, :, :]
-        #f_out = f_out.repeat(2, axis=1)
         f_overlay = copy.copy(f_out)
 
         if self.plot_grid:
@@ -812,7 +811,6 @@ class VideoWriter(MyWrapper):
         if self.plot_goal:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
-                #if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
                 if self.goal_conditioned_wrapper.goal_explorer.exploration_strategy == 2 or self.goal_conditioned_wrapper.returning: 
                     self._render_cell(f_out, goal, (255, 0, 0))
         if self.plot_cell_traj:

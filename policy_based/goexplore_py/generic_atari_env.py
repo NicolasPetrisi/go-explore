@@ -24,7 +24,7 @@ import numpy as np
 import cv2
 import goexplore_py.utils
 
-from goexplore_py.utils import bytes2floatArr, get_goal_pos
+from goexplore_py.utils import bytes2floatArr, get_goal_pos, AGENT_COLOR
 
 
 class AtariPosLevel:
@@ -201,16 +201,14 @@ class MyAtari(MyWrapper):
         self.unprocessed_state, reward, done, lol = self.env.step(action)
         self.level_seed = lol['level_seed']
 
-        # FN assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
+        # FN, Assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
         # This is because procgen end the episodes before the agent actaully enters the goal space
         self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
         self.pos = self.cell_representation(self)
         if reward > 0:
             self.done = done
-            print(f'x and y pos when found cheese: {self.pos.x}, {self.pos.y}')
             return self.unprocessed_state, reward, done, lol
-        #if self.score > 0:
-        #    self.score = reward
+
 
         return self.unprocessed_state, reward, done, lol
 
@@ -231,15 +229,14 @@ class MyAtari(MyWrapper):
         Returns:
             _type_: old pos if no pixels where specified, otherwise no return
         """
-        face_pixels = [(y, x) for y, x in face_pixels] #  * self.x_repeat
+        face_pixels = [(y, x) for y, x in face_pixels]
         if len(face_pixels) == 0:
             assert self.pos is not None, 'No face pixel and no previous pos'
-            return self.pos  # Simply re-use the same position
+            return self.pos  # FN, Simply re-use the same position
         y, x = np.mean(face_pixels, axis=0)
         self.x = x
         self.y = y
 
-    #TODO make generic or at least not this bad
     def get_face_pixels(self, unprocessed_state):
         """get location of pixels unique for the agent
 
@@ -249,8 +246,7 @@ class MyAtari(MyWrapper):
         Returns:
             set: a set of y and x postion of pixels unique for the agent 
         """
-        COLOR = (187,203,204)
-        indices = np.where(np.all(unprocessed_state == COLOR, axis=-1))
+        indices = np.where(np.all(unprocessed_state == AGENT_COLOR, axis=-1))
         indexes = zip(indices[0], indices[1])
         return set(indexes)
 

@@ -417,9 +417,6 @@ def _run(**kwargs):
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
 
-            #print("Return success: " + str(return_success_rate))
-
-
             if expl.archive.max_score > 0 and start_coords == (-1, -1):
                 # FN, This loop below is because sometimes the agent takes a step at the same time as it resets, causing the starting position to shift with 1 step sometimes.
                 # Doing this will take the most probable start position, with a small risk of having an incorrect starting position with 1 step off.
@@ -662,7 +659,7 @@ def run(kwargs):
         raise Exception('Experiment: ' + base_path + ' already exists!')
 
     # We need to setup the MPI environment before performing any data processing
-    nb_cpu = 4 #TODO why is this hard coded? we set it in the settings file? 
+    nb_cpu = 0 #NOTE This was 4. Setting to 0 means the computer picks an appropriate number instead.
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])
     with session.as_default():
         worker_seed_start = master_seed + 1

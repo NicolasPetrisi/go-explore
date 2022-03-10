@@ -459,7 +459,6 @@ def get_env(game_name,
             on_done_reward,
             no_exploration_gradients,
             frame_history,
-            pixel_repetition,
             sil,
             gamma,
             noops,
@@ -477,8 +476,6 @@ def get_env(game_name,
             traj_modifier,
             fail_ent_inc,
             final_goal_reward,
-            level_seed,
-            pos_seed,
             video_all_ep
             ):
     """Creates all environments for all workers to run with Horovod.
@@ -1272,7 +1269,6 @@ def setup(resolution,
                   on_done_reward=on_done_reward,
                   no_exploration_gradients=no_exploration_gradients,
                   frame_history=frame_history,
-                  pixel_repetition=pixel_repetition,
                   sil=sil,
                   gamma=gamma,
                   noops=noops,
@@ -1290,8 +1286,6 @@ def setup(resolution,
                   traj_modifier=traj_modifier,
                   fail_ent_inc=fail_ent_inc,
                   final_goal_reward=final_goal_reward,
-                  level_seed=level_seed,
-                  pos_seed = pos_seed,
                   video_all_ep=video_all_ep
                   )
 

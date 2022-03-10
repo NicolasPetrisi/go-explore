@@ -44,7 +44,7 @@ class Generic(CellRepresentationBase):
     """
     __slots__ = ['_x', '_y', '_level_seed', '_done', 'tuple']   
     attributes = ('x', 'y', 'level_seed', 'done') 
-    array_length = 3 #TODO change in program flow to allow it to be generic
+    array_length = 3 #NOTE If you change the number of elements in the tuple, set change this accordingly (lenght of tuple)
     supported_games = ('$generic')
 
     def __init__(self, atari_env=None):
