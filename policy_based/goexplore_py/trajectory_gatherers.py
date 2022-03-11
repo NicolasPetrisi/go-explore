@@ -56,6 +56,9 @@ class StochasticGatherer:
         self.ent_incs: List[int] = []
         self.reward_mean: float = 0.0
         self.length_mean: float = 0.0
+        self.last_n_lenght_mean: float = 0.0
+        self.lenght_mean_lookback_procentage = 0.2 #TODO add as a varibale to init as well
+        self.minimal_lookback_range = 50 #TODO add as a varibale to init as well
         self.loss_values: List = []
         self.ep_infos_to_report: Union[List, deque] = []
         self.processed_frames: int = 0
@@ -88,8 +91,17 @@ class StochasticGatherer:
         self.nb_exploration_goals_reached = sum([ei['nb_exploration_goals_reached'] for ei in self.ep_infos_to_report])
         self.nb_exploration_goals_chosen = sum([ei['nb_exploration_goals_chosen'] for ei in self.ep_infos_to_report])
         self.reward_mean = safemean([ei['r'] for ei in self.ep_infos_to_report])
-        self.length_mean = safemean([ei['l'] for ei in self.ep_infos_to_report])
         self.nb_of_episodes += len(ep_infos)
+        
+        all_lengths = [ei['l'] for ei in self.ep_infos_to_report]
+        self.length_mean = safemean(all_lengths)
+        lookback_range = int(self.lenght_mean_lookback_procentage * len(all_lengths))
+
+        if  lookback_range < self.minimal_lookback_range:
+            self.last_n_lenght_mean = -1
+        else:
+            self.last_n_lenght_mean = safemean(all_lengths[-lookback_range:])
+
         self.return_goals_chosen = [ei['goal_chosen'] for ei in local_ep_infos]
         self.return_goals_reached = [ei['reached'] for ei in local_ep_infos]
         self.sub_goals = [ei['sub_goal'] for ei in local_ep_infos]
