@@ -203,12 +203,11 @@ class MyAtari(MyWrapper):
 
         # FN, Assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
         # This is because procgen end the episodes before the agent actaully enters the goal space
-        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
-        self.pos = self.cell_representation(self)
         if reward > 0:
             self.done = done
-            return self.unprocessed_state, reward, done, lol
 
+        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
+        self.pos = self.cell_representation(self)
 
         return self.unprocessed_state, reward, done, lol
 
