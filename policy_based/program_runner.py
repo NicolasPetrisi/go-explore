@@ -7,9 +7,11 @@ import numpy as np
 #####################
 gameName = "maze"
 loadPath = "-"
-hoursPerLevel = "0.1"
-levels = 3
-levelSeed = str(np.random.randint(1,2147483648))
+stepsPerLevel = "2000000"
+maxTime = 65.0
+levels = 5
+#levelSeed = str(np.random.randint(1,2147483648)) # This will give a random maze amongst the possible seeds.
+levelSeed = "214"
 posSeed = str(np.random.randint(0,623*1000))
 #####################
 
@@ -17,8 +19,9 @@ posSeed = str(np.random.randint(0,623*1000))
 # Set this to the path to your 'temp' folder where the models are stored.
 # In ubuntu WSL it would probably be '/home/USERNAME/temp/'
 # If 'levels' it set to 1, this variable will not be used and does not have to be changed.
-tempPath = '/home/fredrik/temp/' 
+tempPath = '/home/nicolas/temp/' 
 
+hoursPerLevel = str(maxTime/levels)
 
 
 # This is used as a check such that the path above 'tempPath' is correct.
@@ -69,7 +72,7 @@ for i in range(levels):
     print(tmp_string)
     log.flush()
 
-    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel + " " + levelSeed + " " + posSeed)
+    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel + " " + stepsPerLevel + " " + levelSeed + " " + posSeed)
     
     # Load the next run if this wasn't the last.
     if i < levels - 1:
@@ -108,7 +111,6 @@ for i in range(levels):
             tmp_string = "Using model from previous run instead located at: " + loadPath + "\n"
             log.write(tmp_string)
             print(tmp_string)
-        levelSeed = str(np.random.randint(1,2147483648))
         posSeed = str(np.random.randint(0,623*1000))
     log.flush()
 

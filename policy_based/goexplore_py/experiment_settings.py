@@ -1839,7 +1839,7 @@ def parse_arguments():
                         type=str, default=DefaultArg(''),
                         help='From which files we should log information. Example: atari_reset.atari_reset.policies')
     
-
+    # FN, These are arguments which we have added.
     parser.add_argument('--level_seed', dest='level_seed',
                         type=int, default=DefaultArg(1),
                         help='What game level to run, max is 2^31 - 1. If 0 is put, all workers will have different levels but share archive')
@@ -1853,6 +1853,7 @@ def parse_arguments():
                         help='Set this to True if a vidoe for every single episode is desired. Not recommended \
                             for longer runs. If false then a video every 2^N (1, 2, 4, 8, 16...) episode will be created up to every\
                             1000th episode.')
+
 
 
 

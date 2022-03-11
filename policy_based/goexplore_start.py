@@ -454,19 +454,20 @@ def _run(**kwargs):
                     
 
 
-            logger.write('it', checkpoint_tracker.n_iters)      # FN, the current cycle number.
-            logger.write('cells', len(expl.archive.archive))    # FN, the number of cells found so far.
-            logger.write('ret_suc', return_success_rate)        # FN, how often the agent successfully returned to the chosen cell.
-            logger.write('opt_len', optmial_length)             # FN, the shortest possible number of steps to the goal.
-            logger.write('dist_from_opt', dist_from_opt_traj)   # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
-            logger.write('len_mean', gatherer.length_mean)      # FN, the average number of frames per episode.
-            logger.write('frames', expl.frames_compute)         # FN, the number of frames that has been processed so far.
-            logger.write('rew_mean', gatherer.reward_mean)      # FN, the mean reward across all episodes.
-            logger.write('exp_suc', exploration_success_rate)   # FN, how often the agent successfully reached the cell chosen for exploration.
-            logger.write('score', expl.archive.max_score)       # FN, the maximum score aquired so far.
-            logger.write('ep', gatherer.nb_of_episodes)         # FN, the current episode number.
-            logger.write('arch_suc', mean_success_rate)         # FN, (don't know yet)
-            logger.write('cum_suc', cum_success_rate)           # FN, (don't know yet)
+            logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
+            logger.write('cells', len(expl.archive.archive))            # FN, the number of cells found so far.
+            logger.write('ret_suc', return_success_rate)                # FN, how often the agent successfully returned to the chosen cell.
+            logger.write('opt_len', optmial_length)                     # FN, the shortest possible number of steps to the goal.
+            logger.write('dist_from_opt', dist_from_opt_traj)           # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
+            logger.write('len_mean', gatherer.length_mean)              # FN, the average number of frames per episode.
+            logger.write('last_n_len_mean', gatherer.last_n_len_mean)   # FN, the average number of frames per episode for the n most recent episodes (50 as standard).
+            logger.write('frames', expl.frames_compute)                 # FN, the number of frames that has been processed so far.
+            logger.write('rew_mean', gatherer.reward_mean)              # FN, the mean reward across all episodes.
+            logger.write('exp_suc', exploration_success_rate)           # FN, how often the agent successfully reached the cell chosen for exploration.
+            logger.write('score', expl.archive.max_score)               # FN, the maximum score aquired so far.
+            logger.write('ep', gatherer.nb_of_episodes)                 # FN, the current episode number.
+            logger.write('arch_suc', mean_success_rate)                 # FN, (don't know yet)
+            logger.write('cum_suc', cum_success_rate)                   # FN, (don't know yet)
 
             if len(gatherer.loss_values) > 0:
                 loss_values = np.mean(gatherer.loss_values, axis=0)
@@ -576,7 +577,7 @@ def _run(**kwargs):
                     PROFILER.enable()
 
     if hvd.rank() == 0:
-        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean"]
+        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "last_n_len_mean"]
         x_value = "frames"
         for y_value in y_values:
             make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
