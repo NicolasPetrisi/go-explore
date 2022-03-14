@@ -460,7 +460,6 @@ def _run(**kwargs):
             logger.write('opt_len', optmial_length)                     # FN, the shortest possible number of steps to the goal.
             logger.write('dist_from_opt', dist_from_opt_traj)           # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
             logger.write('len_mean', gatherer.length_mean)              # FN, the average number of frames per episode.
-            logger.write('last_n_len_mean', gatherer.last_n_len_mean)   # FN, the average number of frames per episode for the n most recent episodes (50 as standard).
             logger.write('frames', expl.frames_compute)                 # FN, the number of frames that has been processed so far.
             logger.write('rew_mean', gatherer.reward_mean)              # FN, the mean reward across all episodes.
             logger.write('exp_suc', exploration_success_rate)           # FN, how often the agent successfully reached the cell chosen for exploration.
@@ -546,7 +545,7 @@ def _run(**kwargs):
                     render_pictures(log_par, expl, filename, prev_checkpoint, merged_dict, sil_trajectories)
 
                 # Save archive state
-                if log_par.save_archive:
+                if log_par.save_archive and expl.archive.cell_trajectory_manager.sil != "none":
                     save_state(expl.get_state(), filename + ARCHIVE_POSTFIX)
                     expl.archive.cell_trajectory_manager.dump(filename + TRAJ_POSTFIX)
 
@@ -577,7 +576,7 @@ def _run(**kwargs):
                     PROFILER.enable()
 
     if hvd.rank() == 0:
-        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "last_n_len_mean"]
+        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean"]
         x_value = "frames"
         for y_value in y_values:
             make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
