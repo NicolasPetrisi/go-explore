@@ -48,6 +48,7 @@ from goexplore_py.profiler import display_top
 import goexplore_py.mpi_support as mpi
 from atari_reset.atari_reset.ppo import flatten_lists
 from goexplore_py.data_classes import LogParameters
+
 local_logger = logging.getLogger(__name__)
 
 compress = gzip
@@ -57,8 +58,7 @@ compress_kwargs = {'compresslevel': 1}
 MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
-
-
+CONVERGENCE_THRESHOLD = 0.7 # TODO 0.95 should probally be standard, 0.7 for testing atm
 
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
@@ -231,7 +231,7 @@ class CheckpointTracker:
             self.will_log_warmup = True
             self.log_warmup = False
 
-    def calc_write_checkpoint(self):
+    def calc_write_checkpoint(self, optimal_length):
         if self.log_par.checkpoint_compute is not None:
             passed_compute_thresh = (self.old_compute // self.log_par.checkpoint_compute !=
                                      self.expl.frames_compute // self.log_par.checkpoint_compute)
@@ -247,7 +247,7 @@ class CheckpointTracker:
         else:
             first_it = False
         if self.log_par.checkpoint_first_iteration:
-            last_it = not self.should_continue()
+            last_it = not self.should_continue(optimal_length)
         else:
             last_it = False
         if self.log_par.checkpoint_time is not None:
@@ -265,7 +265,7 @@ class CheckpointTracker:
     def should_write_checkpoint(self):
         return self._should_write_checkpoint
 
-    def should_continue(self):
+    def should_continue(self, optimal_length):
         if self.log_par.max_time is not None and time.time() - self.start_time >= self.log_par.max_time:
             return False
         if self.log_par.max_compute_steps is not None and self.expl.frames_compute >= self.log_par.max_compute_steps:
@@ -276,8 +276,19 @@ class CheckpointTracker:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
+        if self.has_converged(optimal_length):
+            return False
         return True
 
+    def has_converged(self, optimal_length):
+        # optimal_length + 1 is becuse start position have an error margin of 1 step
+        if self.expl.trajectory_gatherer.length_mean == 0:
+            print("length_mean 0")
+            return False
+        conv_factor = (optimal_length + 1) / self.expl.trajectory_gatherer.length_mean
+        print("the convergence factor is: " + str(conv_factor) + " when the optimal legnth is: " +str(optimal_length) + " and the mean lenght is: " +str(self.expl.trajectory_gatherer.length_mean)) 
+        if (optimal_length + 1) / self.expl.trajectory_gatherer.length_mean > CONVERGENCE_THRESHOLD:
+            return True
 
 def _run(**kwargs):
     # Make sure that, if one worker crashes, the entire MPI process is aborted
@@ -345,9 +356,9 @@ def _run(**kwargs):
     
 
     start_coords = (-1, -1)
-    optmial_length = -1
+    optimal_length = -1
 
-    while checkpoint_tracker.should_continue():
+    while checkpoint_tracker.should_continue(optimal_length):
         # Run one iteration
         if hvd.rank() == 0:
             local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}')
@@ -358,7 +369,7 @@ def _run(**kwargs):
 
         write_checkpoint = None
         if hvd.rank() == 0:
-            write_checkpoint = checkpoint_tracker.calc_write_checkpoint()
+            write_checkpoint = checkpoint_tracker.calc_write_checkpoint(optimal_length)
         write_checkpoint = mpi.get_comm_world().bcast(write_checkpoint, root=0)
         checkpoint_tracker.set_should_write_checkpoint(write_checkpoint)
 
@@ -443,13 +454,13 @@ def _run(**kwargs):
         
 
                 # NOTE: FN, this assumes that there are no loops possible in the path!
-                optmial_length = depth_first(start_coords, (-1, -1), 1)
+                optimal_length = depth_first(start_coords, (-1, -1), 1)
 
 
             dist_from_opt_traj = -1
             for k,v in expl.archive.archive.items():
                 if v.score > 0:
-                    dist_from_opt_traj = max(v.trajectory_len - optmial_length, 0) # FN, this is because of the error margin of 1 where the starting location is identified as.
+                    dist_from_opt_traj = max(v.trajectory_len - optimal_length, 0) # FN, this is because of the error margin of 1 where the starting location is identified as.
                     break
                     
 
@@ -457,7 +468,7 @@ def _run(**kwargs):
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
             logger.write('cells', len(expl.archive.archive))            # FN, the number of cells found so far.
             logger.write('ret_suc', return_success_rate)                # FN, how often the agent successfully returned to the chosen cell.
-            logger.write('opt_len', optmial_length)                     # FN, the shortest possible number of steps to the goal.
+            logger.write('opt_len', optimal_length)                     # FN, the shortest possible number of steps to the goal.
             logger.write('dist_from_opt', dist_from_opt_traj)           # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
             logger.write('len_mean', gatherer.length_mean)              # FN, the average number of frames per episode.
             logger.write('frames', expl.frames_compute)                 # FN, the number of frames that has been processed so far.
