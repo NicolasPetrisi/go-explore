@@ -39,4 +39,4 @@ pip install cloudpickle==1.2.2
 #To test it, do:
 #conda activate go-explore
 #cd policy-based
-#sh generic_atari_env maze - 0.1 123
+#sh generic_atari_env maze - 0.1 10000 123

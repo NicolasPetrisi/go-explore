@@ -58,7 +58,7 @@ compress_kwargs = {'compresslevel': 1}
 MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
-CONVERGENCE_THRESHOLD = 0.7 # TODO 0.95 should probally be standard, 0.7 for testing atm
+CONVERGENCE_THRESHOLD = 0.1 # The std value to be below to perform an early stopping
 
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
@@ -191,9 +191,10 @@ def render_pictures(log_par: LogParameters, expl, filename, prev_checkpoint, scr
 
 
 class CheckpointTracker:
-    def __init__(self, log_par, expl):
+    def __init__(self, log_par, expl, early_stopping):
         self.log_par = log_par
         self.expl = expl
+        self.early_stopping = early_stopping
         self.old = None
         self.old_compute = None
         self.old_it = None
@@ -247,7 +248,7 @@ class CheckpointTracker:
         else:
             first_it = False
         if self.log_par.checkpoint_first_iteration:
-            last_it = not self.should_continue(optimal_length)
+            last_it = not self.should_continue()
         else:
             last_it = False
         if self.log_par.checkpoint_time is not None:
@@ -265,7 +266,7 @@ class CheckpointTracker:
     def should_write_checkpoint(self):
         return self._should_write_checkpoint
 
-    def should_continue(self, optimal_length):
+    def should_continue(self):
         if self.log_par.max_time is not None and time.time() - self.start_time >= self.log_par.max_time:
             return False
         if self.log_par.max_compute_steps is not None and self.expl.frames_compute >= self.log_par.max_compute_steps:
@@ -276,19 +277,15 @@ class CheckpointTracker:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
-        if self.has_converged(optimal_length):
+        if self.early_stopping and self.has_converged():
             return False
         return True
 
-    def has_converged(self, optimal_length):
-        # optimal_length + 1 is becuse start position have an error margin of 1 step
-        if self.expl.trajectory_gatherer.length_mean == 0:
-            print("length_mean 0")
-            return False
-        conv_factor = (optimal_length + 1) / self.expl.trajectory_gatherer.length_mean
-        print("the convergence factor is: " + str(conv_factor) + " when the optimal legnth is: " +str(optimal_length) + " and the mean lenght is: " +str(self.expl.trajectory_gatherer.length_mean)) 
-        if (optimal_length + 1) / self.expl.trajectory_gatherer.length_mean > CONVERGENCE_THRESHOLD:
+    def has_converged(self):
+        conv_factor = self.expl.trajectory_gatherer.std
+        if   conv_factor >= 0 and conv_factor < CONVERGENCE_THRESHOLD:
             return True
+        return False
 
 def _run(**kwargs):
     # Make sure that, if one worker crashes, the entire MPI process is aborted
@@ -305,7 +302,7 @@ def _run(**kwargs):
     log_after_warm_up = kwargs['log_after_warm_up']
     screenshot_merge = kwargs['screenshot_merge']
     clear_checkpoints = list(filter(None, kwargs['clear_checkpoints'].split(':')))
-
+    early_stopping = kwargs['early_stopping']
     if 'all' in clear_checkpoints:
         clear_checkpoints = CHECKPOINT_ABBREVIATIONS.keys()
 
@@ -329,7 +326,7 @@ def _run(**kwargs):
     ########################
 
     local_logger.info('Starting experiment')
-    checkpoint_tracker = CheckpointTracker(log_par, expl)
+    checkpoint_tracker = CheckpointTracker(log_par, expl, early_stopping)
     prev_checkpoint = None
     merged_dict = {}
     sil_trajectories = []
@@ -358,7 +355,7 @@ def _run(**kwargs):
     start_coords = (-1, -1)
     optimal_length = -1
 
-    while checkpoint_tracker.should_continue(optimal_length):
+    while checkpoint_tracker.should_continue():
         # Run one iteration
         if hvd.rank() == 0:
             local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}')
@@ -428,7 +425,7 @@ def _run(**kwargs):
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
 
-            if expl.archive.max_score > 0 and start_coords == (-1, -1):
+            if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
                 # FN, This loop below is because sometimes the agent takes a step at the same time as it resets, causing the starting position to shift with 1 step sometimes.
                 # Doing this will take the most probable start position, with a small risk of having an incorrect starting position with 1 step off.
                 tmp_list = []
@@ -456,12 +453,12 @@ def _run(**kwargs):
                 # NOTE: FN, this assumes that there are no loops possible in the path!
                 optimal_length = depth_first(start_coords, (-1, -1), 1)
 
-
             dist_from_opt_traj = -1
-            for k,v in expl.archive.archive.items():
-                if v.score > 0:
-                    dist_from_opt_traj = max(v.trajectory_len - optimal_length, 0) # FN, this is because of the error margin of 1 where the starting location is identified as.
-                    break
+            if kwargs["pos_seed"] != -1:
+                for k,v in expl.archive.archive.items():
+                    if v.score > 0:
+                        dist_from_opt_traj = max(v.trajectory_len - optimal_length, 0) # FN, this is because of the error margin of 1 where the starting location is identified as.
+                        break
                     
 
 

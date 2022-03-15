@@ -930,6 +930,8 @@ def setup(resolution,
     else:
         raise ValueError('Invalid grid resolution: ' + resolution + '. Valid formats are: x,y and x_and_y.')
 
+    assert pos_seed >= -1, "pos_seed should be -1, 0 or a positiv integer."
+    
     clip_game_reward = bool(clip_game_reward)
     one_vid_per_goal = bool(one_vid_per_goal)
     legacy_entropy = bool(legacy_entropy)
@@ -1493,6 +1495,7 @@ def del_out_of_setup_args(kwargs):
     del kwargs['clear_checkpoints']
     del kwargs['log_info']
     del kwargs['log_files']
+    del kwargs['early_stopping']
     return kwargs
 
 
@@ -1853,6 +1856,9 @@ def parse_arguments():
                         help='Set this to True if a vidoe for every single episode is desired. Not recommended \
                             for longer runs. If false then a video every 2^N (1, 2, 4, 8, 16...) episode will be created up to every\
                             1000th episode.')
+    parser.add_argument('--early_stopping', dest='early_stopping',
+                        type=bool, default=DefaultArg(True),
+                        help='Set to True to enable early stopping.')
 
 
 

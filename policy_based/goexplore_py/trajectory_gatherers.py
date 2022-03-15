@@ -59,6 +59,7 @@ class StochasticGatherer:
         self.loss_values: List = []
         self.ep_infos_to_report: Union[List, deque] = []
         self.processed_frames: int = 0
+        self.std: float = -1
 
     def gather(self):
         # t1 = time.perf_counter()
@@ -89,7 +90,12 @@ class StochasticGatherer:
         self.nb_exploration_goals_chosen = sum([ei['nb_exploration_goals_chosen'] for ei in self.ep_infos_to_report])
         self.reward_mean = safemean([ei['r'] for ei in self.ep_infos_to_report])
         self.nb_of_episodes += len(ep_infos)
-        self.length_mean = safemean([ei['l'] for ei in self.ep_infos_to_report])
+        last_episodes = [ei['l'] for ei in self.ep_infos_to_report]
+        self.length_mean = safemean(last_episodes)
+        if len(last_episodes) >= self.log_window_size:
+            self.std = np.std(last_episodes)
+            print("last lengths:", last_episodes)
+            print("std is now:", self.std)
         self.return_goals_chosen = [ei['goal_chosen'] for ei in local_ep_infos]
         self.return_goals_reached = [ei['reached'] for ei in local_ep_infos]
         self.sub_goals = [ei['sub_goal'] for ei in local_ep_infos]

@@ -1,6 +1,7 @@
 #include "../basic-abstract-game.h"
 #include "../mazegen.h"
 #include <iostream>
+// #include <math.h>
 const std::string NAME = "maze";
 
 const float REWARD = 10.0;
@@ -51,8 +52,14 @@ class MazeGame : public BasicAbstractGame {
         main_height = world_dim;
     }
 
+    /**
+     * Uncomment lines to only start at atleast a certain distance from the goal
+     */
+    // TODO remove or uncomment commented lines
     void game_reset() override {
         BasicAbstractGame::game_reset();
+
+        //int min_distance = 8;
 
         grid_step = true;
         maze_dim = rand_gen.randn((world_dim - 1) / 2) * 2 + 3;
@@ -73,8 +80,10 @@ class MazeGame : public BasicAbstractGame {
         for (int i = 0; i < grid_size; i++) {
             set_obj(i, WALL_OBJ);
         }
+        // int goal_x;
+        // int goal_y;
         std::vector< std::tuple<int,int> > free_spaces;
-
+        // std::vector<std::tuple<int, int>> free_spaces_distance;
         for (int i = 0; i < maze_dim; i++) {
             for (int j = 0; j < maze_dim; j++) {
                 int type = maze_gen->grid.get(i + MAZE_OFFSET, j + MAZE_OFFSET);
@@ -82,9 +91,28 @@ class MazeGame : public BasicAbstractGame {
                 if (type == 100){
                     free_spaces.push_back( std::tuple<int, int>(i,j) );
                 }
+                // else if (type == GOAL){
+                //     goal_x = i;
+                //     goal_y = j;
+                // }
                 set_obj(margin + i, margin + j, type);
             }
         }
+
+        // for (int i = 0; i < maze_dim; i++) {
+        //     for (int j = 0; j < maze_dim; j++) {
+        //         int type = maze_gen->grid.get(i + MAZE_OFFSET, j + MAZE_OFFSET);
+        //         // type 100 is empty space, 51 wall and 2 the goal
+        //         if (type == 100) {
+        //             int dist = sqrt( pow((i -goal_x), 2) + pow((j-goal_y), 2) );
+        //             // std::cout << "distacne to goal from pos : " << i << "," << j << " is: " << dist << "\n" << std::flush;
+        //             if (dist > min_distance) {
+        //                 free_spaces_distance.push_back(std::tuple<int, int>(i, j));
+        //             }
+        //         }
+        //     }
+        // }
+
         
         int selector = 0;
         if(options.pos_seed == -1){
@@ -96,6 +124,18 @@ class MazeGame : public BasicAbstractGame {
         int index = selector % free_spaces.size();
         int startx = std::get<0> (free_spaces[index]);
         int starty = std::get<1> (free_spaces[index]);
+            // if (free_spaces_distance.size() > 5){
+            //     index = selector % free_spaces_distance.size();
+            //     startx = std::get<0>(free_spaces_distance[index]);
+            //     starty = std::get<1>(free_spaces_distance[index]);
+            //     std::cout << "choose starting pos as:  " << startx << "," << starty << "\n" << std::flush;
+            // }
+            // else{
+            // index = selector % free_spaces.size();
+            // startx = std::get<0>(free_spaces[index]);
+            // starty = std::get<1>(free_spaces[index]);
+        // }
+        
         agent->x = margin + startx + 0.5;
         agent->y = margin + starty + 0.5;
 
