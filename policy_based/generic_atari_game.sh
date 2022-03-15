@@ -4,9 +4,9 @@
 # For the full experiment settings, change each setting to each "full experiment" value.
 
 # Full experiment: 16
-NB_MPI_WORKERS=1
+NB_MPI_WORKERS=8
 # Full experiment: 16
-NB_ENVS_PER_WORKER=4
+NB_ENVS_PER_WORKER=2
 
 # Full experiment: different for each run
 #SEED=0
@@ -17,7 +17,7 @@ CHECKPOINT=50000
 
 Game=$1
 
-if [ $2! = '-' ];
+if [ $2 != '-' ];
 then
     Load="--load_path $2"
 else
