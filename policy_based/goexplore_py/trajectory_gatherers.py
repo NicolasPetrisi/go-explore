@@ -49,6 +49,10 @@ class StochasticGatherer:
         self.nb_return_goals_chosen: float = 0.0
         self.nb_exploration_goals_reached: float = 0.0
         self.nb_exploration_goals_chosen: float = 0.0
+
+        self.nb_policy_exploration_goal_reached: float = 0.0
+        self.nb_policy_exploration_goal_chosen: float = 0.0
+
         self.return_goals_chosen: List[Any] = []
         self.return_goals_reached: List[bool] = []
 
@@ -88,6 +92,10 @@ class StochasticGatherer:
         self.nb_return_goals_chosen = len(self.ep_infos_to_report)
         self.nb_exploration_goals_reached = sum([ei['nb_exploration_goals_reached'] for ei in self.ep_infos_to_report])
         self.nb_exploration_goals_chosen = sum([ei['nb_exploration_goals_chosen'] for ei in self.ep_infos_to_report])
+
+        self.nb_policy_exploration_goal_reached = sum([ei['nb_policy_exploration_goal_reached'] for ei in self.ep_infos_to_report])
+        self.nb_policy_exploration_goal_chosen = sum([ei['nb_policy_exploration_goal_chosen'] for ei in self.ep_infos_to_report])
+
         self.reward_mean = safemean([ei['r'] for ei in self.ep_infos_to_report])
         self.nb_of_episodes += len(ep_infos)
         last_episodes = [ei['l'] for ei in self.ep_infos_to_report]

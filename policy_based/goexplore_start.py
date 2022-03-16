@@ -58,7 +58,8 @@ compress_kwargs = {'compresslevel': 1}
 MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
-CONVERGENCE_THRESHOLD = 0.1 # The std value to be below to perform an early stopping
+CONVERGENCE_THRESHOLD_STD = 0.1 # The std value to be below to perform an early stopping
+CONVERGENCE_THRESHOLD_SUC = 0.9 # The success rate for return and policy exploration needed for early stopping.
 
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
@@ -232,7 +233,7 @@ class CheckpointTracker:
             self.will_log_warmup = True
             self.log_warmup = False
 
-    def calc_write_checkpoint(self, optimal_length):
+    def calc_write_checkpoint(self, test_mode):
         if self.log_par.checkpoint_compute is not None:
             passed_compute_thresh = (self.old_compute // self.log_par.checkpoint_compute !=
                                      self.expl.frames_compute // self.log_par.checkpoint_compute)
@@ -248,7 +249,7 @@ class CheckpointTracker:
         else:
             first_it = False
         if self.log_par.checkpoint_first_iteration:
-            last_it = not self.should_continue()
+            last_it = not self.should_continue(test_mode)
         else:
             last_it = False
         if self.log_par.checkpoint_time is not None:
@@ -266,7 +267,15 @@ class CheckpointTracker:
     def should_write_checkpoint(self):
         return self._should_write_checkpoint
 
-    def should_continue(self):
+    def should_continue(self, test_mode):
+        """If the program should stop or continue running another cycle.
+
+        Args:
+            test_mode (bool): If the program is in test mode.
+
+        Returns:
+            bool: If the program is done or not.
+        """
         if self.log_par.max_time is not None and time.time() - self.start_time >= self.log_par.max_time:
             return False
         if self.log_par.max_compute_steps is not None and self.expl.frames_compute >= self.log_par.max_compute_steps:
@@ -277,17 +286,38 @@ class CheckpointTracker:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
-        if self.early_stopping and self.has_converged():
+        if self.early_stopping and self.has_converged(test_mode):
             return False
         return True
 
-    def has_converged(self):
-        conv_factor = self.expl.trajectory_gatherer.std
-        if   conv_factor >= 0 and conv_factor < CONVERGENCE_THRESHOLD:
-            return True
+    def has_converged(self, test_mode):
+        """Check if the network has converged according to the CONVERGENCE_THRESHOLD_STD and CONVERGENCE_THRESHOLD_SUC
+
+        Args:
+            test_mode (bool): If the program is in test mode.
+
+        Returns:
+            bool: If it has converged.
+        """
+        if test_mode:
+            conv_factor = self.expl.trajectory_gatherer.std
+            if   conv_factor >= 0 and conv_factor < CONVERGENCE_THRESHOLD_STD:
+                return True
+        else:
+            gatherer = self.expl.trajectory_gatherer
+            if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
+                return_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
+                exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
+                
+                if return_success_rate > CONVERGENCE_THRESHOLD_SUC and exploration_success_rate > CONVERGENCE_THRESHOLD_SUC:
+                    return True
+        
         return False
 
 def _run(**kwargs):
+    """The main loop of the program.
+    """
+
     # Make sure that, if one worker crashes, the entire MPI process is aborted
     def handle_exception(exc_type, exc_value, exc_traceback):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -355,7 +385,7 @@ def _run(**kwargs):
     start_coords = (-1, -1)
     optimal_length = -1
 
-    while checkpoint_tracker.should_continue():
+    while checkpoint_tracker.should_continue(kwargs['test_mode']):
         # Run one iteration
         if hvd.rank() == 0:
             local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}')
@@ -366,7 +396,7 @@ def _run(**kwargs):
 
         write_checkpoint = None
         if hvd.rank() == 0:
-            write_checkpoint = checkpoint_tracker.calc_write_checkpoint(optimal_length)
+            write_checkpoint = checkpoint_tracker.calc_write_checkpoint(kwargs['test_mode'])
         write_checkpoint = mpi.get_comm_world().bcast(write_checkpoint, root=0)
         checkpoint_tracker.set_should_write_checkpoint(write_checkpoint)
 
@@ -411,12 +441,14 @@ def _run(**kwargs):
         # Code that should be executed only by the master
         if hvd.rank() == 0 and not disable_logging:
             gatherer = expl.trajectory_gatherer
+            
             return_success_rate = -1
             if gatherer.nb_return_goals_chosen > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
+            
             exploration_success_rate = -1
-            if gatherer.nb_exploration_goals_chosen > 0:
-                exploration_success_rate = gatherer.nb_exploration_goals_reached / gatherer.nb_exploration_goals_chosen
+            if gatherer.nb_policy_exploration_goal_chosen > 0:
+                exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
 
             cum_success_rate = 0
             for reached in expl.archive.cells_reached_dict.values():
@@ -426,17 +458,9 @@ def _run(**kwargs):
 
 
             if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
-                # FN, This loop below is because sometimes the agent takes a step at the same time as it resets, causing the starting position to shift with 1 step sometimes.
-                # Doing this will take the most probable start position, with a small risk of having an incorrect starting position with 1 step off.
-                tmp_list = []
-                for k, v in expl.archive.archive.items():
-                    cell_id = expl.archive.cell_trajectory_manager.cell_trajectories[v.cell_traj_id].cell_ids[0]
-                    tmp_x = expl.archive.cell_id_to_key_dict[cell_id].x
-                    tmp_y = expl.archive.cell_id_to_key_dict[cell_id].y
-                    tmp_list.append((tmp_x, tmp_y))
 
-                tmp_list.sort()
-                start_coords = tmp_list[int(len(tmp_list)/2)]
+                start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
+
 
                 def depth_first(current_pos, previous_pos, depth):
                     for cell, info in expl.archive.archive.items():
@@ -463,16 +487,16 @@ def _run(**kwargs):
 
 
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
-            logger.write('cells', len(expl.archive.archive))            # FN, the number of cells found so far.
             logger.write('ret_suc', return_success_rate)                # FN, how often the agent successfully returned to the chosen cell.
+            logger.write('exp_suc', exploration_success_rate)           # FN, how often the agent successfully reached the cell chosen for exploration.
             logger.write('opt_len', optimal_length)                     # FN, the shortest possible number of steps to the goal.
             logger.write('dist_from_opt', dist_from_opt_traj)           # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
             logger.write('len_mean', gatherer.length_mean)              # FN, the average number of frames per episode.
             logger.write('frames', expl.frames_compute)                 # FN, the number of frames that has been processed so far.
             logger.write('rew_mean', gatherer.reward_mean)              # FN, the mean reward across all episodes.
-            logger.write('exp_suc', exploration_success_rate)           # FN, how often the agent successfully reached the cell chosen for exploration.
             logger.write('score', expl.archive.max_score)               # FN, the maximum score aquired so far.
             logger.write('ep', gatherer.nb_of_episodes)                 # FN, the current episode number.
+            logger.write('cells', len(expl.archive.archive))            # FN, the number of cells found so far.
             logger.write('arch_suc', mean_success_rate)                 # FN, (don't know yet)
             logger.write('cum_suc', cum_success_rate)                   # FN, (don't know yet)
 

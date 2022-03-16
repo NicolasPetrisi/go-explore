@@ -472,7 +472,10 @@ class GoalConGoExploreEnv(MyWrapper):
         self.steps_to_current: int = 0
         self.info: Dict[str, Any] = {}
         self.total_reward: float = 0
-        self.ep = 0
+        self.ep: int = 0
+        self.nb_policy_exploration_goal_chosen: int = 0
+        self.nb_policy_exploration_goal_reached: int = 0
+
 
     def set_archive(self, archive):
         assert isinstance(archive, dict)
@@ -586,7 +589,13 @@ class GoalConGoExploreEnv(MyWrapper):
         else:
             self.goal_cell_info = self.archive.get_new_cell_info()
         self.returning = False
+
         self.nb_exploration_goals_chosen += 1
+        # FN, to not have random exploration make policy exploration seem to have worse performance than it actually does,
+        # do not count it as an exploration goal chosen if the exploration strategy is random.
+        if self.goal_explorer.exploration_strategy != global_const.EXP_STRAT_RAND:
+            self.nb_policy_exploration_goal_chosen += 1
+
         self.exploration_goals_chosen.append(self.goal_cell_rep)
         self.exploration_goals_reached.append(False)
 
@@ -603,6 +612,12 @@ class GoalConGoExploreEnv(MyWrapper):
 
     def _exploration_success(self):
         self.nb_exploration_goals_reached += 1
+
+        # FN, to not have random exploration make policy exploration seem to have worse performance than it actually does,
+        # do not count it as an exploration goal chosen if the exploration strategy is random.
+        if self.goal_explorer.exploration_strategy != global_const.EXP_STRAT_RAND:
+            self.nb_policy_exploration_goal_reached += 1
+
         self.exploration_goals_reached[-1] = True
         self.last_reached_cell = self.current_cell
 
@@ -699,6 +714,8 @@ class GoalConGoExploreEnv(MyWrapper):
                        'r': self.score,
                        'nb_exploration_goals_reached': self.nb_exploration_goals_reached,
                        'nb_exploration_goals_chosen': self.nb_exploration_goals_chosen,
+                       'nb_policy_exploration_goal_reached': self.nb_policy_exploration_goal_reached,
+                       'nb_policy_exploration_goal_chosen': self.nb_policy_exploration_goal_chosen,
                        'goal_chosen': self.return_goals_chosen[-1],
                        'reached': self.return_goals_reached[-1],
                        'sub_goal': self.sub_goal_cell_rep,
