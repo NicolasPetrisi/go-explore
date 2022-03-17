@@ -464,26 +464,37 @@ def _run(**kwargs):
                 start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
 
 
-                def depth_first(current_pos, previous_pos, depth):
-                    for cell, info in expl.archive.archive.items():
-                        if (cell.x, cell.y) != previous_pos and \
-                                (((cell.x == current_pos[0] + 1 or cell.x == current_pos[0] - 1) and cell.y == current_pos[1]) or \
-                                (cell.x == current_pos[0] and (cell.y == current_pos[1] + 1 or cell.y == current_pos[1] - 1))):
-                            if info.score > 0:
-                                return depth
-                            tmp = depth_first((cell.x, cell.y), current_pos, depth + 1)
-                            if not tmp is None:
-                                return tmp
-        
+                def breadth_first_search(first_pos):
+                    queue = []
+                    visited = set()
 
-                # NOTE: FN, this assumes that there are no loops possible in the path!
-                optimal_length = depth_first(start_coords, (-1, -1), 1)
+                    queue.append((first_pos, 0)) # ((x, y), depth)
+                    visited.add(first_pos)
+
+                    while queue:
+                        current_pos, depth = queue.pop(0)
+
+                        for cell, info in expl.archive.archive.items():
+                            if (cell.x, cell.y) not in visited and \
+                                    (((cell.x == current_pos[0] + 1 or cell.x == current_pos[0] - 1) and cell.y == current_pos[1]) or \
+                                    (cell.x == current_pos[0] and (cell.y == current_pos[1] + 1 or cell.y == current_pos[1] - 1))):
+                                if info.score > 0:
+                                    return depth + 1
+
+                                queue.append(((cell.x, cell.y), depth + 1))
+                                visited.add((cell.x, cell.y))
+                    
+                    # If we reach this statement, then we found no path when one should exist.
+                    raise Exception("No path from start position to goal was found")
+        
+                optimal_length = breadth_first_search(start_coords)
 
             dist_from_opt_traj = -1
             if kwargs["pos_seed"] != -1:
                 for k,v in expl.archive.archive.items():
                     if v.score > 0:
-                        dist_from_opt_traj = max(v.trajectory_len - optimal_length, 0) # FN, this is because of the error margin of 1 where the starting location is identified as.
+                        dist_from_opt_traj = v.trajectory_len - optimal_length
+                        assert dist_from_opt_traj >= 0, "WARNING: The bug where starting position is 1 off is still present."
                         break
                     
 
