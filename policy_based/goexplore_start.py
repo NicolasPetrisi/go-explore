@@ -579,6 +579,7 @@ def _run(**kwargs):
                     render_pictures(log_par, expl, filename, prev_checkpoint, merged_dict, sil_trajectories)
 
                 # Save archive state
+                # FN, if SIL is 'none' the saving of archive crashes, this was the quickest fix for now since we were not really interested in the archive.
                 if log_par.save_archive and expl.archive.cell_trajectory_manager.sil != "none":
                     save_state(expl.get_state(), filename + ARCHIVE_POSTFIX)
                     expl.archive.cell_trajectory_manager.dump(filename + TRAJ_POSTFIX)
@@ -609,6 +610,7 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
+    # FN, only one thread should make plots.
     if hvd.rank() == 0:
         y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean"]
         x_value = "frames"
