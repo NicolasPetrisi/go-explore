@@ -91,13 +91,27 @@ class AbstractWeight:
 
 
 class MaxScoreCell(AbstractWeight):
+    """Cell selector that during test time gives the highest scoring cell weight 1 and all others 0. If all cells have 0 score 
+    or during training training time the weights are given as in the attr class (depending on number of visits to the cell,
+    weight/( 1 + scalar*cell(attr) )^power)
+    """
     def __init__(self, attr, weight, power, scalar, test_mode):
+        """Creates a MaxScoreCell
+
+        Args:
+            attr (str): what variable to use for determine weights, ex number of actions in cell
+            weight (float): the numerator
+            power (float): the power of the denominator
+            scalar (float): scalarr to multy the attribute with (before applying the power)
+            test_mode (bol): whether we run in test or training mode
+        """
         self.max_score: float = -float('inf')
         self.attr: str = attr
         self.weight: float = weight
         self.power: float = power
         self.scalar: float = scalar
         self.test_mode: bool = test_mode
+
     def update_weights(self, archive, update_all):
         max_cell = None
         for cell, info in archive.items():
@@ -109,7 +123,7 @@ class MaxScoreCell(AbstractWeight):
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
 
-        # FN, If there has been no score found so far, choose a cell based on the count visit instead of just a random.
+        # FN, If there has been no score found so far or in training mode, choose a cell based on the count visit instead of just a random.
         if not self.test_mode or self.max_score == 0:
             if self.attr in special_attributes[cell_key]:
                 value = special_attributes[cell_key][self.attr]
