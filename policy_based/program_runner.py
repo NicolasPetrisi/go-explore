@@ -9,10 +9,10 @@ gameName = "maze"
 loadPath = "-"
 stepsPerLevel = "2000000"
 maxTime = 65.0
-levels = 5
+iterations = 5
 #levelSeed = str(np.random.randint(1,2147483648)) # This will give a random maze amongst the possible seeds.
 levelSeed = "214"
-posSeed = str(np.random.randint(0,623*1000))
+posSeed = str(np.random.randint(0,623*1000)) # This will give a random position with close to equal chance for any position.
 #####################
 
 
@@ -21,11 +21,11 @@ posSeed = str(np.random.randint(0,623*1000))
 # If 'levels' it set to 1, this variable will not be used and does not have to be changed.
 tempPath = '/home/nicolas/temp/' 
 
-hoursPerLevel = str(maxTime/levels)
+hoursPerIteration = str(maxTime/iterations)
 
 
 # This is used as a check such that the path above 'tempPath' is correct.
-if levels != 1:
+if iterations != 1:
     os.listdir(tempPath)
 
 
@@ -38,8 +38,8 @@ logName = "program_runner_log.txt"
 log  = open(logName, "w+")
 log.write("Starting program_runner for: \ngameName=" + gameName + 
     "\nloadPath=" + loadPath + 
-    "\nhoursPerLevel=" + hoursPerLevel + 
-    "\nlevels=" + str(levels) + 
+    "\nhoursPerLevel=" + hoursPerIteration + 
+    "\nlevels=" + str(iterations) + 
     "\ndateAndTime=" + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + 
     "\nlevelSeed="+ levelSeed +
     "\nposSeed=" + posSeed +
@@ -51,9 +51,9 @@ prevLoadPath = ""
 errorHappened = False
 nbrErrorHapppened = 0
 
-print("Starting the first run out of " + str(levels) + " runs at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+print("Starting the first run out of " + str(iterations) + " runs at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-if levels != 1:
+if iterations != 1:
     list = os.listdir(tempPath)
     list.sort()
 
@@ -61,9 +61,9 @@ if levels != 1:
 
 
 
-for i in range(levels):
+for i in range(iterations):
     log.write("----------\n")
-    tmp_string = str(round((levels - i) * float(hoursPerLevel), 4)) + " hours remaining. Starting new run for loadPath=" + loadPath + "\n"
+    tmp_string = str(round((iterations - i) * float(hoursPerIteration), 4)) + " hours remaining. Starting new run for loadPath=" + loadPath + "\n"
     log.write(tmp_string)
     log.write("levelSeed=" + levelSeed + "\n")
     log.write("posSeed=" + posSeed + "\n")
@@ -72,10 +72,10 @@ for i in range(levels):
     print(tmp_string)
     log.flush()
 
-    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerLevel + " " + stepsPerLevel + " " + levelSeed + " " + posSeed)
+    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerIteration + " " + stepsPerLevel + " " + levelSeed + " " + posSeed)
     
     # Load the next run if this wasn't the last.
-    if i < levels - 1:
+    if i < iterations - 1:
         prevLoadPath = loadPath
         list = os.listdir(tempPath)
         list.sort()
