@@ -291,7 +291,9 @@ class CheckpointTracker:
         return True
 
     def has_converged(self, test_mode):
-        """Check if the network has converged according to the CONVERGENCE_THRESHOLD_STD and CONVERGENCE_THRESHOLD_SUC
+        """Check if the network has converged according to the CONVERGENCE_THRESHOLD_STD and CONVERGENCE_THRESHOLD_SUC.
+        If test_mode is True, convergence is based on the standard deviation of the trajectory lengths coming below CONVERGENCE_THRESHOLD_STD.
+        If test_mode is False, convergence is based on return and policy-exploration success rate being above CONVERGENCE_THRESHOLD_SUC.
 
         Args:
             test_mode (bool): If the program is in test mode.
