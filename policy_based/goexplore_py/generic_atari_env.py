@@ -142,8 +142,6 @@ class MyAtari(MyWrapper):
         self.done = 0
         self.x = oldx
         self.y = oldy
-        if self.x == 6 and self.y == 18 and self.done ==1:
-            print("wrong from reset")
         return unprocessed
 
     def get_full_res_image(self):

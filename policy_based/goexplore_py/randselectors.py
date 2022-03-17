@@ -139,12 +139,13 @@ class MaxScoreCell(AbstractWeight):
             return 0
 
     def multiplicative_weight(self, cell_key, cell, known_cells, special_attributes):
+        """Used to filter out unwanted cells by multiplying the weight with 0 or 1.
+        """
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
-        if cell.score == self.max_score:
-            logger.debug(f'max cell found: {self.max_score} cell: {cell_key}')
-            return 1
-        else:
+        if cell_key._done:
             return 0
+        else:
+            return 1
 
     def __repr__(self):
         return f'MaxScoreCell()'
@@ -720,9 +721,6 @@ class WeightedSelector(Selector):
 
         assert len(archive) == len(self.all_weights)
         total = np.sum(self.all_weights)
-        if total == 0.0:
-            probabilities = [1 / len(self.all_weights) for w in self.all_weights]
-            return probabilities
         probabilities = [w / total for w in self.all_weights]
         return probabilities
 

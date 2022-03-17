@@ -1823,7 +1823,7 @@ def parse_arguments():
                         type=str, default=DefaultArg('mpi'),
                         help='How to merge screenshots.')
     parser.add_argument('--final_goal_reward', dest='final_goal_reward',
-                        type=float, default=DefaultArg(1.0),
+                        type=float, default=DefaultArg(20.0),
                         help='The reward obtained for reaching the final goal (as opposed to a sub-goal).')
     parser.add_argument('--low_prob_traj_tresh', dest='low_prob_traj_tresh',
                         type=float, default=DefaultArg(0.00001),

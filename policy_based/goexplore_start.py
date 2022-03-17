@@ -287,6 +287,7 @@ class CheckpointTracker:
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
         if self.early_stopping and self.has_converged(test_mode):
+            print("Performing early stopping since it's deemed that the agent has converged")
             return False
         return True
 
@@ -301,18 +302,23 @@ class CheckpointTracker:
         Returns:
             bool: If it has converged.
         """
-        if test_mode:
-            conv_factor = self.expl.trajectory_gatherer.std
-            if   conv_factor >= 0 and conv_factor < CONVERGENCE_THRESHOLD_STD:
-                return True
-        else:
-            gatherer = self.expl.trajectory_gatherer
-            if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
-                return_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
-                exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
-                
-                if return_success_rate > CONVERGENCE_THRESHOLD_SUC and exploration_success_rate > CONVERGENCE_THRESHOLD_SUC:
+        conv_factor = self.expl.trajectory_gatherer.std
+        #FN, this is -1 untill at least trajectory_gatherer.log_window_size episodes have been reported in trajectory_gatherer.
+        if conv_factor >= 0:
+            if test_mode:
+                if  conv_factor < CONVERGENCE_THRESHOLD_STD:
                     return True
+            else:
+                gatherer = self.expl.trajectory_gatherer
+                # REMOVE print("ret goals chosen: ", gatherer.nb_return_goals_chosen )
+                # REMOVE print("expl goals chosen: ", gatherer.nb_policy_exploration_goal_chosen)
+                if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
+                    return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
+                    exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
+                    
+                    # REMOVE print("return_success_rate: " + str(return_success_rate) + "exploration_success_rate: " + str(exploration_success_rate))
+                    if return_success_rate > CONVERGENCE_THRESHOLD_SUC and exploration_success_rate > CONVERGENCE_THRESHOLD_SUC:
+                        return True
         
         return False
 

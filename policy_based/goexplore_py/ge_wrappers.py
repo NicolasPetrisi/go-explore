@@ -573,14 +573,13 @@ class GoalConGoExploreEnv(MyWrapper):
         self.steps_to_previous = 0
         self.steps_to_current = 0
         
-        #print("Chosen goal: " + str(self.goal_cell_rep))
         
         if self.cell_reached(self.current_cell, self.goal_cell_rep):
             self._return_success()
-            self._choose_exploration_goal()
+            self._choose_exploration_goal(False)
             self.returned_on_reset = True
 
-    def _choose_exploration_goal(self):
+    def _choose_exploration_goal(self,done):
         self.actions_to_goal = 0
         self.exploration_steps = 0
         self.goal_cell_rep = self.goal_explorer.choose(self)
@@ -593,7 +592,8 @@ class GoalConGoExploreEnv(MyWrapper):
         self.nb_exploration_goals_chosen += 1
         # FN, to not have random exploration make policy exploration seem to have worse performance than it actually does,
         # do not count it as an exploration goal chosen if the exploration strategy is random.
-        if self.goal_explorer.exploration_strategy != global_const.EXP_STRAT_RAND:
+        # FN, NOTE The last part of the if statement self.score == 0 assumes that when we get reward the episode is done.
+        if self.goal_explorer.exploration_strategy != global_const.EXP_STRAT_RAND and not done: 
             self.nb_policy_exploration_goal_chosen += 1
 
         self.exploration_goals_chosen.append(self.goal_cell_rep)
@@ -612,7 +612,6 @@ class GoalConGoExploreEnv(MyWrapper):
 
     def _exploration_success(self):
         self.nb_exploration_goals_reached += 1
-
         # FN, to not have random exploration make policy exploration seem to have worse performance than it actually does,
         # do not count it as an exploration goal chosen if the exploration strategy is random.
         if self.goal_explorer.exploration_strategy != global_const.EXP_STRAT_RAND:
@@ -692,9 +691,9 @@ class GoalConGoExploreEnv(MyWrapper):
             if self.done_on_return:
                 done = True
             else:
-                self._choose_exploration_goal()
+                self._choose_exploration_goal(done)
         elif self.exploration_steps >= self.max_exploration_steps:
-            self._choose_exploration_goal()
+            self._choose_exploration_goal(done)
 
         # Update our local archive
         if self.current_cell not in self.archive.archive and self.current_cell not in self.locally_explored:

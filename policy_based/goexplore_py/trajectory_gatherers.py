@@ -102,8 +102,6 @@ class StochasticGatherer:
         self.length_mean = safemean(last_episodes)
         if len(last_episodes) >= self.log_window_size:
             self.std = np.std(last_episodes)
-            print("last lengths:", last_episodes)
-            print("std is now:", self.std)
         self.return_goals_chosen = [ei['goal_chosen'] for ei in local_ep_infos]
         self.return_goals_reached = [ei['reached'] for ei in local_ep_infos]
         self.sub_goals = [ei['sub_goal'] for ei in local_ep_infos]
