@@ -1087,7 +1087,7 @@ def setup(resolution,
             power = float(params[3])
             scalar = float(params[4])
 
-            weight = randselectors.MaxScoreCell(name, weight, power, scalar)
+            weight = randselectors.MaxScoreCell(name, weight, power, scalar, test_mode)
             selector_weights_list.append(weight)
         elif selector_weight_name == 'target_cell':
             assert len(params) % 2 == 1, 'Incorrect number of selector-weight parameters provided'

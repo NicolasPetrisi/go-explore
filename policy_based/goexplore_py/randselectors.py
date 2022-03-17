@@ -91,13 +91,13 @@ class AbstractWeight:
 
 
 class MaxScoreCell(AbstractWeight):
-    def __init__(self, attr, weight, power, scalar):
+    def __init__(self, attr, weight, power, scalar, test_mode):
         self.max_score: float = -float('inf')
         self.attr: str = attr
         self.weight: float = weight
         self.power: float = power
         self.scalar: float = scalar
-
+        self.test_mode: bool = test_mode
     def update_weights(self, archive, update_all):
         max_cell = None
         for cell, info in archive.items():
@@ -110,7 +110,7 @@ class MaxScoreCell(AbstractWeight):
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
 
         # FN, If there has been no score found so far, choose a cell based on the count visit instead of just a random.
-        if self.max_score == 0:
+        if not self.test_mode or self.max_score == 0:
             if self.attr in special_attributes[cell_key]:
                 value = special_attributes[cell_key][self.attr]
             else:
