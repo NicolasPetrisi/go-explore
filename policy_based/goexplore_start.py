@@ -304,7 +304,6 @@ class CheckpointTracker:
         """
         gatherer = self.expl.trajectory_gatherer
         epsiodes = gatherer.nb_of_episodes
-        #FN, this is -1 untill at least trajectory_gatherer.log_window_size episodes have been reported in trajectory_gatherer.
         if test_mode:
             if  epsiodes >= TEST_EPISODES:
                 return True
