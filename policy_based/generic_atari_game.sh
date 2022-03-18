@@ -3,18 +3,6 @@
 # The settings below are for testing the code locally
 # For the full experiment settings, change each setting to each "full experiment" value.
 
-# Full experiment: 16
-NB_MPI_WORKERS=1
-# Full experiment: 16
-NB_ENVS_PER_WORKER=2
-
-# Full experiment: different for each run
-#SEED=0
-
-# Full experiment: 200000000
-CHECKPOINT=50000
-
-
 Game=$1
 
 if [ $2 != '-' ];
@@ -63,6 +51,19 @@ then
 else
     TestNetwork=""
 fi
+
+
+# Full experiment: 16
+NB_MPI_WORKERS=$8
+# Full experiment: 16
+NB_ENVS_PER_WORKER=2
+
+# Full experiment: different for each run
+#SEED=0
+
+# Full experiment: 200000000
+CHECKPOINT=50000
+
 
 #Load="--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
 # The game is run with both sticky actions and noops. Also, for Montezuma's Revenge, the episode ends on death.
