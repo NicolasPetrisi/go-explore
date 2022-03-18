@@ -1,17 +1,21 @@
 Starting program_runner for: 
 gameName=maze
 loadPath=-
-hoursPerLevel=65.0
-levels=1
-dateAndTime=18/03/2022 11:35:15
+hoursPerLevel=13.042833333333334
+levels=5
+startDate=2022-03-18 15:47:09
+endDate=2022-03-21 09:00:00
 levelSeed=214
-posSeed=13737
+posSeed=492156
 testMode=False
 
 ----------
-65.0 hours remaining. Starting new run for loadPath=-
+65.21 hours remaining. Starting new run for loadPath=- of 13.042833333333334 hours.
 levelSeed=214
-posSeed=13737
+posSeed=492156
+
+<<ERROR>>: Got keyboard interrupt, stopping program.
 
 
-Run finished successfully at 18/03/2022 11:35:31 with total time in hours of: 0.0.
+
+<<WARNING>>: Run finished at 2022-03-18 15:47:30 with an error occuring.

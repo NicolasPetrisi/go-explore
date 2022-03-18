@@ -1,43 +1,53 @@
 import os
 import time
 from datetime import datetime
+from datetime import timedelta
 import numpy as np
+from signal import SIGINT, siginterrupt
 
-# Set any unwished arguments (except gameName) to "-" if they are not desired, they will get default arguments in Go-Explore.
-# gameName must be defined.
+# Set any unwished arguments (except gameName) to "-" if they are not desired,
+# they will get default arguments in Go-Explore.
+# gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-loadPath           : str    = "-"
-stepsPerIteration  : str    = "2000000"
+minimumIterations  : int    = 5
 levelSeed          : str    = "214"
+posSeed            : str    = str(np.random.randint(0,623*1000))
 testMode           : str    = "False"
-posSeed            : str    = str(np.random.randint(0,623*1000)) # str(np.random.randint(0,623*1000)) <- This will give a random position with close to equal chance for any position.
-maxTime            : str    = "65.0"
-iterations         : int    = 1
+endTime            : str    = "2022-03-21 09:00:00"
+tempPath           : str    = '/home/nicolasfredrik/temp/'
+loadPath           : str    = "-"
+stepsPerIteration  : str    = "20000000"
 #####################
 
 #gameName           : What game to run.
+#minimumIterations  : How many different iterations of the program should at least be run. If given time due to early stopping, more iterations could occure.
+#levelSeed          : Specify which level seed to run. str(np.random.randint(1,2147483648)) will give a random level amongst all possible seeds.
+#posSeed            : The seed to use when selecting starting position. str(np.random.randint(0,623*1000)) will give a random position with close to equal chance for any position.
+#testMode           : If the network should be freezed and tested or not.
+#endTime            : At what time and date the run should be finished (YYYY-mm-dd HH:MM:SS). Alternativelly set to number of hours as a float (X). The time will be divided equally between iterations.
+#tempPath           : Set this to the path to your 'temp' folder where the models from Go-Explore are stored. In ubuntu WSL it would probably be '/home/USERNAME/temp/' 
 #loadPath           : If a model is to be loaded initially, specify path here.
 #stepsPerIteration  : The maximum steps per iteration.
-#levelSeed          : Specify which level seed to run. str(np.random.randint(1,2147483648)) will give a random level amongst all possible seeds.
-#testMode           : If the network should be freezed and tested or not.
-#posSeed            : The seed to use when selecting starting position. str(np.random.randint(0,623*1000)) will give a random position with close to equal chance for any position.
-#maxTime            : The maximum number of hours the program should run in total. Will be divided equally between iterations.
-#iterations         : How many different iterations of the program should be run.
+
+list = os.listdir(tempPath)
+list.sort()
+
+format = "%Y-%m-%d %H:%M:%S"
+startTime = datetime.now().strftime(format)
+
+if datetime.strptime(endTime, format) < datetime.strptime(startTime, format):
+    raise Exception("End time can not be set in the past. Must be forward in time.")
 
 
-# Set this to the path to your 'temp' folder where the models from Go-Explore are stored.
-# In ubuntu WSL it would probably be '/home/USERNAME/temp/'
-# If 'iterations' is set to 1, this variable will not be used and does not have to be changed.
-tempPath = '/home/nicolas/temp/' 
+try:
+    maxHours = float(endTime)
+    endTime = (datetime.now() + timedelta(seconds=int(float(endTime)*3600))).strftime(format)
+except:
+    maxTime = datetime.strptime(endTime, format) - datetime.strptime(startTime, format)
+    maxHours = float(maxTime.total_seconds()/3600)
 
-
-hoursPerIteration = str(float(maxTime)/iterations)
-
-
-# This is used as a check such that the path in 'tempPath' exists.
-if iterations > 1:
-    os.listdir(tempPath)
+hoursPerIteration = str(maxHours/minimumIterations)
 
 
 
@@ -50,44 +60,54 @@ log  = open(logName, "w+")
 log.write("Starting program_runner for: \ngameName=" + gameName + 
     "\nloadPath=" + loadPath + 
     "\nhoursPerLevel=" + hoursPerIteration + 
-    "\nlevels=" + str(iterations) + 
-    "\ndateAndTime=" + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + 
+    "\nlevels=" + str(minimumIterations) + 
+    "\nstartDate=" + str(startTime) + 
+    "\nendDate=" + str(endTime) +
     "\nlevelSeed="+ levelSeed +
     "\nposSeed=" + posSeed +
     "\ntestMode=" + testMode + 
     "\n\n")
 
-startTime = time.time()
 
 prevLoadPath = ""
 errorHappened = False
 nbrErrorHapppened = 0
+minTimeAllowed = 0.05
 
-print("Starting the first run out of " + str(iterations) + " runs at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+print("Starting the first run out of " + str(minimumIterations) + " runs at " + str(datetime.now().strftime(format)))    
 
-if iterations > 1:
-    list = os.listdir(tempPath)
-    list.sort()
+while datetime.now() < datetime.strptime(endTime, format):
 
+    remaining_time = (datetime.strptime(endTime, format) - datetime.now()).total_seconds()/3600
+    if remaining_time < float(hoursPerIteration):
+        if remaining_time < minTimeAllowed:
+            break
+        hoursPerIteration = str(round(remaining_time, 2))
 
-
-
-
-for i in range(iterations):
     log.write("----------\n")
-    tmp_string = str(round((iterations - i) * float(hoursPerIteration), 4)) + " hours remaining. Starting new run for loadPath=" + loadPath + "\n"
-    log.write(tmp_string)
+    tmpString = str(round(remaining_time, 2)) + " hours remaining. Starting new run for loadPath=" + loadPath + " of " + hoursPerIteration + " hours.\n"
+    log.write(tmpString)
     log.write("levelSeed=" + levelSeed + "\n")
     log.write("posSeed=" + posSeed + "\n")
     print("############################################")
     print("############################################")
-    print(tmp_string)
+    print(tmpString)
     log.flush()
 
-    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode)
-    
+    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode)
+
+    # If we got keyboard interrupt, then break the loop to exit the program.
+    if returnValue == SIGINT:
+        tmpString = "\n<<ERROR>>: Got keyboard interrupt, stopping program.\n\n"
+        errorHappened = True
+        nbrErrorHapppened += 1
+        print(tmpString)
+        log.write(tmpString)
+        break
+
     # Load the next run if this wasn't the last.
-    if i < iterations - 1:
+    remaining_time = (datetime.strptime(endTime, format) - datetime.now()).total_seconds()/3600
+    if remaining_time > minTimeAllowed:
         prevLoadPath = loadPath
         list = os.listdir(tempPath)
         list.sort()
@@ -108,31 +128,33 @@ for i in range(iterations):
             errorHappened = True
             nbrErrorHapppened += 1
 
-            tmp_string = "<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPath + "\n"
-            log.write(tmp_string)
-            print(tmp_string)
+            tmpString = "<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPath + "\n"
+            log.write(tmpString)
+            print(tmpString)
 
             loadPath = prevLoadPath
 
             if nbrErrorHapppened > 4:
-                tmp_string = str(nbrErrorHapppened) + " errors have occured, aborting run. Something is wrong."
-                log.write(tmp_string)
-                print(tmp_string)
+                tmpString = str(nbrErrorHapppened) + " errors have occured, aborting run. Something is wrong."
+                log.write(tmpString)
+                print(tmpString)
                 break
 
-            tmp_string = "Using model from previous run instead located at: " + loadPath + "\n"
-            log.write(tmp_string)
-            print(tmp_string)
+            tmpString = "Using model from previous run instead located at: " + loadPath + "\n"
+            log.write(tmpString)
+            print(tmpString)
         posSeed = str(np.random.randint(0,623*1000))
+
     log.flush()
 
-timeTaken = round((time.time() - startTime)/3600, 2)
+timeTaken = datetime.strptime(datetime.now().strftime(format), format) - datetime.strptime(startTime, format)
+
 
 if not errorHappened:
-    tmp_string = "\n\nRun finished successfully at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + " with total time in hours of: " + str(timeTaken) + "."
+    tmpString = "\n\nRun finished successfully at " + str(datetime.now().strftime(format)) + " with total time of: " + str(timeTaken) + "."
 else:
-    tmp_string = "\n\n<<WARNING>>: Run finished at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + " with an error occuring."
-log.write(tmp_string)
-print(tmp_string + " Please see the file '" + logName + "' for more information.")
+    tmpString = "\n\n<<WARNING>>: Run finished at " + str(datetime.now().strftime(format)) + " with an error occuring."
+log.write(tmpString)
+print(tmpString + " Please see the file '" + logName + "' for more information.")
 
 log.close()
