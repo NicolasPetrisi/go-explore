@@ -58,7 +58,7 @@ compress_kwargs = {'compresslevel': 1}
 MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
-CONVERGENCE_THRESHOLD_STD = 0.1 # The std value to be below to perform an early stopping
+TEST_EPISODES = 100
 CONVERGENCE_THRESHOLD_SUC = 0.9 # The success rate for return and policy exploration needed for early stopping.
 
 CHECKPOINT_ABBREVIATIONS = {
@@ -292,8 +292,8 @@ class CheckpointTracker:
         return True
 
     def has_converged(self, test_mode):
-        """Check if the network has converged according to the CONVERGENCE_THRESHOLD_STD and CONVERGENCE_THRESHOLD_SUC.
-        If test_mode is True, convergence is based on the standard deviation of the trajectory lengths coming below CONVERGENCE_THRESHOLD_STD.
+        """Check if the network has converged according to the TEST_EPISODES and CONVERGENCE_THRESHOLD_SUC.
+        If test_mode is True, convergence is based on the number of episodes completed, Note that it will run one cycle after the desired number are reached.
         If test_mode is False, convergence is based on return and policy-exploration success rate being above CONVERGENCE_THRESHOLD_SUC.
 
         Args:
@@ -302,23 +302,19 @@ class CheckpointTracker:
         Returns:
             bool: If it has converged.
         """
-        conv_factor = self.expl.trajectory_gatherer.std
+        gatherer = self.expl.trajectory_gatherer
+        epsiodes = gatherer.nb_of_episodes
         #FN, this is -1 untill at least trajectory_gatherer.log_window_size episodes have been reported in trajectory_gatherer.
-        if conv_factor >= 0:
-            if test_mode:
-                if  conv_factor < CONVERGENCE_THRESHOLD_STD:
+        if test_mode:
+            if  epsiodes >= TEST_EPISODES:
+                return True
+        elif epsiodes >= gatherer.log_window_size:
+            if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
+                return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
+                exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
+                
+                if return_success_rate > CONVERGENCE_THRESHOLD_SUC and exploration_success_rate > CONVERGENCE_THRESHOLD_SUC:
                     return True
-            else:
-                gatherer = self.expl.trajectory_gatherer
-                # REMOVE print("ret goals chosen: ", gatherer.nb_return_goals_chosen )
-                # REMOVE print("expl goals chosen: ", gatherer.nb_policy_exploration_goal_chosen)
-                if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
-                    return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
-                    exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
-                    
-                    # REMOVE print("return_success_rate: " + str(return_success_rate) + "exploration_success_rate: " + str(exploration_success_rate))
-                    if return_success_rate > CONVERGENCE_THRESHOLD_SUC and exploration_success_rate > CONVERGENCE_THRESHOLD_SUC:
-                        return True
         
         return False
 
