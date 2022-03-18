@@ -142,7 +142,7 @@ class MaxScoreCell(AbstractWeight):
         """Used to filter out unwanted cells by multiplying the weight with 0 or 1.
         """
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
-        if cell_key._done:
+        if cell_key._done and not self.test_mode:
             return 0
         else:
             return 1
