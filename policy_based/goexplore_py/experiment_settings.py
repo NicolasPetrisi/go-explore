@@ -1855,7 +1855,7 @@ def parse_arguments():
                         type=bool, default=DefaultArg(False),
                         help='Set this to True if a vidoe for every single episode is desired. Not recommended \
                             for longer runs. If false then a video every 2^N (1, 2, 4, 8, 16...) episode will be created up to every\
-                            1000th episode.')
+                            500th episode.')
     parser.add_argument('--early_stopping', dest='early_stopping',
                         type=bool, default=DefaultArg(True),
                         help='Set to True to enable early stopping.')

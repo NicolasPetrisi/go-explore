@@ -918,8 +918,8 @@ class VideoWriter(MyWrapper):
         if self.video_all_ep:
             return True
 
-        if 2**self.video_counter > 1000:
-            return ep % 1000 == 0
+        if 2**self.video_counter > 500:
+            return ep % 500 == 0
         elif ep >= 2**self.video_counter:
             self.video_counter += 1
             return True
