@@ -40,7 +40,7 @@ else
     MaxSteps=""
 fi
 
-
+# Level Seed
 if [ $5 != '-' ];
 then
     LevelSeed="--level_seed $5"
@@ -48,8 +48,21 @@ else
     LevelSeed=""
 fi
 
-# Default argument in bash, becomes the fith argument if it exists, 0 otherwise 
-PosSeed="--pos_seed ${6:-0}"
+# Position Seed
+if [ $6 != '-' ];
+then
+    PosSeed="--pos_seed $6"
+else
+    PosSeed=""
+fi
+
+# Networking Test
+if [ $7 = 'True' ];
+then
+    TestNetwork="--freeze_network --test_mode $7"
+else
+    TestNetwork=""
+fi
 
 #Load="--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
 # The game is run with both sticky actions and noops. Also, for Montezuma's Revenge, the episode ends on death.
@@ -82,6 +95,6 @@ CELL_REPRESENTATION_OPTIONS="--cell_representation generic" #TODO change this, s
 EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 0.1 --delay 0"
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory --final_goal_or_sub_goal final_goal"
-TRAINING_OPTIONS="--goal_rep raw --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil --max_compute_steps 12000000000" #"--goal_rep onehot_r24 should probally be --goal_rep onehot
-MISC_OPTIONS="--low_prob_traj_tresh 0.01 --start_method fork --log_info INFO --log_files __main__ ${Load} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed}"
+TRAINING_OPTIONS="--goal_rep raw --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil"
+MISC_OPTIONS="--low_prob_traj_tresh 0.01 --start_method fork --log_info INFO --log_files __main__ ${Load} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

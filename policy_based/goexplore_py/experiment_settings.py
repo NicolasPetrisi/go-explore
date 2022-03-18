@@ -1845,12 +1845,12 @@ def parse_arguments():
     # FN, These are arguments which we have added.
     parser.add_argument('--level_seed', dest='level_seed',
                         type=int, default=DefaultArg(1),
-                        help='What game level to run, max is 2^31 - 1. If 0 is put, all workers will have different levels but share archive')
+                        help='What game level to run, max is 2^31 - 1. If 0 is put, all workers will have different levels but share archive.')
     parser.add_argument('--pos_seed', dest='pos_seed',
                         type=int, default=DefaultArg(0),
                         help='What postion to start the agent at, 0 is for the standard position, -1 a random potion on every reset \
                             and otherwise should be a random int specifiying the seed for start postion \
-                            that is the same through the ENTIRE experiment')
+                            that is the same through the ENTIRE experiment.')
     parser.add_argument('--video_all_ep', dest='video_all_ep',
                         type=bool, default=DefaultArg(False),
                         help='Set this to True if a vidoe for every single episode is desired. Not recommended \
@@ -1859,6 +1859,9 @@ def parse_arguments():
     parser.add_argument('--early_stopping', dest='early_stopping',
                         type=bool, default=DefaultArg(True),
                         help='Set to True to enable early stopping.')
+    parser.add_argument('--test_mode', dest='test_mode',
+                        type=bool, default=DefaultArg(False),
+                        help='If the network is to be tested (True) or trained (False).')
 
 
 
@@ -1878,7 +1881,6 @@ def parse_arguments():
     safe_set_argument(args, 'l2_coef', DefaultArg(1e-7))
     safe_set_argument(args, 'lam', DefaultArg(.95))
     safe_set_argument(args, 'clip_range', DefaultArg(0.1))
-    safe_set_argument(args, 'test_mode', DefaultArg(False)) #TODO Changed here
 
     safe_set_argument(args, 'seed_low', DefaultArg(None))
     safe_set_argument(args, 'seed_high', DefaultArg(None))

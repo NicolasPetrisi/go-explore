@@ -3,29 +3,40 @@ import time
 from datetime import datetime
 import numpy as np
 
-# Set any unwished arguments (except gameName) to "-" if they are not desired.
+# Set any unwished arguments (except gameName) to "-" if they are not desired, they will get default arguments in Go-Explore.
+# gameName must be defined.
 #####################
-gameName = "maze"
-loadPath = "-"
-stepsPerLevel = "2000000"
-maxTime = 65.0
-iterations = 5
-#levelSeed = str(np.random.randint(1,2147483648)) # This will give a random maze amongst the possible seeds.
-levelSeed = "214"
-posSeed = str(np.random.randint(0,623*1000)) # This will give a random position with close to equal chance for any position.
+gameName           : str    = "maze"
+loadPath           : str    = "-"
+stepsPerIteration  : str    = "2000000"
+levelSeed          : str    = "214"
+testMode           : str    = "False"
+posSeed            : str    = str(np.random.randint(0,623*1000)) # str(np.random.randint(0,623*1000)) <- This will give a random position with close to equal chance for any position.
+maxTime            : str    = "65.0"
+iterations         : int    = 1
 #####################
 
+#gameName           : What game to run.
+#loadPath           : If a model is to be loaded initially, specify path here.
+#stepsPerIteration  : The maximum steps per iteration.
+#levelSeed          : Specify which level seed to run. str(np.random.randint(1,2147483648)) will give a random level amongst all possible seeds.
+#testMode           : If the network should be freezed and tested or not.
+#posSeed            : The seed to use when selecting starting position. str(np.random.randint(0,623*1000)) will give a random position with close to equal chance for any position.
+#maxTime            : The maximum number of hours the program should run in total. Will be divided equally between iterations.
+#iterations         : How many different iterations of the program should be run.
 
-# Set this to the path to your 'temp' folder where the models are stored.
+
+# Set this to the path to your 'temp' folder where the models from Go-Explore are stored.
 # In ubuntu WSL it would probably be '/home/USERNAME/temp/'
-# If 'levels' it set to 1, this variable will not be used and does not have to be changed.
+# If 'iterations' is set to 1, this variable will not be used and does not have to be changed.
 tempPath = '/home/nicolas/temp/' 
 
-hoursPerIteration = str(maxTime/iterations)
+
+hoursPerIteration = str(float(maxTime)/iterations)
 
 
-# This is used as a check such that the path above 'tempPath' is correct.
-if iterations != 1:
+# This is used as a check such that the path in 'tempPath' exists.
+if iterations > 1:
     os.listdir(tempPath)
 
 
@@ -43,6 +54,7 @@ log.write("Starting program_runner for: \ngameName=" + gameName +
     "\ndateAndTime=" + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")) + 
     "\nlevelSeed="+ levelSeed +
     "\nposSeed=" + posSeed +
+    "\ntestMode=" + testMode + 
     "\n\n")
 
 startTime = time.time()
@@ -53,7 +65,7 @@ nbrErrorHapppened = 0
 
 print("Starting the first run out of " + str(iterations) + " runs at " + str(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
 
-if iterations != 1:
+if iterations > 1:
     list = os.listdir(tempPath)
     list.sort()
 
@@ -72,7 +84,7 @@ for i in range(iterations):
     print(tmp_string)
     log.flush()
 
-    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerIteration + " " + stepsPerLevel + " " + levelSeed + " " + posSeed)
+    os.system("sh generic_atari_game.sh " + gameName + " " + loadPath + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode)
     
     # Load the next run if this wasn't the last.
     if i < iterations - 1:

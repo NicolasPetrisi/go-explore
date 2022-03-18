@@ -302,8 +302,8 @@ class CheckpointTracker:
         Returns:
             bool: If it has converged.
         """
-        conv_factor = self.expl.trajectory_gatherer.std
         #FN, this is -1 untill at least trajectory_gatherer.log_window_size episodes have been reported in trajectory_gatherer.
+        conv_factor = self.expl.trajectory_gatherer.std
         if conv_factor >= 0:
             if test_mode:
                 if  conv_factor < CONVERGENCE_THRESHOLD_STD:
@@ -389,7 +389,6 @@ def _run(**kwargs):
         checkpoint_tracker.log_warmup = log_after_warm_up
         local_logger.info('Performing warm up cycles... done')
     
-
     start_coords = (-1, -1)
     optimal_length = -1
 
