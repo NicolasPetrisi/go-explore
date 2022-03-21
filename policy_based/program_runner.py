@@ -14,7 +14,7 @@ minimumIterations  : int    = 5
 levelSeed          : str    = "214"
 posSeed            : str    = str(np.random.randint(0,623*1000))
 testMode           : str    = "False"
-endTime            : str    = "2022-03-21 09:00:00"
+endTime            : str    = "0.1"
 tempPath           : str    = '/home/nicolas/temp/'
 loadPath           : str    = "-"
 stepsPerIteration  : str    = "20000000"
@@ -38,14 +38,15 @@ list.sort()
 format = "%Y-%m-%d %H:%M:%S"
 startTime = datetime.now().strftime(format)
 
-if datetime.strptime(endTime, format) < datetime.strptime(startTime, format):
-    raise Exception("End time can not be set in the past. Must be forward in time.")
 
 
 try:
     maxHours = float(endTime)
     endTime = (datetime.now() + timedelta(seconds=int(float(endTime)*3600))).strftime(format)
 except:
+    if datetime.strptime(endTime, format) < datetime.strptime(startTime, format):
+        raise Exception("End time can not be set in the past. Must be forward in time.")
+        
     maxTime = datetime.strptime(endTime, format) - datetime.strptime(startTime, format)
     maxHours = float(maxTime.total_seconds()/3600)
 
