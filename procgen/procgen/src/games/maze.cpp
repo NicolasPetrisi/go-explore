@@ -16,7 +16,7 @@ class MazeGame : public BasicAbstractGame {
 
     MazeGame()
         : BasicAbstractGame(NAME) {
-        timeout = 5000;
+        timeout = 1000;
         random_agent_start = false;
         has_useful_vel_info = false;
         out_of_bounds_object = WALL_OBJ;
