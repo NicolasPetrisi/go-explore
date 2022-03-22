@@ -79,7 +79,8 @@ prevLoadPath = ""
 errorsHapppened = []
 minTimeAllowed = 0.1
 
-print("Starting the first run out of " + str(minimumIterations) + " runs at " + str(datetime.now().strftime(format)))    
+print("Starting the first run out of " + str(minimumIterations) + " runs at " + str(datetime.now().strftime(format)))   
+print("Expected to be finished at", str(endTime)) 
 
 while datetime.now() < datetime.strptime(endTime, format):
 
