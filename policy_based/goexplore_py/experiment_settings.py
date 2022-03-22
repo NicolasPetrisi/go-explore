@@ -1671,7 +1671,7 @@ def parse_arguments():
                         help='The number of environments to run in parallel with Horovod.')
     parser.add_argument('--clip_rewards', default=DefaultArg(False), dest='clip_rewards', action='store_true',
                         help='Whether to perform reward clipping.')
-    parser.add_argument('--gamma', type=float, default=DefaultArg(0.999),
+    parser.add_argument('--gamma', type=float, default=DefaultArg(0.99),
                         help='The discount factor.')
     parser.add_argument('--freeze_network', default=DefaultArg(False), dest='freeze_network', action='store_true',
                         help='Do not train the network (i.e. the policy and value function).')
@@ -1741,7 +1741,7 @@ def parse_arguments():
                         type=int, default=DefaultArg(0),
                         help='Whether to disable logging (for debugging purposes)')
     parser.add_argument('--learning_rate', dest='learning_rate',
-                        type=float, default=DefaultArg(1e-4),
+                        type=float, default=DefaultArg(2.5e-4),
                         help='Sets the learning rate')
     parser.add_argument('--cell_representation', dest='cell_representation_name',
                         type=str, default=DefaultArg('level_room_keys_x_y'),
@@ -1835,7 +1835,7 @@ def parse_arguments():
                         type=int, default=DefaultArg(0),
                         help='Whether to skew the cell-selection probability towards higher scoring cells')
     parser.add_argument('--log_info', dest='log_info',
-                        type=str, default=DefaultArg(''),
+                        type=str, default=DefaultArg('INFO'),
                         help='Whether to enable debug output and at what level. Possible values are: CRITICAL, ERROR'
                              'WARNING, INFO, DEBUG, NOTSET.')
     parser.add_argument('--log_files', dest='log_files',
