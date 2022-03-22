@@ -97,5 +97,5 @@ EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --rand
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory --final_goal_or_sub_goal final_goal"
 TRAINING_OPTIONS="--goal_rep raw --gamma 0.99 --learning_rate=2.5e-4 --no_exploration_gradients --sil=sil"
-MISC_OPTIONS="--low_prob_traj_tresh 0.01 --start_method fork --log_info INFO --log_files __main__ ${Load} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
+MISC_OPTIONS="--video_all_ep --early_stopping --low_prob_traj_tresh 0.01 --start_method fork --log_info INFO --log_files __main__ ${Load} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

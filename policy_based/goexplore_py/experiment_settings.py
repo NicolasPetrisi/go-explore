@@ -1852,15 +1852,15 @@ def parse_arguments():
                             and otherwise should be a random int specifiying the seed for start postion \
                             that is the same through the ENTIRE experiment.')
     parser.add_argument('--video_all_ep', dest='video_all_ep',
-                        type=bool, default=DefaultArg(False),
+                        default=DefaultArg(False), action='store_true',
                         help='Set this to True if a vidoe for every single episode is desired. Not recommended \
                             for longer runs. If false then a video every 2^N (1, 2, 4, 8, 16...) episode will be created up to every\
                             500th episode.')
     parser.add_argument('--early_stopping', dest='early_stopping',
-                        type=bool, default=DefaultArg(True),
+                        default=DefaultArg(False), action='store_true',
                         help='Set to True to enable early stopping.')
     parser.add_argument('--test_mode', dest='test_mode',
-                        type=bool, default=DefaultArg(False),
+                        default=DefaultArg(False), action='store_true',
                         help='If the network is to be tested (True) or trained (False).')
 
 

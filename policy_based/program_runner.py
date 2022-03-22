@@ -10,11 +10,11 @@ from signal import SIGINT, siginterrupt
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 5
-levelSeed          : str    = "214"
-posSeed            : str    = str(np.random.randint(0,623*1000))
+minimumIterations  : int    = 1
+levelSeed          : str    = "92"
+posSeed            : str    = "0"
 testMode           : str    = "False"
-endTime            : str    = "0.1"
+endTime            : str    = "3.0"
 tempPath           : str    = '/home/nicolas/temp/'
 loadPath           : str    = "-"
 stepsPerIteration  : str    = "20000000"
@@ -35,6 +35,9 @@ numberOfCores      : str    = "4"
 list = os.listdir(tempPath)
 list.sort()
 
+if loadPath != "-":
+    loadPath = tempPath + loadPath
+
 format = "%Y-%m-%d %H:%M:%S"
 startTime = datetime.now().strftime(format)
 
@@ -46,7 +49,7 @@ try:
 except:
     if datetime.strptime(endTime, format) < datetime.strptime(startTime, format):
         raise Exception("End time can not be set in the past. Must be forward in time.")
-        
+
     maxTime = datetime.strptime(endTime, format) - datetime.strptime(startTime, format)
     maxHours = float(maxTime.total_seconds()/3600)
 
@@ -74,7 +77,7 @@ log.write("Starting program_runner for: \ngameName=" + gameName +
 
 prevLoadPath = ""
 errorsHapppened = []
-minTimeAllowed = 0.05
+minTimeAllowed = 0.1
 
 print("Starting the first run out of " + str(minimumIterations) + " runs at " + str(datetime.now().strftime(format)))    
 
@@ -100,7 +103,7 @@ while datetime.now() < datetime.strptime(endTime, format):
 
     
     if returnValue != 0:
-        # If we got keyboard interrupt, then break the loop to exit the program.
+        # If we got keyboard interrupt; break the loop to exit the program.
         if returnValue == SIGINT:
             tmpString = "\n<<INTERRUPT>>: Got keyboard interrupt, stopping program.\n\n"
             errorsHapppened.append("Error code [" + str(returnValue) + "]")
