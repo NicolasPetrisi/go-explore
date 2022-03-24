@@ -623,7 +623,7 @@ def _run(**kwargs):
 
     # FN, only one thread should make plots.
     if hvd.rank() == 0:
-        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean"]
+        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc"]
         x_value = "frames"
         for y_value in y_values:
             make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
