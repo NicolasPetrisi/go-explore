@@ -7,54 +7,68 @@ Game=$1
 
 if [ $2 != '-' ];
 then
-    Load="--load_path $2"
+    ModelLoad="--load_path $2"
 else
-    Load=""
+    ModelLoad=""
+fi
+
+if [ $3 != '-' ];
+then
+    ArchLoad="--expl_state $3"
+else
+    ArchLoad=""
 fi
 
 # Max Hours
-if [ $3 != '-' ];
+if [ $4 != '-' ];
 then
-    MaxTime="--mh $3"
+    MaxTime="--mh $4"
 else
     MaxTime=""
 fi
 
 # Max Computational Steps
-if [ $4 != '-' ];
+if [ $5 != '-' ];
 then
-    MaxSteps="--mcs $4"
+    MaxSteps="--mcs $5"
 else
     MaxSteps=""
 fi
 
 # Level Seed
-if [ $5 != '-' ];
+if [ $6 != '-' ];
 then
-    LevelSeed="--level_seed $5"
+    LevelSeed="--level_seed $6"
 else
     LevelSeed=""
 fi
 
 # Position Seed
-if [ $6 != '-' ];
+if [ $7 != '-' ];
 then
-    PosSeed="--pos_seed $6"
+    PosSeed="--pos_seed $7"
 else
     PosSeed=""
 fi
 
 # Networking Test
-if [ $7 = 'True' ];
+if [ $8 = 'True' ];
 then
-    TestNetwork="--freeze_network --test_mode $7"
+    TestNetwork="--freeze_network --test_mode"
 else
     TestNetwork=""
 fi
 
+if [ $9 = 'True' ];
+then
+    video_all_ep="--video_all_ep"
+else
+    video_all_ep=""
+fi
+
 
 # Full experiment: 16
-NB_MPI_WORKERS=$8
+NB_MPI_WORKERS=${10}
 # Full experiment: 16
 NB_ENVS_PER_WORKER=2
 
@@ -65,7 +79,7 @@ NB_ENVS_PER_WORKER=2
 CHECKPOINT=50000
 
 
-#Load="--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
+#ModelLoad="--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
 # The game is run with both sticky actions and noops. Also, for Montezuma's Revenge, the episode ends on death.
 GAME_OPTIONS="--game generic_${Game} --end_on_death"
 
@@ -97,5 +111,5 @@ EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --rand
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory --final_goal_or_sub_goal sub_goal"
 TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=sil"
-MISC_OPTIONS="--early_stopping --low_prob_traj_tresh 0.01 --log_files __main__ ${Load} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
+MISC_OPTIONS="--early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

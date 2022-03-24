@@ -1826,7 +1826,7 @@ def parse_arguments():
                         type=float, default=DefaultArg(20.0),
                         help='The reward obtained for reaching the final goal (as opposed to a sub-goal).')
     parser.add_argument('--low_prob_traj_tresh', dest='low_prob_traj_tresh',
-                        type=float, default=DefaultArg(0.00001),
+                        type=float, default=DefaultArg(0.01),
                         help='The probability below which trajectories will be written to disk.')
     parser.add_argument('--reset_on_update', dest='reset_on_update',
                         type=int, default=DefaultArg(0),
