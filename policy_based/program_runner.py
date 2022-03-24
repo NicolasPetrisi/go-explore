@@ -14,11 +14,11 @@ minimumIterations  : int    = 1
 levelSeed          : str    = "92"
 posSeed            : str    = "0"
 testMode           : str    = "False"
-endTime            : str    = "0.1"
-tempPath           : str    = '/home/nicolas/temp/'
+endTime            : str    = "2022-03-25 14:00:00"
+tempPath           : str    = '/home/nicolasfredrik/temp/'
 loadPath           : str    = "-"
 stepsPerIteration  : str    = "20000000"
-numberOfCores      : str    = "4"
+numberOfCores      : str    = "8"
 #####################
 
 #gameName           : What game to run.

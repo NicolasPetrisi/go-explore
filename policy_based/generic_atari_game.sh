@@ -95,7 +95,7 @@ CELL_REPRESENTATION_OPTIONS="--cell_representation generic" #TODO change this, s
 # When the the final cell is reached, there is a random_exp_prob (0.5) chance that we explore by taking random actions, rather than by sampling from the policy.
 EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 0.1 --delay 0"
 
-CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory --final_goal_or_sub_goal final_goal"
+CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory --final_goal_or_sub_goal sub_goal"
 TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=sil"
-MISC_OPTIONS="--video_all_ep --early_stopping --low_prob_traj_tresh 0.01 --log_files __main__ ${Load} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
+MISC_OPTIONS="--early_stopping --low_prob_traj_tresh 0.01 --log_files __main__ ${Load} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}
