@@ -387,7 +387,7 @@ def _run(**kwargs):
     start_coords = (-1, -1)
     optimal_length = -1
 
-    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "cum_suc"]
+    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
     plot_x_value = "frames"
 
     while checkpoint_tracker.should_continue(kwargs['test_mode']):
@@ -470,7 +470,6 @@ def _run(**kwargs):
                     suc_rates.append(success_rate)
                     if success_rate > 1:
                         print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
-                print(info.nb_reached, info.nb_chosen, success_rate)
                 c_return_succes_rate += success_rate 
 
             if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:

@@ -1,21 +1,19 @@
 Starting program_runner for: 
 gameName=maze
-loadPath=-
-hoursPerLevel=12.94
-levels=5
-startDate=2022-03-18 16:17:29
-endDate=2022-03-21 09:00:00
-levelSeed=214
-posSeed=544422
+loadPathModel=-
+loadPathArch=-
+hoursPerLevel=0.1
+levels=1
+startDate=2022-03-25 15:57:03
+endDate=2022-03-25 16:03:03
+levelSeed=92
+posSeed=0
 testMode=False
 
 ----------
-64.71 hours remaining. Starting new run for loadPath=- of 12.94 hours.
-levelSeed=214
-posSeed=544422
+0.1 hours remaining. Starting new run for loadPathModel=- and loadPathArch=- of 0.1 hours.
+levelSeed=92
+posSeed=0
 
-<<INTERRUPT>>: Got keyboard interrupt, stopping program.
 
-<<WARNING>> ['Error code [2]'] errors have occured, aborting run.
-
-<<WARNING>>: Run finished at 2022-03-18 16:17:40 with an error occuring.
+Run finished successfully at 2022-03-25 16:03:22 with total time of: 0:06:19.

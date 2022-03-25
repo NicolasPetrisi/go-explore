@@ -11,11 +11,11 @@ from signal import SIGINT, siginterrupt
 #####################
 gameName           : str    = "maze"
 minimumIterations  : int    = 1
-levelSeed          : str    = "52"
+levelSeed          : str    = "92"
 posSeed            : str    = "0"
 testMode           : str    = "False"
 endTime            : str    = "0.1"
-tempPath           : str    = '/home/nicolas/downloads/'
+tempPath           : str    = '/home/nicolas/temp/'
 loadPathModel      : str    = "-"
 loadPathArch       : str    = "-"
 stepsPerIteration  : str    = "20000000"
@@ -26,7 +26,7 @@ videoAllEpisodes   : str    = "False"
 #gameName           : What game to run.
 #minimumIterations  : How many different iterations of the program should at least be run. If given time due to early stopping, more iterations could occure.
 #levelSeed          : Specify which level seed to run. str(np.random.randint(1,2147483648)) will give a random level amongst all possible seeds.
-#posSeed            : The seed to use when selecting starting position. str(np.random.randint(0,623*1000)) will give a random position with close to equal chance for any position.
+#posSeed            : The seed to use when selecting starting position. 0 will always be bottom left corner. str(np.random.randint(0,623*1000)) will give a random position with close to equal chance for any position.
 #testMode           : If the network should be freezed and tested or not.
 #endTime            : At what time and date the run should be finished (YYYY-mm-dd HH:MM:SS). Alternativelly set to number of hours as a float (X). The time will be divided equally between iterations.
 #tempPath           : Set this to the path to your 'temp' folder where the models from Go-Explore are stored. In ubuntu WSL it would probably be '/home/USERNAME/temp/' 
