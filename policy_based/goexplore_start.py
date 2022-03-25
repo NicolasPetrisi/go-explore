@@ -461,7 +461,7 @@ def _run(**kwargs):
                 cum_success_rate += success_rate
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
-            c_succes_rate = 0 # The cumalite
+            c_return_succes_rate = 0
             suc_rates = []
             for info in expl.archive.archive.values():
                 success_rate = 0
@@ -471,8 +471,7 @@ def _run(**kwargs):
                     if success_rate > 1:
                         print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
                 print(info.nb_reached, info.nb_chosen, success_rate)
-                c_succes_rate += success_rate 
-            mean_suc = sum(suc_rates) / len(suc_rates)
+                c_return_succes_rate += success_rate 
 
             if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
 
@@ -516,6 +515,7 @@ def _run(**kwargs):
 
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
             logger.write('ret_suc', return_success_rate)                # FN, how often the agent successfully returned to the chosen cell.
+            logger.write('ret_cum_suc', c_return_succes_rate)           # FN, The cummulative return success rate of all cells chosen at least one.
             logger.write('exp_suc', exploration_success_rate)           # FN, how often the agent successfully reached the cell chosen for exploration.
             logger.write('opt_len', optimal_length)                     # FN, the shortest possible number of steps to the goal.
             logger.write('dist_from_opt', dist_from_opt_traj)           # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
@@ -526,7 +526,6 @@ def _run(**kwargs):
             logger.write('ep', gatherer.nb_of_episodes)                 # FN, the current episode number.
             logger.write('cells', len(expl.archive.archive))            # FN, the number of cells found so far.
             logger.write('arch_suc', mean_success_rate)                 # FN, (don't know yet)
-            logger.write('cum_suc', c_succes_rate)                      # FN, (don't know yet)
 
 
 
