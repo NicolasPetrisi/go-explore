@@ -124,7 +124,7 @@ class MaxScoreCell(AbstractWeight):
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
 
         # FN, If there has been no score found so far or in training mode, choose a cell based on the count visit instead of just a random.
-        if not self.test_mode or self.max_score == 0:
+        if self.max_score == 0:
             if self.attr in special_attributes[cell_key]:
                 value = special_attributes[cell_key][self.attr]
             else:
@@ -142,10 +142,12 @@ class MaxScoreCell(AbstractWeight):
         """Used to filter out unwanted cells by multiplying the weight with 0 or 1.
         """
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
-        if cell_key._done and not self.test_mode:
-            return 0
-        else:
-            return 1
+        return 1
+
+        #if cell_key._done and not self.test_mode:
+        #    return 0
+        #else:
+        #    return 1
 
     def __repr__(self):
         return f'MaxScoreCell()'
