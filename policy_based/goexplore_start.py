@@ -387,6 +387,9 @@ def _run(**kwargs):
     start_coords = (-1, -1)
     optimal_length = -1
 
+    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "cum_suc"]
+    plot_x_value = "frames"
+
     while checkpoint_tracker.should_continue(kwargs['test_mode']):
         # Run one iteration
         if hvd.rank() == 0:
@@ -564,10 +567,8 @@ def _run(**kwargs):
 
 
             if checkpoint_tracker.n_iters % 10 == 0:
-                y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "cum_suc"]
-                x_value = "frames"
-                for y_value in y_values:
-                    make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
+                for y_value in plot_y_values:
+                    make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'])
 
             traj_manager = expl.archive.cell_trajectory_manager
             new_trajectories = sorted(traj_manager.new_trajectories,
@@ -644,10 +645,8 @@ def _run(**kwargs):
 
     # FN, only one thread should make plots.
     if hvd.rank() == 0:
-        y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc"]
-        x_value = "frames"
-        for y_value in y_values:
-            make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
+        for y_value in plot_y_values:
+            make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'])
 
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
