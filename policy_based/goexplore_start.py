@@ -458,6 +458,18 @@ def _run(**kwargs):
                 cum_success_rate += success_rate
             mean_success_rate = cum_success_rate / len(expl.archive.archive)
 
+            c_succes_rate = 0 # The cumalite
+            suc_rates = []
+            for info in expl.archive.archive.values():
+                success_rate = 0
+                if info.nb_chosen > 0:
+                    success_rate = info.nb_reached / info.nb_chosen
+                    suc_rates.append(success_rate)
+                    if success_rate > 1:
+                        print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
+                print(info.nb_reached, info.nb_chosen, success_rate)
+                c_succes_rate += success_rate 
+            mean_suc = sum(suc_rates) / len(suc_rates)
 
             if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
 
@@ -511,7 +523,9 @@ def _run(**kwargs):
             logger.write('ep', gatherer.nb_of_episodes)                 # FN, the current episode number.
             logger.write('cells', len(expl.archive.archive))            # FN, the number of cells found so far.
             logger.write('arch_suc', mean_success_rate)                 # FN, (don't know yet)
-            logger.write('cum_suc', cum_success_rate)                   # FN, (don't know yet)
+            logger.write('cum_suc', c_succes_rate)                      # FN, (don't know yet)
+
+
 
             if len(gatherer.loss_values) > 0:
                 loss_values = np.mean(gatherer.loss_values, axis=0)
@@ -547,6 +561,13 @@ def _run(**kwargs):
             logger.write('cells_found_rand', cells_found_rand)
             logger.write('cells_found_policy', cells_found_policy)
             logger.flush()
+
+
+            if checkpoint_tracker.n_iters % 10 == 0:
+                y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "cum_suc"]
+                x_value = "frames"
+                for y_value in y_values:
+                    make_plot(log_par.base_path, x_value, y_value, kwargs['level_seed'])
 
             traj_manager = expl.archive.cell_trajectory_manager
             new_trajectories = sorted(traj_manager.new_trajectories,
