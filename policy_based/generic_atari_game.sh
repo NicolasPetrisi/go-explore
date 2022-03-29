@@ -88,8 +88,8 @@ GAME_OPTIONS="--game generic_${Game} --end_on_death"
 REWARD_OPTIONS="--game_reward_factor 1 --goal_reward_factor 1 --clip_game_reward 1 --rew_clip_range=-2,2 --final_goal_reward 3"
 
 # Cell selection is relative to: 1 / (1 + 0.5*number_of_actions_taken_in_cell).
-#CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=max_score_cell,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
-CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
+CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=max_score_cell,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
+#CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
 #CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=target_cell,x,20,y,18,done,0 --base_weight 0"
 
 # When the agent takes too long to reach the next cell, its intropy increases according to (inc_ent_fac*steps)^ent_inc_power.
