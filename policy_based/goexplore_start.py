@@ -59,7 +59,7 @@ MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
 TEST_EPISODES = 100
-CONVERGENCE_THRESHOLD_SUC = 0.9 # The success rate for return and policy exploration needed for early stopping.
+CONVERGENCE_THRESHOLD_SUC = 0.98 # The success rate for return and policy exploration needed for early stopping.
 
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
@@ -233,7 +233,7 @@ class CheckpointTracker:
             self.will_log_warmup = True
             self.log_warmup = False
 
-    def calc_write_checkpoint(self, test_mode):
+    def calc_write_checkpoint(self, test_mode, expl):
         if self.log_par.checkpoint_compute is not None:
             passed_compute_thresh = (self.old_compute // self.log_par.checkpoint_compute !=
                                      self.expl.frames_compute // self.log_par.checkpoint_compute)
@@ -249,7 +249,7 @@ class CheckpointTracker:
         else:
             first_it = False
         if self.log_par.checkpoint_first_iteration:
-            last_it = not self.should_continue(test_mode)
+            last_it = not self.should_continue(test_mode, expl)
         else:
             last_it = False
         if self.log_par.checkpoint_time is not None:
@@ -267,7 +267,7 @@ class CheckpointTracker:
     def should_write_checkpoint(self):
         return self._should_write_checkpoint
 
-    def should_continue(self, test_mode):
+    def should_continue(self, test_mode, expl):
         """If the program should stop or continue running another cycle.
 
         Args:
@@ -286,12 +286,14 @@ class CheckpointTracker:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
-        if self.early_stopping and self.has_converged(test_mode):
-            print("Performing early stopping since it's deemed that the agent has converged")
+        if self.early_stopping and self.has_converged(test_mode, expl):
+            print("########################################################################\n\
+Performing early stopping since it's deemed that the agent has converged\n\
+########################################################################")
             return False
         return True
 
-    def has_converged(self, test_mode):
+    def has_converged(self, test_mode, expl):
         """Check if the network has converged according to the TEST_EPISODES and CONVERGENCE_THRESHOLD_SUC.
         If test_mode is True, convergence is based on the number of episodes completed, Note that it will run one cycle after the desired number are reached.
         If test_mode is False, convergence is based on return and policy-exploration success rate being above CONVERGENCE_THRESHOLD_SUC.
@@ -303,16 +305,15 @@ class CheckpointTracker:
             bool: If it has converged.
         """
         gatherer = self.expl.trajectory_gatherer
-        epsiodes = gatherer.nb_of_episodes
+        episodes = gatherer.nb_of_episodes
         if test_mode:
-            if  epsiodes >= TEST_EPISODES:
+            if  episodes >= TEST_EPISODES:
                 return True
-        elif epsiodes >= gatherer.log_window_size:
-            if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
+        elif episodes >= gatherer.log_window_size:
+            if gatherer.nb_return_goals_chosen > 0 and expl.archive.max_score > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
-                exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
                 
-                if return_success_rate > CONVERGENCE_THRESHOLD_SUC and exploration_success_rate > CONVERGENCE_THRESHOLD_SUC:
+                if return_success_rate > CONVERGENCE_THRESHOLD_SUC:
                     return True
         
         return False
@@ -390,7 +391,7 @@ def _run(**kwargs):
     plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
     plot_x_value = "frames"
 
-    while checkpoint_tracker.should_continue(kwargs['test_mode']):
+    while checkpoint_tracker.should_continue(kwargs['test_mode'], expl):
         # Run one iteration
         if hvd.rank() == 0:
             local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}')
@@ -401,7 +402,7 @@ def _run(**kwargs):
 
         write_checkpoint = None
         if hvd.rank() == 0:
-            write_checkpoint = checkpoint_tracker.calc_write_checkpoint(kwargs['test_mode'])
+            write_checkpoint = checkpoint_tracker.calc_write_checkpoint(kwargs['test_mode'], expl)
         write_checkpoint = mpi.get_comm_world().bcast(write_checkpoint, root=0)
         checkpoint_tracker.set_should_write_checkpoint(write_checkpoint)
 
