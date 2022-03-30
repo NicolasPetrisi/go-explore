@@ -44,7 +44,7 @@ def main():
 
     files = []
 
-    for i in range(1, 5):
+    for i in range(1, len(sys.argv)):
         files.append(sys.argv[i])
 
     x_axis_label = "frames"
