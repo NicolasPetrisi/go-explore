@@ -60,6 +60,7 @@ ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
 TEST_EPISODES = 100
 CONVERGENCE_THRESHOLD_SUC = 0.98 # The success rate for return and policy exploration needed for early stopping.
+CONVERGENCE_THRESHOLD_STD = 0.2
 
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
@@ -313,7 +314,7 @@ Performing early stopping since it's deemed that the agent has converged\n\
             if gatherer.nb_return_goals_chosen > 0 and expl.archive.max_score > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
                 
-                if return_success_rate > CONVERGENCE_THRESHOLD_SUC:
+                if return_success_rate > CONVERGENCE_THRESHOLD_SUC and gatherer.std < CONVERGENCE_THRESHOLD_STD:
                     return True
         
         return False
