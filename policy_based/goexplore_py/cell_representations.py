@@ -181,6 +181,10 @@ class CellRepresentationFactory:
         self.grid_resolution = None
         self.grid_res_dict = None
         self.max_values = None
+        self.archive = None
+
+    def set_archive(self, archive):
+        self.archive = archive
 
     def __call__(self, env=None):
         """function that is called when a CellRepresentation is called as a function i.e. as cell_representation(self)
@@ -200,6 +204,9 @@ class CellRepresentationFactory:
                     value = (int(value / dimension.div))
                     setattr(cell_representation, dimension.attr, value)
 
+        if cell_representation in self.archive.cell_map:
+            cell_representation = self.archive.cell_map[cell_representation]
+        
         return cell_representation
 
     def set_grid_resolution(self, grid_resolution):

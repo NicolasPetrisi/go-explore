@@ -849,8 +849,8 @@ class VideoWriter(MyWrapper):
         else:
             text = "state: exploration (" + str(d[self.goal_conditioned_wrapper.goal_explorer.exploration_strategy]) + ")"
         f_out = cv2.putText(f_out, text, (20, 30), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
-        text = "level_seed: " + str(getattr(current_cell,'level_seed')) + " pos_seed: " + str(self.env.recursive_getattr('pos_seed'))
-        f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
+        #text = "level_seed: " + str(getattr(current_cell,'level_seed')) + " pos_seed: " + str(self.env.recursive_getattr('pos_seed'))
+        #f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
         f_out = cv2.putText(f_out, "ep: "+ str(self.local_ep), (20, 90), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
         if 'increase_entropy' in self.goal_conditioned_wrapper.info:
             text = "entropy: " + str(self.goal_conditioned_wrapper.info['increase_entropy'])

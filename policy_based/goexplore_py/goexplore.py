@@ -115,7 +115,7 @@ class Explore:
         # Send loaded information to sub-processes
         new_cell_trajectory_info = self.archive.cell_trajectory_manager.get_info_to_sync()
         new_archive_info = self.archive.get_info_to_sync()
-        new_archive_info = (self.archive.cell_id_to_key_dict, new_archive_info[1], new_archive_info[2], set())
+        new_archive_info = (self.archive.cell_id_to_key_dict, new_archive_info[1], new_archive_info[2], set(), new_archive_info[4])
         to_send = [(new_cell_trajectory_info, new_archive_info)]
         self.trajectory_gatherer.env.recursive_call_method('update_archive', (to_send,))
 

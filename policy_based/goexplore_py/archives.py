@@ -9,6 +9,7 @@
 import sys
 from collections import deque, defaultdict
 from typing import Any, Dict, Set, Optional, Tuple
+from goexplore_py.cell_representations import CellRepresentationBase
 import goexplore_py.data_classes as data_classes
 from goexplore_py.trajectory_manager import CellTrajectoryManager
 import horovod.tensorflow as hvd
@@ -29,6 +30,9 @@ class StochasticArchive:
         self.cell_trajectory_manager: CellTrajectoryManager = cell_trajectory_manager
         self.cell_id_to_key_dict: Dict[int, Any] = {-1: None}
         self.cells_reached_dict: Dict[Any, deque] = dict()
+        
+        # Micro to macro cell mapping
+        self.cell_map: Dict[CellRepresentationBase, CellRepresentationBase] = dict()
 
         # Convenience data
         # This information is necessary to make the archive run properly, but it can be calculated from the core data
@@ -46,17 +50,28 @@ class StochasticArchive:
         self.new_cells: Dict[Any, int] = dict()
 
     def get_state(self):
+        print("get state")
         for key in self.archive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
 
         cell_set = set(self.cell_id_to_key_dict.values())
+        i = 0
+        old_key = None
+        print(".............................")
         for key in self.archive:
             assert key in cell_set, 'key:' + str(key) + ' has no inverse id!'
-
+            if old_key is not None and i % 2 == 1:
+                self.cell_map[key] = old_key
+            else:
+                self.cell_map[key] = key
+                old_key = key
+            i += 1
+        print("...................")
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(),
                  'cell_id_to_key_dict': self.cell_id_to_key_dict,
                  'cells_reached_dict': self.cells_reached_dict,
+                 'cell_mapping': self.cell_map,
                  }
         return state
 
@@ -66,7 +81,10 @@ class StochasticArchive:
         self.cell_trajectory_manager.set_state(state['trajectory_manager_state'])
         self.cell_id_to_key_dict = state['cell_id_to_key_dict']
         self.cells_reached_dict = state['cells_reached_dict']
-
+        self.cell_map = state['cell_mapping']
+        print("loading...... cell mapping")
+        print(self.cell_map)
+        print("done loading cell mapp")
         # Derived attributes
         self.local_cell_counter = 0
         my_min_id = hvd.rank() * (sys.maxsize // hvd.size())
@@ -146,17 +164,21 @@ class StochasticArchive:
                 self.archive[cell_key].nb_reset += 1
 
     def get_info_to_sync(self) -> Tuple[Dict[int, Any], Dict[Any, data_classes.CellInfoStochastic],
-                                        Dict[Any, Any], Dict[Any, int]]:
+                                        Dict[Any, Any], Dict[Any, int], Dict[CellRepresentationBase, CellRepresentationBase]]:
         updated_cell_id_to_key_dict = {}
         updated_cell_info = {}
         for cell in self.updated_cells:
             updated_cell_id_to_key_dict[self.cell_key_to_id_dict[cell]] = cell
             updated_cell_info[cell] = self.archive[cell]
-        info_to_sync = (updated_cell_id_to_key_dict, updated_cell_info, self.updated_info, self.new_cells)
+        info_to_sync = (updated_cell_id_to_key_dict, updated_cell_info, self.updated_info, self.new_cells, self.cell_map)
+        print(len(info_to_sync))
         return info_to_sync
 
-    def sync_cells(self, info_to_sync: Tuple[Dict[int, Any], Dict[Any, data_classes.CellInfoStochastic], Any, Any]):
-        updated_cell_id_to_key_dict, updated_cell_info, updated_info, new_cells = info_to_sync
+    def sync_cells(self, info_to_sync: Tuple[Dict[int, Any], Dict[Any, data_classes.CellInfoStochastic], Any, Any, Dict[CellRepresentationBase, CellRepresentationBase]]):
+        print(len(info_to_sync))
+        updated_cell_id_to_key_dict, updated_cell_info, updated_info, new_cells, cell_map = info_to_sync
+        self.cell_map = cell_map
+        print("syncing cell mapp:", cell_map)
         self.cell_id_to_key_dict.update(updated_cell_id_to_key_dict)
         for cell_id, cell_key in updated_cell_id_to_key_dict.items():
             if cell_key not in self.cell_key_to_id_dict:

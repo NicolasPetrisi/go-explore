@@ -447,6 +447,11 @@ def _run(**kwargs):
         if hvd.rank() == 0 and not disable_logging:
             gatherer = expl.trajectory_gatherer
             
+            # print("archive keys")
+            # for key in expl.archive.archive.keys():
+            #     print(key)
+            # print("archive keys")
+
             return_success_rate = -1
             if gatherer.nb_return_goals_chosen > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
@@ -659,7 +664,7 @@ def find_checkpoint(base_path):
             local_logger.debug(f'job_lib_file: {job_lib_file}')
             num = str(os.path.basename(job_lib_file).split('_')[0])
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix)}')
-            arch_exists = os.path.exists(os.path.join(path_to_, num + ARCHIVE_POSTFIX + compress_suffix))
+            arch_exists = os.path.exists(os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix))
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + TRAJ_POSTFIX)}')
             traj_exists = os.path.exists(os.path.join(path_to_load, num + TRAJ_POSTFIX))
             if arch_exists and traj_exists:
@@ -722,7 +727,7 @@ def run(kwargs):
 
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
-
+    kwargs['cell_trajectories_file'] = "/home/fredrik/temp/0673_d2ea14295175441ba4eb17036f183be9/000000000576_traj.tfrecords"
     # We need to setup the MPI environment before performing any data processing
     nb_cpu = 0 #NOTE This was 4. Setting to 0 means the computer picks an appropriate number instead.
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])

@@ -1160,6 +1160,7 @@ def setup(resolution,
                           max_failed=max_failed,
                           reset_on_update=reset_on_update)
 
+    cell_representation.set_archive(archive)
     logger.info('Defining cell reached operator')
 
     def cell_equals(x, y):
@@ -1381,6 +1382,7 @@ def setup(resolution,
             with gzip.open(expl_state, 'rb') as file_handle:
                 expl_state = pickle.load(file_handle)
         expl.set_state(expl_state)
+    cell_representation.set_archive(archive)
 
     if len(expl.archive.archive) != 0:
         logger.info('Archive is initialized: recalculating trajectory id...')
@@ -1782,7 +1784,7 @@ def parse_arguments():
                         type=str, default=DefaultArg(None),
                         help='The go-explore state to load')
     parser.add_argument('--warm_up_cycles', dest='warm_up_cycles',
-                        type=int, default=DefaultArg(10),
+                        type=int, default=DefaultArg(5),
                         help='How many warmup cycles to perform when continuing from a checkpoint')
     parser.add_argument('--continue', dest='continue',
                         default=DefaultArg(False), action='store_true',
