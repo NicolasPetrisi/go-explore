@@ -97,8 +97,8 @@ class Explore:
         del to_send[hvd.rank()]
         self.archive.sync_info(to_send)
 
-    def get_state(self):
-        archive_state = self.archive.get_state()
+    def get_state(self, finalSave=False):
+        archive_state = self.archive.get_state(finalSave)
         gatherer_state = self.trajectory_gatherer.get_state()
         state = {'archive_state': archive_state,
                  'gatherer_state': gatherer_state,

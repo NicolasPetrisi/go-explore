@@ -49,7 +49,7 @@ class StochasticArchive:
         self.updated_info = defaultdict(data_classes.CellInfoStochastic)
         self.new_cells: Dict[Any, int] = dict()
 
-    def get_state(self):
+    def get_state(self, finalSave=False):
         for key in self.archive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
 
@@ -64,6 +64,23 @@ class StochasticArchive:
                 self.cell_map[key] = key
                 old_key = key
             i += 1
+        
+        if finalSave:
+            keys = list(self.archive.keys())
+            for key in keys:
+                if key != self.cell_map[key]:
+                    info = self.archive.pop(key)
+                    #del self.cell_trajectory_manager.cell_trajectories[info.cell_traj_id]
+                    self.cell_id_to_key_dict.pop(self.cell_key_to_id_dict[key])
+                    self.cells_reached_dict.pop(key, None)
+
+                    self.archive[self.cell_map[key]].add(info)
+
+#'cell_trajectories': self.cell_trajectories,
+#'del_policy_new_cells': self.del_policy_new_cells,
+#'del_rand_new_cells': self.del_rand_new_cells,
+#'del_ret_new_cells': self.del_ret_new_cells
+        
 
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(),
@@ -83,6 +100,7 @@ class StochasticArchive:
         print("loading...... cell mapping")
         print(self.cell_map)
         print("done loading cell mapp")
+        print("LÄNGD:", len(self.archive))
         # Derived attributes
         self.local_cell_counter = 0
         my_min_id = hvd.rank() * (sys.maxsize // hvd.size())

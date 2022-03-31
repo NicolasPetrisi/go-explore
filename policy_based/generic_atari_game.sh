@@ -88,7 +88,7 @@ GAME_OPTIONS="--game generic_${Game} --end_on_death"
 REWARD_OPTIONS="--game_reward_factor 1 --goal_reward_factor 1 --clip_game_reward 1 --rew_clip_range=-2,2 --final_goal_reward 3"
 
 # Cell selection is relative to: 1 / (1 + 0.5*number_of_actions_taken_in_cell).
-CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=max_score_cell,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
+CELL_SELECTION_OPTIONS="--selector_weights=max_score_cell,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
 #CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
 #CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=target_cell,x,20,y,18,done,0 --base_weight 0"
 
@@ -110,6 +110,6 @@ CELL_REPRESENTATION_OPTIONS="--cell_representation generic" #TODO change this, s
 EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 0.1 --delay 0"
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints trajectory --final_goal_or_sub_goal sub_goal"
-TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=sil --continue"
-MISC_OPTIONS="--early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
+TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=sil"
+MISC_OPTIONS="--hampus_cells --early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

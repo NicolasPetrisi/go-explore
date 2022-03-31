@@ -785,7 +785,8 @@ def setup(resolution,
           weight_based_skew,
           level_seed,
           pos_seed,
-          video_all_ep):
+          video_all_ep
+          ):
     """Sets up everything needed to start running the experiment.
 
     Args:
@@ -1498,6 +1499,7 @@ def del_out_of_setup_args(kwargs):
     del kwargs['log_info']
     del kwargs['log_files']
     del kwargs['early_stopping']
+    del kwargs['hampus_cells']
     return kwargs
 
 
@@ -1648,7 +1650,7 @@ def parse_arguments():
                         help='How to track trajectories for returning to a cell, if such functionality is desired.'
                              'Options are: dummy, reward_only, and sequential')
     parser.add_argument('--selector', dest='selector_name',
-                        type=str, default=DefaultArg('random'),
+                        type=str, default=DefaultArg('weighted'),
                         help='How to select cells to return to. '
                              'Options are: random, mr_curriculum, iterative, and weighted.')
     parser.add_argument('--selector_weights', dest='selector_weights_str',
@@ -1864,6 +1866,9 @@ def parse_arguments():
     parser.add_argument('--test_mode', dest='test_mode',
                         default=DefaultArg(False), action='store_true',
                         help='If the network is to be tested (True) or trained (False).')
+    parser.add_argument('--hampus_cells', dest='hampus_cells',
+                        default=DefaultArg(False), action='store_true',
+                        help='If Hampus Cells (dynamic cells) are to be used or not')
 
 
 

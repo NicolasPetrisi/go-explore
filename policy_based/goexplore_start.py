@@ -336,6 +336,7 @@ def _run(**kwargs):
     screenshot_merge = kwargs['screenshot_merge']
     clear_checkpoints = list(filter(None, kwargs['clear_checkpoints'].split(':')))
     early_stopping = kwargs['early_stopping']
+    hampus_cells = kwargs['hampus_cells']
     if 'all' in clear_checkpoints:
         clear_checkpoints = CHECKPOINT_ABBREVIATIONS.keys()
 
@@ -616,7 +617,7 @@ def _run(**kwargs):
 
                 # Save archive state
                 # FN, if SIL is 'none' the saving of archive crashes, this was the quickest fix for now since we were not really interested in the archive.
-                if log_par.save_archive and expl.archive.cell_trajectory_manager.sil != "none":
+                if log_par.save_archive:
                     save_state(expl.get_state(), filename + ARCHIVE_POSTFIX)
                     expl.archive.cell_trajectory_manager.dump(filename + TRAJ_POSTFIX)
 
@@ -654,6 +655,18 @@ def _run(**kwargs):
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
+
+    # FN, One last save to update the archive if Hampus Cells (dynamic cells) are used.
+    if hampus_cells and hvd.rank() == 0 and not disable_logging:
+        # Save Archive
+        if log_par.save_archive:
+            save_state(expl.get_state(True), filename + ARCHIVE_POSTFIX)
+            expl.archive.cell_trajectory_manager.dump(filename + TRAJ_POSTFIX)
+
+        # Save model
+        if log_par.save_model:
+            expl.trajectory_gatherer.save_model(filename + MODEL_POSTFIX)
+
     expl.close()
 
 
@@ -727,6 +740,7 @@ def run(kwargs):
 
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
+    kwargs['cell_trajectories_file'] = "/home/nicolas/temp/2363215_452fe0866c354aa49d6690cb095280a0/000000010240_traj.tfrecords"
     # We need to setup the MPI environment before performing any data processing
     nb_cpu = 0 #NOTE This was 4. Setting to 0 means the computer picks an appropriate number instead.
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])

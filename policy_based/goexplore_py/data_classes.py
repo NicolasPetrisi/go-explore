@@ -119,12 +119,17 @@ class CellInfoStochastic:
         self.nb_chosen += other.nb_chosen
         self.nb_reached += other.nb_reached
         self.nb_actions_taken_in_cell += other.nb_actions_taken_in_cell
+        self.score += other.score # NOTE This might need to be max(self, other) or similar. In the case of Procgen 'Maze' only one cell has any score hence we don't know how scores should be added.
+        self.nb_sub_goal_failed += other.nb_sub_goal_failed
+        self.nb_failures_above_thresh += other.nb_failures_above_thresh
+        self.nb_seen += other.nb_seen
+        self.nb_reset += other.nb_reset
 
 
 @dataclass
 class TrajectoryElement:
     __slots__ = ['cells', 'action', 'reward', 'done', 'length', 'score', 'restore']
-    cells: {}
+    cells: dict()
     action: int
     reward: float
     done: bool
