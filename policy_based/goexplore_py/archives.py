@@ -50,14 +50,12 @@ class StochasticArchive:
         self.new_cells: Dict[Any, int] = dict()
 
     def get_state(self):
-        print("get state")
         for key in self.archive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
 
         cell_set = set(self.cell_id_to_key_dict.values())
         i = 0
         old_key = None
-        print(".............................")
         for key in self.archive:
             assert key in cell_set, 'key:' + str(key) + ' has no inverse id!'
             if old_key is not None and i % 2 == 1:
@@ -66,7 +64,7 @@ class StochasticArchive:
                 self.cell_map[key] = key
                 old_key = key
             i += 1
-        print("...................")
+
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(),
                  'cell_id_to_key_dict': self.cell_id_to_key_dict,
@@ -171,14 +169,11 @@ class StochasticArchive:
             updated_cell_id_to_key_dict[self.cell_key_to_id_dict[cell]] = cell
             updated_cell_info[cell] = self.archive[cell]
         info_to_sync = (updated_cell_id_to_key_dict, updated_cell_info, self.updated_info, self.new_cells, self.cell_map)
-        print(len(info_to_sync))
         return info_to_sync
 
     def sync_cells(self, info_to_sync: Tuple[Dict[int, Any], Dict[Any, data_classes.CellInfoStochastic], Any, Any, Dict[CellRepresentationBase, CellRepresentationBase]]):
-        print(len(info_to_sync))
         updated_cell_id_to_key_dict, updated_cell_info, updated_info, new_cells, cell_map = info_to_sync
         self.cell_map = cell_map
-        print("syncing cell mapp:", cell_map)
         self.cell_id_to_key_dict.update(updated_cell_id_to_key_dict)
         for cell_id, cell_key in updated_cell_id_to_key_dict.items():
             if cell_key not in self.cell_key_to_id_dict:

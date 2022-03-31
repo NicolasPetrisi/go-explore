@@ -727,7 +727,6 @@ def run(kwargs):
 
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
-    kwargs['cell_trajectories_file'] = "/home/fredrik/temp/0673_d2ea14295175441ba4eb17036f183be9/000000000576_traj.tfrecords"
     # We need to setup the MPI environment before performing any data processing
     nb_cpu = 0 #NOTE This was 4. Setting to 0 means the computer picks an appropriate number instead.
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])
