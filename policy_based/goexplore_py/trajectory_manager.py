@@ -188,8 +188,72 @@ class CellTrajectoryManager:
             self.write_low_prob_traj_to_disk(key)
         writer.close()
 
-    def get_state(self):
-        state = {'cell_trajectories': self.cell_trajectories,
+
+    def update_trajectories(self, cell_id_map, cell_infos):
+
+        assert cell_id_map is not None, "cell_id_map is none"
+        # trajectories to be saved, we dont want to save trajectories for cells that doesn't exist after merge
+        save_trajectories: Dict[int, CellTrajectory] = dict()
+
+        # dictionary to keep track of how the trajectory changes when merging cells
+        trajectory_ids_dicts: Dict [int, Dict[int,int]] = dict()
+
+        #change all trajectory to fit the new cell mapping
+        for id, traj in self.cell_trajectories.items():
+            # We should add the trajectory but update the information first
+
+            # dictionary that keeps track of all previous length to the new length. used for he trajectory_end variable in cell_info
+            trajectory_id_dict: Dict[int,int] = dict()
+            prev_id = -1
+            new_cell_ids: List[int] = []
+            actions_per_cell: List[int] = []
+
+            num_removed_cells = 0
+
+            for i in range(len(traj.cell_ids)):
+                cell_id = traj.cell_ids[i]
+                # get the new cell_id for the cell
+                new_cell_id = cell_id_map[cell_id]
+                # if the previous cell has the same id as the current we have not changed cell in the new mapping and
+                # it should not be added to the trajectory
+                if prev_id != new_cell_id:
+                    new_cell_ids.append(new_cell_id)
+                    actions_per_cell.append(traj.actions_per_cell[i])
+                else:
+                    # if we don't end upp in a new cell in the new mapping we need to add the actions taken in cell since we 
+                    # we're still in the same cell
+                    actions_per_cell[-1] += traj.actions_per_cell[i]
+                    num_removed_cells += 1
+
+                trajectory_id_dict[i] = i - num_removed_cells
+                prev_id = new_cell_id
+            assert len(new_cell_ids) == len(actions_per_cell), "actions_per_cell and new_cell_ids must have the same length"
+            traj.cell_ids = new_cell_ids
+            traj.actions_per_cell = actions_per_cell
+            
+            save_trajectories[id] = traj
+            trajectory_ids_dicts[id] = trajectory_id_dict
+
+        for info in cell_infos:
+            info.cell_traj_end = trajectory_ids_dicts[info.cell_traj_id][info.cell_traj_end-1] + 1
+
+        for id, traj in save_trajectories.items():
+            print("####################################")
+            print("trajectory id is: ", id)
+            print("cell_trajectory is: ", traj.cell_ids)
+            print("actions per cell is: ", traj.actions_per_cell)
+            print("#####################################")
+
+        return save_trajectories
+
+    def get_state(self, modified_trajectories=None):
+        
+        if modified_trajectories is not None:
+            cell_trajectories_to_save = modified_trajectories
+        else:
+            cell_trajectories_to_save = self.cell_trajectories
+
+        state = {'cell_trajectories': cell_trajectories_to_save,
                  'del_policy_new_cells': self.del_policy_new_cells,
                  'del_rand_new_cells': self.del_rand_new_cells,
                  'del_ret_new_cells': self.del_ret_new_cells}
@@ -201,6 +265,13 @@ class CellTrajectoryManager:
         self.del_rand_new_cells = state['del_rand_new_cells']
         self.del_ret_new_cells = state['del_ret_new_cells']
 
+        print("####################################")
+        for id, traj in self.cell_trajectories.items():
+            print("when loading trajectories:")
+            print("trajectory id is: ", id)
+            print("cell_trajectory is: ", traj.cell_ids)
+            print("actions per cell is: ", traj.actions_per_cell)
+        print("#####################################")
         # Create an updated trajectory fragment for every trajectory so that the information will be updated in
         # sub-processes
         for traj_id in self.cell_trajectories:

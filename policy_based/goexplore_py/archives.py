@@ -58,20 +58,11 @@ class StochasticArchive:
         for key in self.archive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
             assert key in cell_key_set, 'key:' + str(key) + ' has no inverse id!'        
-        
-        if finalSave:
-            #cell_key_set = set(self.cell_id_to_key_dict.values())
-            #i = 0
-            #old_key = None
-            #for key in self.archive:
-            #    assert key in cell_key_set, 'key:' + str(key) + ' has no inverse id!'
-            #    if old_key is not None and i % 2 == 1:
-            #        self.cell_map[key] = old_key
-            #    else:
-            #        self.cell_map[key] = key
-            #        old_key = key
-            #    i += 1
 
+
+
+        save_trajectories = None
+        if finalSave:
 
             for traj in self.cell_trajectory_manager.cell_trajectories.values():
                 prev_cell_key = None
@@ -111,11 +102,29 @@ class StochasticArchive:
                     prev_cell_key = current_cell_key
 
 
+
+            cell_id_map = dict()
+            for cell_key, new_cell_key in self.cell_map.items():
+                if cell_key not in self.archive.keys():
+                    pass
+                else:
+                    cell_id = self.cell_key_to_id_dict[cell_key]
+                    new_cell_id = self.cell_key_to_id_dict[new_cell_key]
+                    cell_id_map[cell_id] = new_cell_id
+        
+            cell_infos = list()
+            for key in self.cell_map.values():
+                if self.archive[key] not in cell_infos:
+                    cell_infos.append(self.archive[key])
+
+
+
             for k, v in self.cell_map.items():
                 print(k, ":", v)
 
 
 
+            save_trajectories = self.cell_trajectory_manager.update_trajectories(cell_id_map, cell_infos)
             keys = list(self.archive.keys())
             for key in keys:
                 if key != self.cell_map[key]:
@@ -125,7 +134,9 @@ class StochasticArchive:
                     self.cells_reached_dict.pop(key, None)
 
                     self.archive[self.cell_map[key]].add(info)
-
+            for key, value in self.archive.items():
+                print("----------------------------")
+                print("cell with id: " + str(self.cell_key_to_id_dict[key]) + " has traj id: " +str(value.cell_traj_id) + " and trajectory_end:" +str(value.cell_traj_end))
 #'cell_trajectories': self.cell_trajectories,
 #'del_policy_new_cells': self.del_policy_new_cells,
 #'del_rand_new_cells': self.del_rand_new_cells,
@@ -133,7 +144,7 @@ class StochasticArchive:
         
 
         state = {'archive': self.archive,
-                 'trajectory_manager_state': self.cell_trajectory_manager.get_state(),
+                 'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
                  'cell_id_to_key_dict': self.cell_id_to_key_dict,
                  'cells_reached_dict': self.cells_reached_dict,
                  'cell_mapping': self.cell_map,
@@ -150,7 +161,10 @@ class StochasticArchive:
         print("loading...... cell mapping")
         print(self.cell_map)
         print("done loading cell mapp")
-        print("LÄNGD:", len(self.archive))
+        print("333333333333333333333 archive keys")
+        for key in self.archive.keys():
+            print(key)
+        print("33333333333333333333333333333")
         # Derived attributes
         self.local_cell_counter = 0
         my_min_id = hvd.rank() * (sys.maxsize // hvd.size())
