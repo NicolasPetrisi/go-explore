@@ -6,6 +6,7 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from decimal import DivisionByZero
 import sys
 from collections import deque, defaultdict
 from typing import Any, Dict, Set, Optional, Tuple
@@ -49,23 +50,72 @@ class StochasticArchive:
         self.updated_info = defaultdict(data_classes.CellInfoStochastic)
         self.new_cells: Dict[Any, int] = dict()
 
+    def add_to_cell_map(self, cell_key):
+        self.cell_map[cell_key] = cell_key
+
     def get_state(self, finalSave=False):
+        cell_key_set = set(self.cell_id_to_key_dict.values())
         for key in self.archive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
-
-        cell_set = set(self.cell_id_to_key_dict.values())
-        i = 0
-        old_key = None
-        for key in self.archive:
-            assert key in cell_set, 'key:' + str(key) + ' has no inverse id!'
-            if old_key is not None and i % 2 == 1:
-                self.cell_map[key] = old_key
-            else:
-                self.cell_map[key] = key
-                old_key = key
-            i += 1
+            assert key in cell_key_set, 'key:' + str(key) + ' has no inverse id!'        
         
         if finalSave:
+            #cell_key_set = set(self.cell_id_to_key_dict.values())
+            #i = 0
+            #old_key = None
+            #for key in self.archive:
+            #    assert key in cell_key_set, 'key:' + str(key) + ' has no inverse id!'
+            #    if old_key is not None and i % 2 == 1:
+            #        self.cell_map[key] = old_key
+            #    else:
+            #        self.cell_map[key] = key
+            #        old_key = key
+            #    i += 1
+
+
+            for traj in self.cell_trajectory_manager.cell_trajectories.values():
+                prev_cell_key = None
+                current_cell_key = None
+                checked_ids = set()
+                for cell_id in traj.cell_ids:
+                    if cell_id in checked_ids:
+                        prev_cell_key = None
+                        current_cell_key = None
+                        continue
+
+
+                    if current_cell_key is None:
+                        prev_cell_key = self.cell_id_to_key_dict[cell_id]
+                        current_cell_key = self.cell_id_to_key_dict[cell_id]
+                        checked_ids.add(cell_id)
+                        self.cell_map[current_cell_key] = current_cell_key
+                        continue
+
+                    
+                    current_cell_key = self.cell_id_to_key_dict[cell_id]
+                    checked_ids.add(cell_id)
+                    self.cell_map[current_cell_key] = current_cell_key
+
+                    try:
+                        current_cell_key_ret_suc = self.archive[current_cell_key].nb_reached / self.archive[current_cell_key].nb_chosen
+                        prev_cell_key_ret_suc = self.archive[prev_cell_key].nb_reached / self.archive[prev_cell_key].nb_chosen
+                    except ZeroDivisionError:
+                        current_cell_key_ret_suc = 0
+                        prev_cell_key_ret_suc = 0
+
+
+                    if current_cell_key_ret_suc > 0.75 and prev_cell_key_ret_suc > 0.75:
+                        self.cell_map[current_cell_key] = prev_cell_key
+
+
+                    prev_cell_key = current_cell_key
+
+
+            for k, v in self.cell_map.items():
+                print(k, ":", v)
+
+
+
             keys = list(self.archive.keys())
             for key in keys:
                 if key != self.cell_map[key]:
