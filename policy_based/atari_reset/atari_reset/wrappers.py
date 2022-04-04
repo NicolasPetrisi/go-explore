@@ -744,7 +744,7 @@ class VideoWriter(MyWrapper):
         self.local_archive = set()
         self.local_ep = 0
         self.video_counter = 0
-        self.video_all_ep = video_all_ep
+        self.video_all_ep = video_all_ep        
 
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = int(cell.x * self.x_res)
@@ -791,10 +791,20 @@ class VideoWriter(MyWrapper):
             for x in np.arange(self.x_res, f_out.shape[1], self.x_res):
                 cv2.line(f_out, (0 + int(x), 0), (0 + int(x), 0 + f_out.shape[0]), (127, 127, 127), 1)
 
+
+        def get_deterministic_color(cell_key):
+            
+            g = int(cell_key.x * 47 % 255)
+            r = int(cell_key.y * 47 % 255)
+            b = int((cell_key.x + cell_key.y) * 47 % 255)
+
+            return (r, g, b)
+
+
         current_cell = self.goal_conditioned_wrapper.archive.get_cell_from_env(self.goal_conditioned_wrapper.env)
         if self.plot_archive:
             for cell_key in self.local_archive:
-                if self.match_attr(cell_key, current_cell, 'level_seed'): # and self.match_attr(cell_key, current_cell, 'room'):
+                if self.match_attr(cell_key, current_cell, 'level_seed'):
                     base_brightness = 50
                     if self.plot_return_prob:
                         reached = self.goal_conditioned_wrapper.archive.cells_reached_dict.get(cell_key, [])
@@ -805,7 +815,19 @@ class VideoWriter(MyWrapper):
                         color = (0, r, 100)
                     else:
                         color = (0, 0, 200)
+                    
+                    if cell_key in self.goal_conditioned_wrapper.archive.cell_map:
+                        color = get_deterministic_color(self.goal_conditioned_wrapper.archive.cell_map[cell_key])
+                    else:
+                        color = get_deterministic_color(cell_key)
+                        
                     self._render_cell(f_out, cell_key, color, overlay=f_overlay)
+
+                    for cell_key_sibling in self.goal_conditioned_wrapper.archive.cell_map.keys():
+                        if self.goal_conditioned_wrapper.archive.cell_map[cell_key_sibling] == cell_key:
+                            self._render_cell(f_out, cell_key_sibling, color, overlay=f_overlay)
+
+
         self.local_archive.add(current_cell)
 
         if self.plot_goal:
@@ -825,9 +847,10 @@ class VideoWriter(MyWrapper):
                     self.time_in_cell -= 1
                     self._render_cell(f_out, traj_cell, (255, 255, 0))
 
-        # FN, NOTE: This code will never run on Procgen's game 'Maze' since we never have any sub-goals.
+        # FN, NOTE: This code will never run on Procgen's game 'Maze' since we never have any sub-goals between screens.
         # But in case sub-goals are ever wanted in the future due to transition screens where the goal is not
         # in the current game stage, this would be how to add it to the video.
+        # In the case of Maze the sub_goal square and final_goal square would always be the same.
         #if self.plot_sub_goal:
         #    goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
         #    if goal is not None:

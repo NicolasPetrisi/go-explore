@@ -197,15 +197,20 @@ class CellRepresentationFactory:
             CellRepresentation: a new cell representation  
         """
         cell_representation = self.cell_rep_class.make(env)
-        if env is not None:
-            for dimension in self.grid_resolution:
-                if dimension.div != 1:
-                    value = getattr(cell_representation, dimension.attr)
-                    value = (int(value / dimension.div))
-                    setattr(cell_representation, dimension.attr, value)
 
+        if env is None:
+            return cell_representation
+        
+        for dimension in self.grid_resolution:
+            if dimension.div != 1:
+                value = getattr(cell_representation, dimension.attr)
+                value = (int(value / dimension.div))
+                setattr(cell_representation, dimension.attr, value)
+        
         if cell_representation in self.archive.cell_map:
             cell_representation = self.archive.cell_map[cell_representation]
+        else:
+           self.archive.add_to_cell_map(cell_representation)
         
         return cell_representation
 

@@ -76,7 +76,7 @@ NB_ENVS_PER_WORKER=2
 #SEED=0
 
 # Full experiment: 200000000
-CHECKPOINT=100
+CHECKPOINT=50000
 
 
 #ModelLoad="--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"

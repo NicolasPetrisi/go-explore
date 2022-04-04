@@ -95,8 +95,12 @@ class StochasticArchive:
                         prev_cell_key_ret_suc = 0
 
 
-                    if current_cell_key_ret_suc > 0.75 and prev_cell_key_ret_suc > 0.75:
-                        self.cell_map[current_cell_key] = prev_cell_key
+                    if current_cell_key_ret_suc > -0.75 and prev_cell_key_ret_suc > -0.75:
+                        self.cell_map[current_cell_key] = self.cell_map[prev_cell_key]
+
+                        for k, v in self.cell_map.items():
+                            if v == current_cell_key:
+                                self.cell_map[k] = self.cell_map[prev_cell_key]
 
 
                     prev_cell_key = current_cell_key
