@@ -15,9 +15,10 @@ levelSeed          : str    = "92"
 posSeed            : str    = "0"
 testMode           : str    = "False"
 endTime            : str    = "0.05"
-tempPath           : str    = '/home/nicolas/temp/'
-loadPathModel      : str    = "2363247_94940a5beb704b7a8f0a7f3d61f0378e/000000002432_model.joblib"
-loadPathArch       : str    = "2363247_94940a5beb704b7a8f0a7f3d61f0378e/000000002432_arch.gz"
+tempPath           : str    = '/home/fredrik/temp/'
+folder             : str    = "0785_c5f423f2d2e64640b65eba8f7ee4b969"
+loadPathModel      : str    = "000000001408_model.joblib"
+loadPathArch       : str    = "-"#"000000001408_arch.gz"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "1"
 videoAllEpisodes   : str    = "False"
@@ -39,11 +40,11 @@ videoAllEpisodes   : str    = "False"
 list = os.listdir(tempPath)
 list.sort()
 
-if loadPathModel != "-":
-    loadPathModel = tempPath + loadPathModel
+# if loadPathModel != "-":
+#     loadPathModel = tempPath + loadPathModel
 
-if loadPathArch != "-":
-    loadPathArch = tempPath + loadPathArch
+# if loadPathArch != "-":
+#     loadPathArch = tempPath + loadPathArch
 
 format = "%Y-%m-%d %H:%M:%S"
 startTime = datetime.now().strftime(format)
@@ -70,7 +71,8 @@ hoursPerIteration = str(round(maxHours/minimumIterations, 2))
 logName = "program_runner_log.txt"
 
 log  = open(logName, "w+")
-log.write("Starting program_runner for: \ngameName=" + gameName + 
+log.write("Starting program_runner for: \ngameName=" + gameName +
+    "\nfolder=" + folder + 
     "\nloadPathModel=" + loadPathModel + 
     "\nloadPathArch=" + loadPathArch + 
     "\nhoursPerLevel=" + hoursPerIteration + 
@@ -100,7 +102,7 @@ while datetime.now() < datetime.strptime(endTime, format):
         hoursPerIteration = str(round(remaining_time, 2))
 
     log.write("----------\n")
-    tmpString = str(remaining_time) + " hours remaining. Starting new run for loadPathModel=" + loadPathModel + " and loadPathArch=" + loadPathArch + " of " + hoursPerIteration + " hours.\n"
+    tmpString = str(remaining_time) + " hours remaining. Starting new run from folder: " + folder + " with loadPathModel=" + loadPathModel + " and loadPathArch=" + loadPathArch + " of " + hoursPerIteration + " hours.\n"
     log.write(tmpString)
     log.write("levelSeed=" + levelSeed + "\n")
     log.write("posSeed=" + posSeed + "\n")
@@ -109,7 +111,7 @@ while datetime.now() < datetime.strptime(endTime, format):
     print(tmpString)
     log.flush()
 
-    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores)
+    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder)
 
     
     if returnValue != 0:

@@ -569,10 +569,9 @@ def _run(**kwargs):
             logger.write('cells_found_policy', cells_found_policy)
             logger.flush()
 
-
             if checkpoint_tracker.n_iters % 10 == 0:
                 for y_value in plot_y_values:
-                    make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'])
+                    make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'], prev_log_file = None)
 
             traj_manager = expl.archive.cell_trajectory_manager
             new_trajectories = sorted(traj_manager.new_trajectories,
@@ -649,8 +648,13 @@ def _run(**kwargs):
 
     # FN, only one thread should make plots.
     if hvd.rank() == 0:
+        if kwargs['expl_state'] is not None:
+            path = '/'.join(kwargs['expl_state'].split('/')[:-1]) + "/log.txt"
+            print(path)
+        else:
+            path = None
         for y_value in plot_y_values:
-            make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'])
+            make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'], prev_log_file = path)
 
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
@@ -737,10 +741,16 @@ def run(kwargs):
             kwargs['load_path'] = ''
             kwargs['cell_trajectories_file'] = ''
             local_logger.warning(f'No checkpoint found in: {kwargs["base_path"]} starting new run.')
+    else:
+        if kwargs['folder'] is not None:
+            if kwargs['load_path'] is not None:
+                kwargs['load_path'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['load_path']
+            if kwargs['expl_state'] is not None:
+                kwargs['expl_state'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['expl_state']
 
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
-    kwargs['cell_trajectories_file'] = "/home/nicolas/temp/2363247_94940a5beb704b7a8f0a7f3d61f0378e/000000002432_traj.tfrecords"
+    #kwargs['cell_trajectories_file'] = "/home/fredrik/temp/0785_c5f423f2d2e64640b65eba8f7ee4b969/000000001408_traj.tfrecords"
     # We need to setup the MPI environment before performing any data processing
     nb_cpu = 0 #NOTE This was 4. Setting to 0 means the computer picks an appropriate number instead.
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])
