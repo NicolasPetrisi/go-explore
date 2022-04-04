@@ -60,7 +60,6 @@ class StochasticArchive:
             assert key in cell_key_set, 'key:' + str(key) + ' has no inverse id!'        
 
 
-
         save_trajectories = None
         if finalSave:
 
@@ -106,7 +105,6 @@ class StochasticArchive:
                     prev_cell_key = current_cell_key
 
 
-
             cell_id_map = dict()
             for cell_key, new_cell_key in self.cell_map.items():
                 if cell_key not in self.archive.keys():
@@ -122,12 +120,6 @@ class StochasticArchive:
                     cell_infos.append(self.archive[key])
 
 
-
-            for k, v in self.cell_map.items():
-                print(k, ":", v)
-
-
-
             save_trajectories = self.cell_trajectory_manager.update_trajectories(cell_id_map, cell_infos)
             keys = list(self.archive.keys())
             for key in keys:
@@ -138,14 +130,6 @@ class StochasticArchive:
                     self.cells_reached_dict.pop(key, None)
 
                     self.archive[self.cell_map[key]].add(info)
-            for key, value in self.archive.items():
-                print("----------------------------")
-                print("cell with id: " + str(self.cell_key_to_id_dict[key]) + " has traj id: " +str(value.cell_traj_id) + " and trajectory_end:" +str(value.cell_traj_end))
-#'cell_trajectories': self.cell_trajectories,
-#'del_policy_new_cells': self.del_policy_new_cells,
-#'del_rand_new_cells': self.del_rand_new_cells,
-#'del_ret_new_cells': self.del_ret_new_cells
-        
 
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
@@ -162,13 +146,7 @@ class StochasticArchive:
         self.cell_id_to_key_dict = state['cell_id_to_key_dict']
         self.cells_reached_dict = state['cells_reached_dict']
         self.cell_map = state['cell_mapping']
-        print("loading...... cell mapping")
-        print(self.cell_map)
-        print("done loading cell mapp")
-        print("333333333333333333333 archive keys")
-        for key in self.archive.keys():
-            print(key)
-        print("33333333333333333333333333333")
+
         # Derived attributes
         self.local_cell_counter = 0
         my_min_id = hvd.rank() * (sys.maxsize // hvd.size())

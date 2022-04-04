@@ -250,14 +250,6 @@ class CellTrajectoryManager:
         for info in cell_infos:
             info.cell_traj_end = trajectory_ids_dicts[info.cell_traj_id][info.cell_traj_end-1] + 1
 
-        # Print the new trajectory, TODO remove in finall versions
-        for id, traj in save_trajectories.items():
-            print("####################################")
-            print("trajectory id is: ", id)
-            print("cell_trajectory is: ", traj.cell_ids)
-            print("actions per cell is: ", traj.actions_per_cell)
-            print("#####################################")
-
         return save_trajectories
 
     def get_state(self, modified_trajectories=None):
@@ -279,13 +271,6 @@ class CellTrajectoryManager:
         self.del_rand_new_cells = state['del_rand_new_cells']
         self.del_ret_new_cells = state['del_ret_new_cells']
 
-        print("####################################")
-        for id, traj in self.cell_trajectories.items():
-            print("when loading trajectories:")
-            print("trajectory id is: ", id)
-            print("cell_trajectory is: ", traj.cell_ids)
-            print("actions per cell is: ", traj.actions_per_cell)
-        print("#####################################")
         # Create an updated trajectory fragment for every trajectory so that the information will be updated in
         # sub-processes
         for traj_id in self.cell_trajectories:
