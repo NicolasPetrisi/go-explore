@@ -190,19 +190,28 @@ class CellTrajectoryManager:
 
 
     def update_trajectories(self, cell_id_map, cell_infos):
+        """" Function to change cell-trajectories depending on a new cell-mappning
+             it also updates the relevant info in the cell-info of the concened cells
 
+        Args:
+            cell_id_map (Dict[int, int]): new cell mappnig to be applied of the cell_ids for the cells
+            cell_infos (List[CellInfoStochastic]): list of cell-infos corresponding to the keys in the new cell mapping 
+
+        Returns:
+            Dict[int, CellTrajectory]: The new trajectories to be saved
+        """
         assert cell_id_map is not None, "cell_id_map is none"
-        # trajectories to be saved, we dont want to save trajectories for cells that doesn't exist after merge
+
+        # trajectories to be saved
         save_trajectories: Dict[int, CellTrajectory] = dict()
 
         # dictionary to keep track of how the trajectory changes when merging cells
         trajectory_ids_dicts: Dict [int, Dict[int,int]] = dict()
 
-        #change all trajectory to fit the new cell mapping
+        # change all trajectory to fit the new cell mapping
         for id, traj in self.cell_trajectories.items():
-            # We should add the trajectory but update the information first
 
-            # dictionary that keeps track of all previous length to the new length. used for he trajectory_end variable in cell_info
+            # Dictionary that keeps track of all previous length to the new length. used for the trajectory_end variable in cell_info
             trajectory_id_dict: Dict[int,int] = dict()
             prev_id = -1
             new_cell_ids: List[int] = []
@@ -212,10 +221,10 @@ class CellTrajectoryManager:
 
             for i in range(len(traj.cell_ids)):
                 cell_id = traj.cell_ids[i]
-                # get the new cell_id for the cell
                 new_cell_id = cell_id_map[cell_id]
+                
                 # if the previous cell has the same id as the current we have not changed cell in the new mapping and
-                # it should not be added to the trajectory
+                # it should not be added to the trajectory, i.e. the same cell should not occure after itself in a trajectory
                 if prev_id != new_cell_id:
                     new_cell_ids.append(new_cell_id)
                     actions_per_cell.append(traj.actions_per_cell[i])
@@ -227,6 +236,7 @@ class CellTrajectoryManager:
 
                 trajectory_id_dict[i] = i - num_removed_cells
                 prev_id = new_cell_id
+            
             assert len(new_cell_ids) == len(actions_per_cell), "actions_per_cell and new_cell_ids must have the same length"
             traj.cell_ids = new_cell_ids
             traj.actions_per_cell = actions_per_cell
@@ -234,9 +244,13 @@ class CellTrajectoryManager:
             save_trajectories[id] = traj
             trajectory_ids_dicts[id] = trajectory_id_dict
 
+        # Change the trajectory_end variable for all cell-infos that exsist after the cell merging. The trajectory end varibale 
+        # determine how far you should follow a trajectory in order to get to the target cell and since we potentially reduce the length
+        # of the trajectories we also need to modify this variable. 
         for info in cell_infos:
             info.cell_traj_end = trajectory_ids_dicts[info.cell_traj_id][info.cell_traj_end-1] + 1
 
+        # Print the new trajectory, TODO remove in finall versions
         for id, traj in save_trajectories.items():
             print("####################################")
             print("trajectory id is: ", id)
