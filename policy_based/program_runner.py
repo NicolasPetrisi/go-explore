@@ -10,19 +10,20 @@ from signal import SIGINT, siginterrupt
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 1
+minimumIterations  : int    = 2
 levelSeed          : str    = "92"
 posSeed            : str    = "0"
 testMode           : str    = "False"
 endTime            : str    = "0.05"
-tempPath           : str    = '/home/nicolas/temp/'
-folder             : str    = "0000003_5a1fed2a12654a41a9aefd9b55df9585"
-loadPathModel      : str    = "000000007040_model.joblib"
-loadPathArch       : str    = "000000007040_arch.gz"
-loadPathTrajectory : str    = "000000007040_traj.tfrecords"
+tempPath           : str    = '/home/nicloasfredrik/temp/'
+folder             : str    = "-"
+loadPathModel      : str    = "-"
+loadPathArch       : str    = "-"
+loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
-numberOfCores      : str    = "1"
+numberOfCores      : str    = "8"
 videoAllEpisodes   : str    = "False"
+continue_run       : bool   = True
 #####################
 
 #gameName           : What game to run.
@@ -132,7 +133,7 @@ while datetime.now() < datetime.strptime(endTime, format):
 
     # Load the next run if this wasn't the last.
     remaining_time = (datetime.strptime(endTime, format) - datetime.now()).total_seconds()/3600
-    if remaining_time > minTimeAllowed:
+    if remaining_time > minTimeAllowed and not continue_run:
         prevLoadPath = loadPathModel
         list = os.listdir(tempPath)
         list.sort()
