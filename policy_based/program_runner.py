@@ -14,14 +14,14 @@ minimumIterations  : int    = 2
 levelSeed          : str    = "92"
 posSeed            : str    = "0"
 testMode           : str    = "False"
-endTime            : str    = "0.05"
-tempPath           : str    = '/home/nicloasfredrik/temp/'
+endTime            : str    = "0.02"
+tempPath           : str    = '/home/fredrik/temp/'
 folder             : str    = "-"
 loadPathModel      : str    = "-"
 loadPathArch       : str    = "-"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
-numberOfCores      : str    = "8"
+numberOfCores      : str    = "2"
 videoAllEpisodes   : str    = "False"
 continue_run       : bool   = True
 #####################
@@ -94,6 +94,7 @@ minTimeAllowed = 0.1
 print("Starting the first run out of " + str(minimumIterations) + " runs at " + str(datetime.now().strftime(format)))   
 print("Expected to be finished at", str(endTime)) 
 print("Making video for every episode:", videoAllEpisodes)
+first_run = True
 
 while datetime.now() < datetime.strptime(endTime, format):
 
@@ -113,7 +114,11 @@ while datetime.now() < datetime.strptime(endTime, format):
     print(tmpString)
     log.flush()
 
-    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory)
+    cont = "-"
+    if continue_run and not first_run:
+        cont = "True"
+
+    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
 
     
     if returnValue != 0:
@@ -168,7 +173,7 @@ while datetime.now() < datetime.strptime(endTime, format):
         print("<<WARNING>> More than 4 errors have occured. Something is wrong, stopping program.")
         break
         
-
+    first_run = False
     log.flush()
 
 timeTaken = datetime.strptime(datetime.now().strftime(format), format) - datetime.strptime(startTime, format)
