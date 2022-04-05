@@ -1505,7 +1505,7 @@ def del_out_of_setup_args(kwargs):
     del kwargs['log_info']
     del kwargs['log_files']
     del kwargs['early_stopping']
-    del kwargs['hampus_cells']
+    del kwargs['hampu_cells']
     del kwargs['folder']
     del kwargs['trajectory_file']
     return kwargs
@@ -1874,9 +1874,9 @@ def parse_arguments():
     parser.add_argument('--test_mode', dest='test_mode',
                         default=DefaultArg(False), action='store_true',
                         help='If the network is to be tested (True) or trained (False).')
-    parser.add_argument('--hampus_cells', dest='hampus_cells',
+    parser.add_argument('--hampu_cells', dest='hampu_cells',
                         default=DefaultArg(False), action='store_true',
-                        help='If Hampus Cells (dynamic cells) are to be used or not')
+                        help='If Hampu Cells (dynamic cells) are to be used or not')
     parser.add_argument('--folder', type=str,
                         help='Thr folder containing the model, archive and/or trjectory_file to load')
     parser.add_argument('--trajectory_file', type=str,

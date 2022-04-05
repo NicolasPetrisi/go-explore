@@ -20,6 +20,8 @@ class CellMapping:
         else:
             return 1
 
+    def get_mapping(self):
+        return self.__cell_mapping
 
     def __getitem__(self, key):
         return self.__cell_mapping[key]
@@ -33,6 +35,15 @@ class CellMapping:
         self.__reverse_cell_mapping[cell] = set([cell])
 
 
+    def load_cell_mapping(self, cell_mapp: Dict[CellRepresentationBase, CellRepresentationBase]):
+        self.__cell_mapping = cell_mapp
+        for k, v in self.__cell_mapping.items():
+            if v not in self.__reverse_cell_mapping:
+                self.__reverse_cell_mapping[v] = set([k])
+            else:
+                self.__reverse_cell_mapping[v].add(k)
+
+
     def __setitem__(self, key_cell, value_cell):
 
         if key_cell not in self.__cell_mapping:
@@ -43,13 +54,12 @@ class CellMapping:
 
 
         children = self.__reverse_cell_mapping[key_cell]
+        self.__reverse_cell_mapping[key_cell] = set()
         for child in children:
             self.__cell_mapping[child] = value_cell
             self.__reverse_cell_mapping[value_cell].add(child)
 
 
-        if key_cell in self.__reverse_cell_mapping and key_cell != value_cell:
-            del self.__reverse_cell_mapping[key_cell]
 
         
 

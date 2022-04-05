@@ -336,7 +336,7 @@ def _run(**kwargs):
     screenshot_merge = kwargs['screenshot_merge']
     clear_checkpoints = list(filter(None, kwargs['clear_checkpoints'].split(':')))
     early_stopping = kwargs['early_stopping']
-    hampus_cells = kwargs['hampus_cells']
+    hampu_cell = kwargs['hampu_cells']
     if 'all' in clear_checkpoints:
         clear_checkpoints = CHECKPOINT_ABBREVIATIONS.keys()
 
@@ -663,8 +663,8 @@ def _run(**kwargs):
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
 
-    # FN, One last save to update the archive if Hampus Cells (dynamic cells) are used.
-    if hampus_cells and hvd.rank() == 0 and not disable_logging:
+    # FN, One last save to update the archive if Hampu Cells (dynamic cells) are used.
+    if hampu_cell and hvd.rank() == 0 and not disable_logging:
         # Save Archive
         if log_par.save_archive:
             save_state(expl.get_state(True), filename + ARCHIVE_POSTFIX)

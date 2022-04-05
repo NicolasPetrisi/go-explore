@@ -1,19 +1,23 @@
 Starting program_runner for: 
 gameName=maze
-loadPathModel=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_model.joblib
-loadPathArch=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_arch.gz
-hoursPerLevel=0.03
+folder=0000003_5a1fed2a12654a41a9aefd9b55df9585
+loadPathModel=000000007040_model.joblib
+loadPathArch=000000007040_arch.gz
+hoursPerLevel=0.05
 levels=1
-startDate=2022-04-05 11:02:55
-endDate=2022-04-05 11:04:43
+startDate=2022-04-05 15:28:55
+endDate=2022-04-05 15:31:55
 levelSeed=92
 posSeed=0
 testMode=False
 
 ----------
-0.03 hours remaining. Starting new run for loadPathModel=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_model.joblib and loadPathArch=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_arch.gz of 0.03 hours.
+0.05 hours remaining. Starting new run from folder: 0000003_5a1fed2a12654a41a9aefd9b55df9585 with loadPathModel=000000007040_model.joblib and loadPathArch=000000007040_arch.gz of 0.05 hours.
 levelSeed=92
 posSeed=0
 
+<<INTERRUPT>>: Got keyboard interrupt, stopping program.
 
-Run finished successfully at 2022-04-05 11:05:10 with total time of: 0:02:15.
+<<WARNING>> ['Error code [2]'] errors have occured.
+
+<<WARNING>>: Run finished at 2022-04-05 15:29:17 with 1 errors occuring.

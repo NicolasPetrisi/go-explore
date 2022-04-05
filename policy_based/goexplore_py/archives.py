@@ -9,7 +9,7 @@
 from decimal import DivisionByZero
 import sys
 from collections import deque, defaultdict
-from typing import Any, Dict, Set, Optional, Tuple
+from typing import Any, Dict, Set, List, Optional, Tuple
 from goexplore_py.cell_representations import CellRepresentationBase
 import goexplore_py.data_classes as data_classes
 from goexplore_py.trajectory_manager import CellTrajectoryManager
@@ -63,52 +63,55 @@ class StochasticArchive:
 
 
         save_trajectories = None
+
+
         if finalSave:
-            checked_ids: Set[int] = set()
+            for key in self.archive.keys():
+                self.cell_map.add_cell(key)
+
+            cell_neighbours: Dict[int, Set[int]] = dict()
             for traj in self.cell_trajectory_manager.cell_trajectories.values():
-                prev_cell_key = None
-                current_cell_key = None
-                
+                prev_cell_id = None
+
                 for cell_id in traj.cell_ids:
+                    if cell_id not in cell_neighbours:
+                        cell_neighbours[cell_id] = set()
 
-                    if cell_id in checked_ids:
-                        prev_cell_key = None
-                        current_cell_key = None
+                    if prev_cell_id is None:
+                        prev_cell_id = cell_id
                         continue
 
+                    cell_neighbours[cell_id].add(prev_cell_id)
+                    cell_neighbours[prev_cell_id].add(cell_id)
 
-                    if current_cell_key is None:
-                        prev_cell_key = self.cell_id_to_key_dict[cell_id]
-                        current_cell_key = self.cell_id_to_key_dict[cell_id]
-                        checked_ids.add(cell_id)
-                        self.cell_map.add_cell(current_cell_key)
-                        continue
+                    prev_cell_id = cell_id
 
+            mapped_cells: set[CellRepresentationBase] = set()
+            for cell_id in cell_neighbours.keys():
+                current_cell = self.cell_id_to_key_dict[cell_id]
 
-                    current_cell_key = self.cell_id_to_key_dict[cell_id]
+                # If this is already mapped to a cell this run, don't mapp others to it, it may cause chain mapping
+                if current_cell in mapped_cells:
+                    continue
 
-                    checked_ids.add(cell_id)
-                    self.cell_map.add_cell(current_cell_key)
-                    
+                for neighbour in cell_neighbours[cell_id]:
+                    neighbour_cell = self.cell_id_to_key_dict[neighbour]
 
-                    print("Linking:", current_cell_key, "to", self.cell_map[prev_cell_key])
-                    self.cell_map[current_cell_key] = self.cell_map[prev_cell_key]
-
-                    prev_cell_key = current_cell_key
-
-            print("Final Cell_map")
-            print(self.cell_map)
+                    if self.cell_map.get_cell_size(current_cell) + self.cell_map.get_cell_size(neighbour_cell) < 10:
+                        
+                        # Only add cells that have not been mapped to another cell yet
+                        if not neighbour_cell in mapped_cells:
+                            self.cell_map[current_cell] = self.cell_map[neighbour_cell]
+                            mapped_cells.add(neighbour_cell)
+                            mapped_cells.add(current_cell)
 
             cell_id_map = dict()
-            for cell_key in self.cell_map.keys():
+            for cell_key in self.archive.keys():
                 new_cell_key = self.cell_map[cell_key]
 
-                if cell_key not in self.archive.keys():
-                    pass
-                else:
-                    cell_id = self.cell_key_to_id_dict[cell_key]
-                    new_cell_id = self.cell_key_to_id_dict[new_cell_key]
-                    cell_id_map[cell_id] = new_cell_id
+                cell_id = self.cell_key_to_id_dict[cell_key]
+                new_cell_id = self.cell_key_to_id_dict[new_cell_key]
+                cell_id_map[cell_id] = new_cell_id
         
             cell_infos = list()
             for key in self.cell_map.values():
@@ -131,7 +134,7 @@ class StochasticArchive:
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
                  'cell_id_to_key_dict': self.cell_id_to_key_dict,
                  'cells_reached_dict': self.cells_reached_dict,
-                 'cell_mapping': self.cell_map,
+                 'cell_mapping': self.cell_map.get_mapping(),
                  }
         return state
 
@@ -141,7 +144,9 @@ class StochasticArchive:
         self.cell_trajectory_manager.set_state(state['trajectory_manager_state'])
         self.cell_id_to_key_dict = state['cell_id_to_key_dict']
         self.cells_reached_dict = state['cells_reached_dict']
-        self.cell_map = state['cell_mapping']
+
+        self.cell_map = CellMapping()
+        self.cell_map.load_cell_mapping(state['cell_mapping'])
 
         # Derived attributes
         self.local_cell_counter = 0
