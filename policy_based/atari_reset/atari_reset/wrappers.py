@@ -1,6 +1,7 @@
 """
 // Modifications Copyright (c) 2020 Uber Technologies Inc.
 """
+from curses import color_content
 import os
 import random
 import pickle
@@ -18,6 +19,7 @@ import cv2
 import cloudpickle
 import goexplore_py.mpi_support as mpi
 import logging
+import copy
 logger = logging.getLogger(__name__)
 
 try:
@@ -745,6 +747,7 @@ class VideoWriter(MyWrapper):
         self.local_ep = 0
         self.video_counter = 0
         self.video_all_ep = video_all_ep        
+        self.colours = [(255,128,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
 
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = int(cell.x * self.x_res)
@@ -793,11 +796,13 @@ class VideoWriter(MyWrapper):
 
 
         def get_deterministic_color(cell_key):
-            
-            g = int(cell_key.x * 47 % 255)
-            r = int(cell_key.y * 47 % 255)
-            b = int((cell_key.x + cell_key.y) * 47 % 255)
-
+            r = int(cell_key.y * 59 % 255)
+            g = int(cell_key.x * 59 % 255)
+            b = int((cell_key.x + cell_key.y) * 89 % 255)
+            if min(r,g,b) > 100:
+                r = r -50
+                g = g -50
+                b = b -50
             return (r, g, b)
 
 
