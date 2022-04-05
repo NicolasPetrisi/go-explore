@@ -1379,6 +1379,12 @@ def setup(resolution,
 
     if expl_state is not None:
         logger.info('Loading explorer state')
+
+        # FN, copy the previous log file to get nice plots and log file
+        path = '/'.join(expl_state.split('/')[:-1]) + "/log.txt"
+        import shutil
+        shutil.copyfile(path, base_path +"log.txt")
+
         if isinstance(expl_state, str):
             with gzip.open(expl_state, 'rb') as file_handle:
                 expl_state = pickle.load(file_handle)
@@ -1500,6 +1506,8 @@ def del_out_of_setup_args(kwargs):
     del kwargs['log_files']
     del kwargs['early_stopping']
     del kwargs['hampus_cells']
+    del kwargs['folder']
+    del kwargs['trajectory_file']
     return kwargs
 
 
@@ -1565,7 +1573,7 @@ def parse_arguments():
                         help='Fail if the base directory already exists.')
 
     # Environment arguments
-    parser.add_argument('--end_on_death', dest='end_on_death', default=DefaultArg(False), action='store_true',
+    parser.add_argument('--end_on_death', dest='end_on_death', default=DefaultArg(True), action='store_true',
                         help='End episode on death.')
     parser.add_argument('--game', '-g', type=str, default=DefaultArg('montezuma'),
                         help='Determines the game to which apply goexplore.')
@@ -1786,7 +1794,7 @@ def parse_arguments():
                         type=str, default=DefaultArg(None),
                         help='The go-explore state to load')
     parser.add_argument('--warm_up_cycles', dest='warm_up_cycles',
-                        type=int, default=DefaultArg(5),
+                        type=int, default=DefaultArg(1),
                         help='How many warmup cycles to perform when continuing from a checkpoint')
     parser.add_argument('--continue', dest='continue',
                         default=DefaultArg(False), action='store_true',
@@ -1869,7 +1877,11 @@ def parse_arguments():
     parser.add_argument('--hampus_cells', dest='hampus_cells',
                         default=DefaultArg(False), action='store_true',
                         help='If Hampus Cells (dynamic cells) are to be used or not')
-
+    parser.add_argument('--folder', type=str,
+                        default=DefaultArg("GUESSED_FOLDER_PATH"),
+                        help='Thr folder containing the model, archive and/or trjectory_file to load')
+    parser.add_argument('--trajectory_file', type=str,
+                        help='The trajectory file to load, should be paired with an exploration state to load')
 
 
 

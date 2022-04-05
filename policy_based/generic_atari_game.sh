@@ -72,6 +72,19 @@ NB_MPI_WORKERS=${10}
 # Full experiment: 16
 NB_ENVS_PER_WORKER=2
 
+if [ ${11} != '-' ];
+then
+    Folder="--folder ${11}"
+else
+    Folder=""
+fi
+
+if [ ${12} != '-' ];
+then
+    TrajectoryFile="--trajectory_file ${12}"
+else
+    TrajectoryFile=""
+fi
 # Full experiment: different for each run
 #SEED=0
 
@@ -81,7 +94,7 @@ CHECKPOINT=50000
 
 #ModelLoad="--load_path /home/fredrik/temp/0600_ce76f8b4a8734e8bbb8fc957f5144d38/000001430098_model.joblib"
 # The game is run with both sticky actions and noops. Also, for Montezuma's Revenge, the episode ends on death.
-GAME_OPTIONS="--game generic_${Game} --end_on_death"
+GAME_OPTIONS="--game generic_${Game}"
 
 # Both trajectory reward (goal_reward_factor) are 1, except for reaching the final cell, for which the reward is 3.
 # Extrinsic (game) rewards are clipped to [-2, 2]. Because most Atari games have large rewards, this usually means that extrinsic rewards are twice that of the trajectory rewards.
@@ -111,5 +124,5 @@ EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --rand
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints all --final_goal_or_sub_goal sub_goal"
 TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=sil"
-MISC_OPTIONS="--hampus_cells --early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork}"
+MISC_OPTIONS="--hampus_cells --early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork} ${Folder} ${TrajectoryFile}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

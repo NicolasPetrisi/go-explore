@@ -132,14 +132,16 @@ def get_values(filepath, x_name, y_name):
         x_values (list): x-values to be used in the graph.
         y_values (list): y-values to be used in the graph.
     """
+
+    x_values = []
+    y_values = []
+    
     with open(filepath) as f:
         lines = f.readlines()
         first = make_sub_list(lines, ',')
 
         x_index = first[0].index(x_name)
         y_index = first[0].index(y_name)
-        x_values = []
-        y_values = []
         for line in first[1:]:
             if line[y_index] != 'nan':
                 y = float(line[y_index])
