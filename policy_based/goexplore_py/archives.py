@@ -27,6 +27,8 @@ class StochasticArchive:
         self.failed_threshold: float = 0.9
         self.reset_on_update: bool = reset_on_update
 
+        self.max_cell_size = 10
+
         # Core data
         # This information is required to reset the state of the archive
         self.archive: Dict[Any, data_classes.CellInfoStochastic] = dict()
@@ -69,41 +71,44 @@ class StochasticArchive:
             for key in self.archive.keys():
                 self.cell_map.add_cell(key)
 
-            cell_neighbours: Dict[int, Set[int]] = dict()
+            cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]] = dict()
             for traj in self.cell_trajectory_manager.cell_trajectories.values():
-                prev_cell_id = None
+                prev_cell_key = None
 
                 for cell_id in traj.cell_ids:
-                    if cell_id not in cell_neighbours:
-                        cell_neighbours[cell_id] = set()
+                    cell_key = self.cell_id_to_key_dict[cell_id]
 
-                    if prev_cell_id is None:
-                        prev_cell_id = cell_id
+                    if cell_key not in cell_neighbours:
+                        cell_neighbours[cell_key] = set()
+
+                    if prev_cell_key is None:
+                        prev_cell_key = cell_key
                         continue
 
-                    cell_neighbours[cell_id].add(prev_cell_id)
-                    cell_neighbours[prev_cell_id].add(cell_id)
+                    cell_neighbours[cell_key].add(prev_cell_key)
+                    cell_neighbours[prev_cell_key].add(cell_key)
 
-                    prev_cell_id = cell_id
+                    prev_cell_key = cell_key
 
             mapped_cells: set[CellRepresentationBase] = set()
-            for cell_id in cell_neighbours.keys():
-                current_cell = self.cell_id_to_key_dict[cell_id]
+            for cell_key in cell_neighbours.keys():
 
                 # If this is already mapped to a cell this run, don't mapp others to it, it may cause chain mapping
-                if current_cell in mapped_cells:
+                if cell_key in mapped_cells:
                     continue
 
-                for neighbour in cell_neighbours[cell_id]:
-                    neighbour_cell = self.cell_id_to_key_dict[neighbour]
+                neighbours = list(cell_neighbours[cell_key])
+                neighbours.sort(key=self.cell_map.get_cell_size)
 
-                    if self.cell_map.get_cell_size(current_cell) + self.cell_map.get_cell_size(neighbour_cell) < 10:
+                for neighbour_cell_key in neighbours:
+
+                    if self.cell_map.get_cell_size(cell_key) + self.cell_map.get_cell_size(neighbour_cell_key) <= self.max_cell_size:
                         
                         # Only add cells that have not been mapped to another cell yet
-                        if not neighbour_cell in mapped_cells:
-                            self.cell_map[current_cell] = self.cell_map[neighbour_cell]
-                            mapped_cells.add(neighbour_cell)
-                            mapped_cells.add(current_cell)
+                        if not neighbour_cell_key in mapped_cells:
+                            self.cell_map[neighbour_cell_key] = self.cell_map[cell_key]
+                            mapped_cells.add(neighbour_cell_key)
+                            mapped_cells.add(cell_key)
 
             cell_id_map = dict()
             for cell_key in self.archive.keys():

@@ -5,8 +5,8 @@ loadPathModel=000000007040_model.joblib
 loadPathArch=000000007040_arch.gz
 hoursPerLevel=0.05
 levels=1
-startDate=2022-04-05 15:28:55
-endDate=2022-04-05 15:31:55
+startDate=2022-04-05 16:03:10
+endDate=2022-04-05 16:06:10
 levelSeed=92
 posSeed=0
 testMode=False
@@ -16,8 +16,5 @@ testMode=False
 levelSeed=92
 posSeed=0
 
-<<INTERRUPT>>: Got keyboard interrupt, stopping program.
 
-<<WARNING>> ['Error code [2]'] errors have occured.
-
-<<WARNING>>: Run finished at 2022-04-05 15:29:17 with 1 errors occuring.
+Run finished successfully at 2022-04-05 16:06:47 with total time of: 0:03:37.
