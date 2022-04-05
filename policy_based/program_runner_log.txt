@@ -1,19 +1,19 @@
 Starting program_runner for: 
 gameName=maze
-loadPathModel=/home/nicolas/temp/2363247_94940a5beb704b7a8f0a7f3d61f0378e/000000002432_model.joblib
-loadPathArch=/home/nicolas/temp/2363247_94940a5beb704b7a8f0a7f3d61f0378e/000000002432_arch.gz
-hoursPerLevel=0.05
+loadPathModel=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_model.joblib
+loadPathArch=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_arch.gz
+hoursPerLevel=0.03
 levels=1
-startDate=2022-04-04 13:36:35
-endDate=2022-04-04 13:39:35
+startDate=2022-04-05 11:02:55
+endDate=2022-04-05 11:04:43
 levelSeed=92
 posSeed=0
 testMode=False
 
 ----------
-0.05 hours remaining. Starting new run for loadPathModel=/home/nicolas/temp/2363247_94940a5beb704b7a8f0a7f3d61f0378e/000000002432_model.joblib and loadPathArch=/home/nicolas/temp/2363247_94940a5beb704b7a8f0a7f3d61f0378e/000000002432_arch.gz of 0.05 hours.
+0.03 hours remaining. Starting new run for loadPathModel=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_model.joblib and loadPathArch=/home/nicolas/temp/2363319_813867a3ac8f420d88f205bae131e3f6/000000004608_arch.gz of 0.03 hours.
 levelSeed=92
 posSeed=0
 
 
-Run finished successfully at 2022-04-04 13:39:58 with total time of: 0:03:23.
+Run finished successfully at 2022-04-05 11:05:10 with total time of: 0:02:15.

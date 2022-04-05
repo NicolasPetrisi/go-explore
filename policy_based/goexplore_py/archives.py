@@ -13,9 +13,11 @@ from typing import Any, Dict, Set, Optional, Tuple
 from goexplore_py.cell_representations import CellRepresentationBase
 import goexplore_py.data_classes as data_classes
 from goexplore_py.trajectory_manager import CellTrajectoryManager
+
 import horovod.tensorflow as hvd
 import goexplore_py.globals as global_const
 
+from goexplore_py.cell_mapping import CellMapping
 
 class StochasticArchive:
     def __init__(self, optimize_score, cell_selector, cell_trajectory_manager, max_failed, reset_on_update):
@@ -33,7 +35,7 @@ class StochasticArchive:
         self.cells_reached_dict: Dict[Any, deque] = dict()
         
         # Micro to macro cell mapping
-        self.cell_map: Dict[CellRepresentationBase, CellRepresentationBase] = dict()
+        self.cell_map: CellMapping = CellMapping()
 
         # Convenience data
         # This information is necessary to make the archive run properly, but it can be calculated from the core data
@@ -51,7 +53,7 @@ class StochasticArchive:
         self.new_cells: Dict[Any, int] = dict()
 
     def add_to_cell_map(self, cell_key):
-        self.cell_map[cell_key] = cell_key
+        self.cell_map.add_cell(cell_key)
 
     def get_state(self, finalSave=False):
         cell_key_set = set(self.cell_id_to_key_dict.values())
@@ -62,12 +64,13 @@ class StochasticArchive:
 
         save_trajectories = None
         if finalSave:
-
+            checked_ids: Set[int] = set()
             for traj in self.cell_trajectory_manager.cell_trajectories.values():
                 prev_cell_key = None
                 current_cell_key = None
-                checked_ids = set()
+                
                 for cell_id in traj.cell_ids:
+
                     if cell_id in checked_ids:
                         prev_cell_key = None
                         current_cell_key = None
@@ -78,35 +81,28 @@ class StochasticArchive:
                         prev_cell_key = self.cell_id_to_key_dict[cell_id]
                         current_cell_key = self.cell_id_to_key_dict[cell_id]
                         checked_ids.add(cell_id)
-                        self.cell_map[current_cell_key] = current_cell_key
+                        self.cell_map.add_cell(current_cell_key)
                         continue
 
-                    
+
                     current_cell_key = self.cell_id_to_key_dict[cell_id]
+
                     checked_ids.add(cell_id)
-                    self.cell_map[current_cell_key] = current_cell_key
+                    self.cell_map.add_cell(current_cell_key)
+                    
 
-                    try:
-                        current_cell_key_ret_suc = self.archive[current_cell_key].nb_reached / self.archive[current_cell_key].nb_chosen
-                        prev_cell_key_ret_suc = self.archive[prev_cell_key].nb_reached / self.archive[prev_cell_key].nb_chosen
-                    except ZeroDivisionError:
-                        current_cell_key_ret_suc = 0
-                        prev_cell_key_ret_suc = 0
-
-
-                    if current_cell_key_ret_suc > -0.75 and prev_cell_key_ret_suc > -0.75:
-                        self.cell_map[current_cell_key] = self.cell_map[prev_cell_key]
-
-                        for k, v in self.cell_map.items():
-                            if v == current_cell_key:
-                                self.cell_map[k] = self.cell_map[prev_cell_key]
-
+                    print("Linking:", current_cell_key, "to", self.cell_map[prev_cell_key])
+                    self.cell_map[current_cell_key] = self.cell_map[prev_cell_key]
 
                     prev_cell_key = current_cell_key
 
+            print("Final Cell_map")
+            print(self.cell_map)
 
             cell_id_map = dict()
-            for cell_key, new_cell_key in self.cell_map.items():
+            for cell_key in self.cell_map.keys():
+                new_cell_key = self.cell_map[cell_key]
+
                 if cell_key not in self.archive.keys():
                     pass
                 else:
