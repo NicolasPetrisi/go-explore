@@ -800,9 +800,9 @@ class VideoWriter(MyWrapper):
             g = int(cell_key.x * 59 % 255)
             b = int((cell_key.x + cell_key.y) * 89 % 255)
             if min(r,g,b) > 100:
-                r = r -50
-                g = g -50
-                b = b -50
+                r = r -100
+                g = g -100
+                b = b -100
             return (r, g, b)
 
 
