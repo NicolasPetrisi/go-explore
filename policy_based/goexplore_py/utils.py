@@ -120,7 +120,7 @@ def make_sub_list(input_list,seperator):
         final.append(almost_final)
     return final
 
-def get_values(filepath, x_name, y_name, prev_log_file):
+def get_values(filepath, x_name, y_name):
     """extract the x and y values from log.txt file to be used when plotting the graph.
 
     Args:
@@ -136,20 +136,6 @@ def get_values(filepath, x_name, y_name, prev_log_file):
     x_values = []
     y_values = []
     
-    if prev_log_file is not None:
-        with open(prev_log_file) as prev_f:
-            lines = prev_f.readlines()
-            first = make_sub_list(lines, ',')
-
-            x_index = first[0].index(x_name)
-            y_index = first[0].index(y_name)
-            for line in first[1:]:
-                if line[y_index] != 'nan':
-                    y = float(line[y_index])
-                    if y > -0.1:
-                        x_values.append(int(line[x_index]))
-                        y_values.append(float(line[y_index]))
-
     with open(filepath) as f:
         lines = f.readlines()
         first = make_sub_list(lines, ',')
@@ -179,7 +165,7 @@ def plot_values(x_values, y_values, x_label, y_label, seed, name="plot.png"):
     plt.title("Level Seed = " + str(seed))
     plt.savefig(name)
 
-def make_plot(filepath, x_name, y_name, level_seed, prev_log_file):
+def make_plot(filepath, x_name, y_name, level_seed):
     """makes a plot with x_name as x values and y_name as y values.\n
        The plot will be saved in temp/run_numberandhash/plots/
 
@@ -193,7 +179,7 @@ def make_plot(filepath, x_name, y_name, level_seed, prev_log_file):
     if not os.path.isdir(filepath + "/plots"):
         os.mkdir(filepath + "/plots")
 
-    x, y = get_values(filepath + '/log.txt', x_name , y_name, prev_log_file)
+    x, y = get_values(filepath + '/log.txt', x_name , y_name)
     plot_values(x, y, x_name, y_name, level_seed, f'{filepath}/plots/{y_name}_of_{x_name}.png')
 
 

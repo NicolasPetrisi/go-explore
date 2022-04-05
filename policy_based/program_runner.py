@@ -18,7 +18,8 @@ endTime            : str    = "0.05"
 tempPath           : str    = '/home/fredrik/temp/'
 folder             : str    = "0785_c5f423f2d2e64640b65eba8f7ee4b969"
 loadPathModel      : str    = "000000001408_model.joblib"
-loadPathArch       : str    = "-"#"000000001408_arch.gz"
+loadPathArch       : str    = "000000001408_arch.gz"
+loadPathTrajectory : str    = "000000001408_traj.tfrecords"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "1"
 videoAllEpisodes   : str    = "False"
@@ -111,7 +112,7 @@ while datetime.now() < datetime.strptime(endTime, format):
     print(tmpString)
     log.flush()
 
-    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder)
+    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory)
 
     
     if returnValue != 0:

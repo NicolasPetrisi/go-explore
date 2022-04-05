@@ -8,7 +8,7 @@
 # limitations under the License.
 class SimpleLogger:
     def __init__(self, file_name):
-        self.file_handle = open(file_name, 'w')
+        self.file_handle = open(file_name, 'a')
         self.column_names = []
         self.values = []
         self.first_line = True

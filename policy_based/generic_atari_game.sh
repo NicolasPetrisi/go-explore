@@ -72,11 +72,18 @@ NB_MPI_WORKERS=${10}
 # Full experiment: 16
 NB_ENVS_PER_WORKER=2
 
-if [ $11 != '-' ];
+if [ ${11} != '-' ];
 then
     Folder="--folder ${11}"
 else
     Folder=""
+fi
+
+if [ ${12} != '-' ];
+then
+    TrajectoryFile="--trajectory_file ${12}"
+else
+    TrajectoryFile=""
 fi
 # Full experiment: different for each run
 #SEED=0
@@ -117,5 +124,5 @@ EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --rand
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints all --final_goal_or_sub_goal sub_goal"
 TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=sil"
-MISC_OPTIONS="--hampus_cells --early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork} ${Folder}"
+MISC_OPTIONS="--hampus_cells --early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork} ${Folder} ${TrajectoryFile}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

@@ -353,6 +353,14 @@ def _run(**kwargs):
     traj_logger = None
     if hvd.rank() == 0 and not disable_logging:
         logger = SimpleLogger(log_par.base_path + '/log.txt')
+        # FN, if we copied the load path, parse the first line containing 
+        # the values to log and give it to the logger
+        if os.stat(log_par.base_path + '/log.txt').st_size != 0:
+            with open(log_par.base_path + '/log.txt') as f:
+                line = f.readline()
+                tmp = line.split(", ")
+                logger.column_names = tmp
+                logger.first_line = False
         traj_logger = SimpleLogger(log_par.base_path + '/traj_log.txt')
 
     ########################
@@ -571,7 +579,7 @@ def _run(**kwargs):
 
             if checkpoint_tracker.n_iters % 10 == 0:
                 for y_value in plot_y_values:
-                    make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'], prev_log_file = None)
+                    make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'])
 
             traj_manager = expl.archive.cell_trajectory_manager
             new_trajectories = sorted(traj_manager.new_trajectories,
@@ -648,13 +656,8 @@ def _run(**kwargs):
 
     # FN, only one thread should make plots.
     if hvd.rank() == 0:
-        if kwargs['expl_state'] is not None:
-            path = '/'.join(kwargs['expl_state'].split('/')[:-1]) + "/log.txt"
-            print(path)
-        else:
-            path = None
         for y_value in plot_y_values:
-            make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'], prev_log_file = path)
+            make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'])
 
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
@@ -747,10 +750,11 @@ def run(kwargs):
                 kwargs['load_path'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['load_path']
             if kwargs['expl_state'] is not None:
                 kwargs['expl_state'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['expl_state']
+            if kwargs['trajectory_file'] is not None:
+                kwargs['cell_trajectories_file'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['trajectory_file']
 
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
-    #kwargs['cell_trajectories_file'] = "/home/fredrik/temp/0785_c5f423f2d2e64640b65eba8f7ee4b969/000000001408_traj.tfrecords"
     # We need to setup the MPI environment before performing any data processing
     nb_cpu = 0 #NOTE This was 4. Setting to 0 means the computer picks an appropriate number instead.
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])

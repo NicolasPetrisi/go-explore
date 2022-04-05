@@ -1379,6 +1379,12 @@ def setup(resolution,
 
     if expl_state is not None:
         logger.info('Loading explorer state')
+
+        # FN, copy the previous log file to get nice plots and log file
+        path = '/'.join(expl_state.split('/')[:-1]) + "/log.txt"
+        import shutil
+        shutil.copyfile(path, base_path +"log.txt")
+
         if isinstance(expl_state, str):
             with gzip.open(expl_state, 'rb') as file_handle:
                 expl_state = pickle.load(file_handle)
@@ -1501,6 +1507,7 @@ def del_out_of_setup_args(kwargs):
     del kwargs['early_stopping']
     del kwargs['hampus_cells']
     del kwargs['folder']
+    del kwargs['trajectory_file']
     return kwargs
 
 
@@ -1873,7 +1880,8 @@ def parse_arguments():
     parser.add_argument('--folder', type=str,
                         default=DefaultArg("GUESSED_FOLDER_PATH"),
                         help='Thr folder containing the model, archive and/or trjectory_file to load')
-
+    parser.add_argument('--trajectory_file', type=str,
+                        help='The trajectory file to load, should be paired with an exploration state to load')
 
 
 
