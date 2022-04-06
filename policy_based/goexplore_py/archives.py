@@ -12,7 +12,7 @@ from typing import Any, Dict, Set, List, Optional, Tuple
 from goexplore_py.cell_representations import CellRepresentationBase
 import goexplore_py.data_classes as data_classes
 from goexplore_py.trajectory_manager import CellTrajectoryManager
-
+from goexplore_py.utils import get_neighbours
 import horovod.tensorflow as hvd
 import goexplore_py.globals as global_const
 
@@ -81,25 +81,27 @@ class StochasticArchive:
             # FN, Find which cell has what neighbour to correctly merge them together as Hampu Cells in the later steps.
             # A cell neighbour is defined from the trajectories. If a cell comes after another in a trajectory, they are
             # assumed to be neighbours.
-            cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]] = dict()
-            for traj in self.cell_trajectory_manager.cell_trajectories.values():
-                prev_cell_key = None
+            cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]]
+            cell_neighbours = get_neighbours(self.cell_trajectory_manager.cell_trajectories, self.cell_id_to_key_dict)
+            # cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]] = dict()
+            # for traj in self.cell_trajectory_manager.cell_trajectories.values():
+            #     prev_cell_key = None
 
-                for cell_id in traj.cell_ids:
-                    cell_key = self.cell_id_to_key_dict[cell_id]
+            #     for cell_id in traj.cell_ids:
+            #         cell_key = self.cell_id_to_key_dict[cell_id]
 
-                    if cell_key not in cell_neighbours:
-                        cell_neighbours[cell_key] = set()
+            #         if cell_key not in cell_neighbours:
+            #             cell_neighbours[cell_key] = set()
 
-                    if prev_cell_key is None:
-                        prev_cell_key = cell_key
-                        continue
+            #         if prev_cell_key is None:
+            #             prev_cell_key = cell_key
+            #             continue
 
-                    # FN, Define the two cells to be each other's neighbours.
-                    cell_neighbours[cell_key].add(prev_cell_key)
-                    cell_neighbours[prev_cell_key].add(cell_key)
+            #         # FN, Define the two cells to be each other's neighbours.
+            #         cell_neighbours[cell_key].add(prev_cell_key)
+            #         cell_neighbours[prev_cell_key].add(cell_key)
 
-                    prev_cell_key = cell_key
+            #         prev_cell_key = cell_key
 
             # FN, Create so called "Hampu Cells". Merging together neighbouring cells with each other to create larger cells.
             mapped_cells: set[CellRepresentationBase] = set()

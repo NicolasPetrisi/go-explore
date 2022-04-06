@@ -70,6 +70,7 @@ class MyAtari(MyWrapper):
 
     def make_env(self):
         return gym.make(self.name, distribution_mode=self.distribution_mode, render_mode="rgb_array" , start_level=self.org_seed, use_sequential_levels=self.use_sequential_levels, num_levels = self.num_levels, restrict_themes = self.restrict_themes, pos_seed = self.pos_seed)
+    
     def reset(self) -> np.ndarray:
         """reseting an enviroment to the start state
 

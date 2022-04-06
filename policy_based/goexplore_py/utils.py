@@ -14,6 +14,8 @@ import glob
 import hashlib
 from contextlib import contextmanager
 import cv2
+from typing import Dict, Set
+from goexplore_py.cell_representations import CellRepresentationBase
 
 GOAL_COLOR = (253,155,37) # FN, NOTE Set these RGB values to one which is unique to the goal in the frame.
 AGENT_COLOR = (187,203,204) # FN, NOTE Set these RGB values to one which is unique to the agent in the frame.
@@ -203,3 +205,25 @@ def get_goal_pos(obs):
         return (-1,-1)
     y, x = np.mean(face_pixels, axis=0)
     return (x,y)
+
+def get_neighbours(trajectories, cell_id_to_key_dict):
+    cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]] = dict()
+    for traj in trajectories.values():
+        prev_cell_key = None
+
+        for cell_id in traj.cell_ids:
+            cell_key = cell_id_to_key_dict[cell_id]
+
+            if cell_key not in cell_neighbours:
+                cell_neighbours[cell_key] = set()
+
+            if prev_cell_key is None:
+                prev_cell_key = cell_key
+                continue
+
+            # FN, Define the two cells to be each other's neighbours.
+            cell_neighbours[cell_key].add(prev_cell_key)
+            cell_neighbours[prev_cell_key].add(cell_key)
+
+            prev_cell_key = cell_key
+    return cell_neighbours

@@ -336,7 +336,6 @@ def _run(**kwargs):
     screenshot_merge = kwargs['screenshot_merge']
     clear_checkpoints = list(filter(None, kwargs['clear_checkpoints'].split(':')))
     early_stopping = kwargs['early_stopping']
-    hampu_cell = kwargs['hampu_cells']
     if 'all' in clear_checkpoints:
         clear_checkpoints = CHECKPOINT_ABBREVIATIONS.keys()
 
@@ -488,7 +487,7 @@ def _run(**kwargs):
                 c_return_succes_rate += success_rate 
 
             #FN, when using Hampu_Cells it's impossible to calculate the optimal length using the cells since they change over time.
-            if not hampu_cell:
+            if not kwargs['hampu_cells']:
                 if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
 
                     start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
@@ -667,7 +666,7 @@ def _run(**kwargs):
     mpi.get_comm_world().barrier()
 
     # FN, One last save to update the archive if Hampu Cells (dynamic cells) are used.
-    if hampu_cell and hvd.rank() == 0 and not disable_logging:
+    if kwargs['hampu_cells'] and hvd.rank() == 0 and not disable_logging:
         # Save Archive
         if log_par.save_archive:
             save_state(expl.get_state(True), filename + ARCHIVE_POSTFIX)

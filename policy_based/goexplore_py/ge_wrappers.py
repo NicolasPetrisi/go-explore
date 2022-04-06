@@ -206,6 +206,33 @@ class TargetedGoalExplorer(GoalExplorer):
         goal_cell = go_explore_env.env.recursive_getattr('goal_cell')
         return goal_cell
 
+
+class HampuGoalExplorer(GoalExplorer):
+    def __init__(self, random_exp_prob, random_explorer):
+        super(HampuGoalExplorer,self).__init__(random_exp_prob, random_explorer)
+
+    def choose(self, go_explore_env):
+
+        # choose a neighbouring hampu cell to the current cell with 75% proability 
+        if go_explore_env.archive.cell_map and random.random() > 0.75 :
+            current_cell = go_explore_env.last_reached_cell
+            trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
+            cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
+            neighbours_dict = utils.get_neighbours(trajectories, cell_id_to_key_dict)
+        
+            if neighbours_dict:
+                print("############################################")
+                print("exploration choooooose")
+                neighbours = list(neighbours_dict[go_explore_env.archive.cell_map[current_cell]])
+                if len(neighbours) > 0:
+                    return random.sample(neighbours, 1)[0]
+
+        # choose a know cell in archive with 25% probability
+        target_cell = go_explore_env.select_cell_from_archive()
+        go_explore_env.last_reached_cell = target_cell
+        return target_cell
+
+
 class DomKnowNeighborGoalExplorer(GoalExplorer):
     def __init__(self, x_res, y_res, random_exp_prob, random_explorer):
         super(DomKnowNeighborGoalExplorer, self).__init__(random_exp_prob, random_explorer)

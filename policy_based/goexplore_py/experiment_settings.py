@@ -783,7 +783,8 @@ def setup(resolution,
           weight_based_skew,
           level_seed,
           pos_seed,
-          video_all_ep
+          video_all_ep,
+          hampu_cells
           ):
     """Sets up everything needed to start running the experiment.
 
@@ -989,7 +990,7 @@ def setup(resolution,
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
-         targeted_exploration = True
+         targeted_exploration = False
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
 
@@ -1134,6 +1135,8 @@ def setup(resolution,
     
     if targeted_exploration:
         goal_explorer = ge_wrappers.TargetedGoalExplorer(random_exp_prob, random_explorer)
+    elif hampu_cells:
+        goal_explorer = ge_wrappers.HampuGoalExplorer(random_exp_prob, random_explorer)
     else:
         goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     
@@ -1503,7 +1506,6 @@ def del_out_of_setup_args(kwargs):
     del kwargs['log_info']
     del kwargs['log_files']
     del kwargs['early_stopping']
-    del kwargs['hampu_cells']
     del kwargs['folder']
     del kwargs['trajectory_file']
     return kwargs
