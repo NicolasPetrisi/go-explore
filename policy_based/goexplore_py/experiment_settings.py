@@ -32,8 +32,6 @@ import goexplore_py.randselectors as randselectors
 import goexplore_py.archives as archives
 import goexplore_py.goal_representations as goal_rep
 import goexplore_py.trajectory_gatherers as trajectory_gatherers
-import goexplore_py.montezuma_env as montezuma_env
-import goexplore_py.pitfall_env as pitfall_env
 import goexplore_py.generic_atari_env as generic_atari_env
 import goexplore_py.generic_goal_conditioned_env as generic_goal_conditioned_env
 import goexplore_py.explorers as explorers
@@ -1878,6 +1876,7 @@ def parse_arguments():
                         default=DefaultArg(False), action='store_true',
                         help='If Hampu Cells (dynamic cells) are to be used or not')
     parser.add_argument('--folder', type=str,
+                        default=DefaultArg(''),
                         help='Thr folder containing the model, archive and/or trjectory_file to load')
     parser.add_argument('--trajectory_file', type=str,
                         help='The trajectory file to load, should be paired with an exploration state to load')

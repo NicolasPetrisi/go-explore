@@ -1,4 +1,3 @@
-
 # Copyright (c) 2020 Uber Technologies, Inc.
 
 # Licensed under the Uber Non-Commercial License (the "License");
@@ -17,57 +16,11 @@
 import numpy as np
 import gym
 import copy
-from typing import Tuple, List
 import typing
 from atari_reset.atari_reset.wrappers import MyWrapper
 import numpy as np
-import cv2
-import goexplore_py.utils
 
-from goexplore_py.utils import bytes2floatArr, get_goal_pos, AGENT_COLOR
-
-
-class AtariPosLevel:
-    """old code for an atari enviroment, don't think it runs
-
-    Returns:
-        _type_: _description_
-    """
-    __slots__ = ['level', 'score', 'room', 'x', 'y', 'tuple']
-
-    def __init__(self, level=0, score=0, room=0, x=0, y=0):
-        self.level = level
-        self.score = score
-        self.room = room
-        self.x = x
-        self.y = y
-
-        self.set_tuple()
-
-    def set_tuple(self):
-        self.tuple = (self.level, self.score, self.room, self.x, self.y)
-
-    def __hash__(self):
-        return hash(self.tuple)
-
-    def __eq__(self, other):
-        if not isinstance(other, AtariPosLevel):
-            return False
-        return self.tuple == other.tuple
-
-    def __setstate__(self, d):
-        self.level, self.score, self.room, self.x, self.y = d
-        self.tuple = d
-
-    def __repr__(self):
-        return f'Level={self.level} Room={self.room} Objects={self.score} x={self.x} y={self.y}'
-
-def clip(a, m, M):
-    if a < m:
-        return m
-    if a > M:
-        return M
-    return a
+from goexplore_py.utils import get_goal_pos, AGENT_COLOR
 
 
 class MyAtari(MyWrapper):
@@ -199,7 +152,7 @@ class MyAtari(MyWrapper):
         self.unprocessed_state, reward, done, lol = self.env.step(action)
         self.level_seed = lol['level_seed']
 
-        # FN, Assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
+        # FN, Assuming that the episodes terminate when reward is found and the position of the agent is at the goal when it happens
         # This is because procgen end the episodes before the agent actaully enters the goal space
         if reward > 0:
             self.done = done

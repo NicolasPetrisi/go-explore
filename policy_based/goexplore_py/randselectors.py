@@ -13,7 +13,6 @@ import numpy as np
 from collections import defaultdict
 from typing import List, Any, Dict
 from .data_classes import CellInfoStochastic
-from .cell_representations import MontezumaPosLevel
 logger = logging.getLogger(__name__)
 
 
@@ -387,7 +386,7 @@ class NeighborWeights(AbstractWeight):
         return f'NeighborWeights(horiz={self.horiz}, vert={self.vert}, score_low={self.score_low}, ' \
                f'score_high={self.score_high})'
 
-    def get_neighbor(self, pos: MontezumaPosLevel, offset):
+    def get_neighbor(self, pos, offset):
         x = pos.x + offset[0]
         y = pos.y + offset[1]
         room = pos.room
@@ -416,7 +415,7 @@ class NeighborWeights(AbstractWeight):
         res = self.game.make_pos(pos.objects, new_pos)
         return res
 
-    def no_neighbor(self, pos: MontezumaPosLevel, offset, known_cells):
+    def no_neighbor(self, pos, offset, known_cells):
         return self.get_neighbor(pos, offset) not in known_cells
 
     def convert_score(self, e):
@@ -427,9 +426,9 @@ class NeighborWeights(AbstractWeight):
         return number_of_set_bits(e)
 
     def additive_weight(self,
-                        pos: MontezumaPosLevel,
+                        pos,
                         cell: CellInfoStochastic,
-                        known_cells: Dict[MontezumaPosLevel, CellInfoStochastic],
+                        known_cells,
                         special_attributes):
         possible_scores = self.sorted_scores
 

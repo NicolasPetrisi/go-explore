@@ -10,19 +10,19 @@ from signal import SIGINT, siginterrupt
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 2
-levelSeed          : str    = "92"
+minimumIterations  : int    = 1
+levelSeed          : str    = "100"
 posSeed            : str    = "0"
 testMode           : str    = "False"
-endTime            : str    = "0.02"
+endTime            : str    = "0.05"
 tempPath           : str    = '/home/fredrik/temp/'
-folder             : str    = "-"
-loadPathModel      : str    = "-"
-loadPathArch       : str    = "-"
-loadPathTrajectory : str    = "-"
+folder             : str    = "-"#"0035_9f6db63867244bc5b59d05dcdcd7b657"
+loadPathModel      : str    = "-"#"000000001280_model.joblib"
+loadPathArch       : str    = "-"#"000000001280_arch.gz"
+loadPathTrajectory : str    = "-"#"000000001280_traj.tfrecords"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "2"
-videoAllEpisodes   : str    = "False"
+videoAllEpisodes   : str    = "True"
 continue_run       : bool   = True
 #####################
 
@@ -118,7 +118,7 @@ while datetime.now() < datetime.strptime(endTime, format):
     if continue_run and not first_run:
         cont = "True"
 
-    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
+    returnValue = os.system("sh run_procgen_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
 
     
     if returnValue != 0:
