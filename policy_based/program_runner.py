@@ -1,9 +1,8 @@
 import os
-import time
 from datetime import datetime
 from datetime import timedelta
 import numpy as np
-from signal import SIGINT, siginterrupt
+from signal import SIGINT
 
 # Set any unwished arguments (except gameName) to "-" if they are not desired,
 # they will get default arguments in Go-Explore.
