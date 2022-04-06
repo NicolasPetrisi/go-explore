@@ -395,6 +395,7 @@ def _run(**kwargs):
     
     start_coords = (-1, -1)
     optimal_length = -1
+    dist_from_opt_traj = -1
 
     plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
     plot_x_value = "frames"
@@ -486,43 +487,45 @@ def _run(**kwargs):
                         print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
                 c_return_succes_rate += success_rate 
 
-            if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
+            #FN, when using Hampu_Cells it's impossible to calculate the optimal length using the cells since they change over time.
+            if not hampu_cell:
+                if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
 
-                start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
+                    start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
 
 
-                def breadth_first_search(first_pos):
-                    queue = []
-                    visited = set()
+                    def breadth_first_search(first_pos):
+                        queue = []
+                        visited = set()
 
-                    queue.append((first_pos, 0)) # ((x, y), depth)
-                    visited.add(first_pos)
+                        queue.append((first_pos, 0)) # ((x, y), depth)
+                        visited.add(first_pos)
 
-                    while queue:
-                        current_pos, depth = queue.pop(0)
+                        while queue:
+                            current_pos, depth = queue.pop(0)
 
-                        for cell, info in expl.archive.archive.items():
-                            if (cell.x, cell.y) not in visited and \
-                                    (((cell.x == current_pos[0] + 1 or cell.x == current_pos[0] - 1) and cell.y == current_pos[1]) or \
-                                    (cell.x == current_pos[0] and (cell.y == current_pos[1] + 1 or cell.y == current_pos[1] - 1))):
-                                if info.score > 0:
-                                    return depth + 1
+                            for cell, info in expl.archive.archive.items():
+                                if (cell.x, cell.y) not in visited and \
+                                        (((cell.x == current_pos[0] + 1 or cell.x == current_pos[0] - 1) and cell.y == current_pos[1]) or \
+                                        (cell.x == current_pos[0] and (cell.y == current_pos[1] + 1 or cell.y == current_pos[1] - 1))):
+                                    if info.score > 0:
+                                        return depth + 1
 
-                                queue.append(((cell.x, cell.y), depth + 1))
-                                visited.add((cell.x, cell.y))
-                    
-                    # If we reach this statement, then we found no path when one should exist.
-                    raise Exception("No path from start position to goal was found")
-        
-                optimal_length = breadth_first_search(start_coords)
+                                    queue.append(((cell.x, cell.y), depth + 1))
+                                    visited.add((cell.x, cell.y))
+                        
+                        # FN, If we reach this statement, then we found no path when one should exist.
+                        raise Exception("No path from start position to goal was found")
+            
+                    optimal_length = breadth_first_search(start_coords)
 
-            dist_from_opt_traj = -1
-            if kwargs["pos_seed"] != -1:
-                for k,v in expl.archive.archive.items():
-                    if v.score > 0:
-                        dist_from_opt_traj = v.trajectory_len - optimal_length
-                        assert dist_from_opt_traj >= 0, "WARNING: The bug where starting position is 1 off is still present."
-                        break
+                dist_from_opt_traj = -1
+                if kwargs["pos_seed"] != -1:
+                    for k,v in expl.archive.archive.items():
+                        if v.score > 0:
+                            dist_from_opt_traj = v.trajectory_len - optimal_length
+                            assert dist_from_opt_traj >= 0, "WARNING: The bug where starting position is 1 off is still present."
+                            break
                     
 
 
