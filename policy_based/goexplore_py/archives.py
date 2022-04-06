@@ -142,7 +142,7 @@ class StochasticArchive:
                 if self.archive[key] not in cell_infos:
                     cell_infos.append(self.archive[key])
 
-
+            #FN, Modify the remaining objects which we save as the archive.
             save_trajectories = self.cell_trajectory_manager.update_trajectories(cell_id_map, cell_infos)
             keys = list(self.archive.keys())
             for key in keys:
@@ -153,7 +153,7 @@ class StochasticArchive:
 
 
 
-
+        #FN, The final state of the archive to return.
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
                  'cell_id_to_key_dict': self.cell_id_to_key_dict,
