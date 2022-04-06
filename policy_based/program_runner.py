@@ -10,8 +10,8 @@ from signal import SIGINT, siginterrupt
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 2
-levelSeed          : str    = "92"
+minimumIterations  : int    = 1
+levelSeed          : str    = "100"
 posSeed            : str    = "0"
 testMode           : str    = "False"
 endTime            : str    = "0.2"
@@ -118,7 +118,7 @@ while datetime.now() < datetime.strptime(endTime, format):
     if continue_run and not first_run:
         cont = "True"
 
-    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
+    returnValue = os.system("sh run_procgen_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
 
     
     if returnValue != 0:

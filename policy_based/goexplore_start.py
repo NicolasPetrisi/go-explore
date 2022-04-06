@@ -748,7 +748,7 @@ def run(kwargs):
             kwargs['cell_trajectories_file'] = ''
             local_logger.warning(f'No checkpoint found in: {kwargs["base_path"]} starting new run.')
     else:
-        if kwargs['folder'] is not None:
+        if kwargs['folder'] != '':
             if kwargs['load_path'] is not None:
                 kwargs['load_path'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['load_path']
             if kwargs['expl_state'] is not None:
