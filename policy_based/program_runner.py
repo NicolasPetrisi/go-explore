@@ -37,6 +37,7 @@ continue_run       : bool   = True
 #stepsPerIteration  : The maximum steps per iteration.
 #numberOfCores      : How many cores of the CPU to use during the run.
 #videoAllEpisodes   : If True, then a video for every episodes will be made, if False only every min(2^N, 500) video will be made.
+#continue_run       : If True, then Go-Explore will automatically load the most recent run saved in the temp folder when it restarts. For example when minimumIterations is greater than 1.
 
 list = os.listdir(tempPath)
 list.sort()
