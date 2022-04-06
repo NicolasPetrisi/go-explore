@@ -32,6 +32,7 @@ continue_run       : bool   = True
 #testMode           : If the network should be freezed and tested or not.
 #endTime            : At what time and date the run should be finished (YYYY-mm-dd HH:MM:SS). Alternativelly set to number of hours as a float (X). The time will be divided equally between iterations.
 #tempPath           : Set this to the path to your 'temp' folder where the models from Go-Explore are stored. In ubuntu WSL it would probably be '/home/USERNAME/temp/' 
+#folder             : Which folder in tempPath that the model, archive and trajectory file resides.
 #loadPathModel      : If a model is to be loaded initially, specify path from tempPath here.
 #loadPathArch       : The archive to load initially, specify path from tempPath here.
 #stepsPerIteration  : The maximum steps per iteration.
