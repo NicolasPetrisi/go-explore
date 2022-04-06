@@ -14,15 +14,15 @@ minimumIterations  : int    = 2
 levelSeed          : str    = "92"
 posSeed            : str    = "0"
 testMode           : str    = "False"
-endTime            : str    = "0.02"
-tempPath           : str    = '/home/fredrik/temp/'
+endTime            : str    = "0.2"
+tempPath           : str    = '/home/nicolas/temp/'
 folder             : str    = "-"
 loadPathModel      : str    = "-"
 loadPathArch       : str    = "-"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "2"
-videoAllEpisodes   : str    = "False"
+videoAllEpisodes   : str    = "True"
 continue_run       : bool   = True
 #####################
 
@@ -138,37 +138,39 @@ while datetime.now() < datetime.strptime(endTime, format):
 
     # Load the next run if this wasn't the last.
     remaining_time = (datetime.strptime(endTime, format) - datetime.now()).total_seconds()/3600
-    if remaining_time > minTimeAllowed and not continue_run:
-        prevLoadPath = loadPathModel
-        list = os.listdir(tempPath)
-        list.sort()
-        loadPathModel = tempPath + list[-1] + "/"
+    if remaining_time > minTimeAllowed:
+        if not continue_run:
+            prevLoadPath = loadPathModel
+            list = os.listdir(tempPath)
+            list.sort()
+            loadPathModel = tempPath + list[-1] + "/"
 
 
-        files = os.listdir(loadPathModel)
+            files = os.listdir(loadPathModel)
 
 
-        modelFiles = []
-        for file in files:
-            if file.endswith(".joblib"):
-                modelFiles.append(file)
+            modelFiles = []
+            for file in files:
+                if file.endswith(".joblib"):
+                    modelFiles.append(file)
 
-        if len(modelFiles) > 0:
-            loadPathModel = loadPathModel + modelFiles[-1]
-        else:
-            errorsHapppened.append("no .joblib file found")
+            if len(modelFiles) > 0:
+                loadPathModel = loadPathModel + modelFiles[-1]
+            else:
+                errorsHapppened.append("no .joblib file found")
 
-            tmpString = "<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPathModel + "\n"
-            log.write(tmpString)
-            print(tmpString)
+                tmpString = "<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPathModel + "\n"
+                log.write(tmpString)
+                print(tmpString)
 
-            loadPathModel = prevLoadPath
+                loadPathModel = prevLoadPath
 
-            tmpString = "Using model from previous run instead located at: " + loadPathModel + "\n"
-            log.write(tmpString)
-            print(tmpString)
-        posSeed = str(np.random.randint(0,623*1000))
-
+                tmpString = "Using model from previous run instead located at: " + loadPathModel + "\n"
+                log.write(tmpString)
+                print(tmpString)
+            posSeed = str(np.random.randint(0,623*1000))
+    else:
+        log.write("Only " + str(remaining_time) + " hours left but minimum time allowed is " + str(minTimeAllowed) + ". Stopping.\n")
     if len(errorsHapppened) > 4:
         print("<<WARNING>> More than 4 errors have occured. Something is wrong, stopping program.")
         break
