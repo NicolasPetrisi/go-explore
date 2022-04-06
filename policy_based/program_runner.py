@@ -42,11 +42,6 @@ continue_run       : bool   = True
 list = os.listdir(tempPath)
 list.sort()
 
-# if loadPathModel != "-":
-#     loadPathModel = tempPath + loadPathModel
-
-# if loadPathArch != "-":
-#     loadPathArch = tempPath + loadPathArch
 
 format = "%Y-%m-%d %H:%M:%S"
 startTime = datetime.now().strftime(format)
