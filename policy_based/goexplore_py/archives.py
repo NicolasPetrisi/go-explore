@@ -57,7 +57,15 @@ class StochasticArchive:
     def add_to_cell_map(self, cell_key):
         self.cell_map.add_cell(cell_key)
 
-    def get_state(self, finalSave=False):
+    def get_state(self, hampu_cells_save=False):
+        """Get the current state of the archive.
+
+        Args:
+            hampu_cells_save (bool, optional): If the save should merge the cells together as Hampu Cells before saving the archive state. Defaults to False.
+
+        Returns:
+            Dict[string, Any]: The current state of the archive as a dictionary.
+        """
         cell_key_set = set(self.cell_id_to_key_dict.values())
         for key in self.archive:
             assert key in self.cell_key_to_id_dict, 'key:' + str(key) + ' has no recorded id!'
@@ -66,11 +74,14 @@ class StochasticArchive:
 
         save_trajectories = None
 
-
-        if finalSave:
+        # FN, NOTE: The resulting cells we end up with when merging together individual cells are refered to as "Hampu Cells".
+        if hampu_cells_save:
             for key in self.archive.keys():
                 self.cell_map.add_cell(key)
 
+            # FN, Find which cell has what neighbour to correctly merge them together as Hampu Cells in the later steps.
+            # A cell neighbour is defined from the trajectories. If a cell comes after another in a trajectory, they are
+            # assumed to be neighbours.
             cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]] = dict()
             for traj in self.cell_trajectory_manager.cell_trajectories.values():
                 prev_cell_key = None
@@ -85,18 +96,21 @@ class StochasticArchive:
                         prev_cell_key = cell_key
                         continue
 
+                    # FN, Define the two cells to be each other's neighbours.
                     cell_neighbours[cell_key].add(prev_cell_key)
                     cell_neighbours[prev_cell_key].add(cell_key)
 
                     prev_cell_key = cell_key
 
+            # FN, Create so called "Hampu Cells". Merging together neighbouring cells with each other to create larger cells.
             mapped_cells: set[CellRepresentationBase] = set()
             for cell_key in cell_neighbours.keys():
 
-                # If this is already mapped to a cell this run, don't mapp others to it, it may cause chain mapping
+                #FN, If this is already mapped to a cell this run, don't map others to it, it may cause chain mapping.
                 if cell_key in mapped_cells or self.archive[self.cell_map[cell_key]].score > 0:
                     continue
 
+                # FN, Sort the neighbouring cells according to their cell size, making Hampu Cells prioritizing merging with smaller neighbours before the larger.
                 neighbours = list(cell_neighbours[cell_key])
                 neighbours.sort(key=self.cell_map.get_cell_size)
 
@@ -105,31 +119,24 @@ class StochasticArchive:
                     if self.cell_map.get_cell_size(cell_key) + self.cell_map.get_cell_size(neighbour_cell_key) <= self.max_cell_size and \
                         not self.archive[self.cell_map[neighbour_cell_key]].score > 0:
                         
-                        # Only add cells that have not been mapped to another cell yet
+                        #FN, Only add cells that have not been mapped to another cell yet.
                         if not neighbour_cell_key in mapped_cells:
                             self.cell_map[neighbour_cell_key] = self.cell_map[cell_key]
                             mapped_cells.add(neighbour_cell_key)
                             mapped_cells.add(cell_key)
 
+            # FN, Update the cell_id mapping according to the mapping already done in cell_map.
             cell_id_map = dict()
-            # cell_id_reverse: Dict[int, Set[int]] = dict()
-            for cell_id, cell_key in self.cell_id_to_key_dict.items():
+            items = list(self.cell_id_to_key_dict.items())
+            for cell_id, cell_key in items:
                 if cell_id != -1:
                     mapped_cell_id = self.cell_key_to_id_dict[self.cell_map[cell_key]]
                     cell_id_map[cell_id] = mapped_cell_id
 
-                    # if mapped_cell_id in cell_id_reverse:
-                    #     cell_id_reverse[mapped_cell_id].add(cell_id)
-                    # else:
-                    #     cell_id_reverse[mapped_cell_id] = set([cell_id])
-
-            # for cell_key in self.archive.keys():
-            #     new_cell_key = self.cell_map[cell_key]
-
-            #     cell_id = self.cell_key_to_id_dict[cell_key]
-            #     new_cell_id = self.cell_key_to_id_dict[new_cell_key]
-            #     cell_id_map[cell_id] = new_cell_id
-        
+                    if cell_id != mapped_cell_id:
+                        self.cell_id_to_key_dict.pop(cell_id)
+            
+            #FN, Extract the cell info of all cells that have survived the creation of the Hampu Cells (those that were not removed).
             cell_infos = list()
             for key in self.cell_map.values():
                 if self.archive[key] not in cell_infos:
@@ -143,14 +150,9 @@ class StochasticArchive:
                     info = self.archive.pop(key)
                     self.cells_reached_dict.pop(key, None)
                     self.archive[self.cell_map[key]].add(info)
-                # else:
-                #     for remove_id in cell_id_reverse[self.cell_key_to_id_dict[key]]:
-                #         self.cell_id_to_key_dict.pop(remove_id)
 
-            #TODO  using a reverse mapping would be faster           
-            for cell_id, mapped_cell_id in cell_id_map.items():
-                if cell_id != mapped_cell_id:
-                    self.cell_id_to_key_dict.pop(cell_id)
+
+
 
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
