@@ -94,7 +94,7 @@ class StochasticArchive:
             for cell_key in cell_neighbours.keys():
 
                 # If this is already mapped to a cell this run, don't mapp others to it, it may cause chain mapping
-                if cell_key in mapped_cells:
+                if cell_key in mapped_cells or self.archive[self.cell_map[cell_key]].score > 0:
                     continue
 
                 neighbours = list(cell_neighbours[cell_key])
@@ -102,7 +102,8 @@ class StochasticArchive:
 
                 for neighbour_cell_key in neighbours:
 
-                    if self.cell_map.get_cell_size(cell_key) + self.cell_map.get_cell_size(neighbour_cell_key) <= self.max_cell_size:
+                    if self.cell_map.get_cell_size(cell_key) + self.cell_map.get_cell_size(neighbour_cell_key) <= self.max_cell_size and \
+                        not self.archive[self.cell_map[neighbour_cell_key]].score > 0:
                         
                         # Only add cells that have not been mapped to another cell yet
                         if not neighbour_cell_key in mapped_cells:
