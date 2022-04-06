@@ -10,7 +10,6 @@ import numpy as np
 from typing import List, Any
 from gym import spaces
 
-from goexplore_py.utils import bytes2floatArr
 
 
 class AbstractGoalRepresentation:

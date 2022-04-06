@@ -23,7 +23,7 @@ import copy
 logger = logging.getLogger(__name__)
 
 try:
-    from dataclasses import dataclass, field as datafield
+    from dataclasses import field as datafield
 
     def copyfield(data):
         return datafield(default_factory=lambda: copy.deepcopy(data))
