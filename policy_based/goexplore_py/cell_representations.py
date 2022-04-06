@@ -10,7 +10,6 @@ import numpy as np
 from typing import List, Any, Type
 from goexplore_py.montezuma_env import MyMontezuma
 from goexplore_py.pitfall_env import MyPitfall
-from goexplore_py.utils import bytes2floatArr, floatArr2bytes
 
 
 class CellRepresentationBase:
