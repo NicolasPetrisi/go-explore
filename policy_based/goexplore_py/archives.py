@@ -111,12 +111,23 @@ class StochasticArchive:
                             mapped_cells.add(cell_key)
 
             cell_id_map = dict()
-            for cell_key in self.archive.keys():
-                new_cell_key = self.cell_map[cell_key]
+            # cell_id_reverse: Dict[int, Set[int]] = dict()
+            for cell_id, cell_key in self.cell_id_to_key_dict.items():
+                if cell_id != -1:
+                    mapped_cell_id = self.cell_key_to_id_dict[self.cell_map[cell_key]]
+                    cell_id_map[cell_id] = mapped_cell_id
 
-                cell_id = self.cell_key_to_id_dict[cell_key]
-                new_cell_id = self.cell_key_to_id_dict[new_cell_key]
-                cell_id_map[cell_id] = new_cell_id
+                    # if mapped_cell_id in cell_id_reverse:
+                    #     cell_id_reverse[mapped_cell_id].add(cell_id)
+                    # else:
+                    #     cell_id_reverse[mapped_cell_id] = set([cell_id])
+
+            # for cell_key in self.archive.keys():
+            #     new_cell_key = self.cell_map[cell_key]
+
+            #     cell_id = self.cell_key_to_id_dict[cell_key]
+            #     new_cell_id = self.cell_key_to_id_dict[new_cell_key]
+            #     cell_id_map[cell_id] = new_cell_id
         
             cell_infos = list()
             for key in self.cell_map.values():
@@ -129,11 +140,16 @@ class StochasticArchive:
             for key in keys:
                 if key != self.cell_map[key]:
                     info = self.archive.pop(key)
-                    #del self.cell_trajectory_manager.cell_trajectories[info.cell_traj_id]
-                    self.cell_id_to_key_dict.pop(self.cell_key_to_id_dict[key])
                     self.cells_reached_dict.pop(key, None)
-
                     self.archive[self.cell_map[key]].add(info)
+                # else:
+                #     for remove_id in cell_id_reverse[self.cell_key_to_id_dict[key]]:
+                #         self.cell_id_to_key_dict.pop(remove_id)
+
+            #TODO  using a reverse mapping would be faster           
+            for cell_id, mapped_cell_id in cell_id_map.items():
+                if cell_id != mapped_cell_id:
+                    self.cell_id_to_key_dict.pop(cell_id)
 
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
@@ -149,7 +165,6 @@ class StochasticArchive:
         self.cell_trajectory_manager.set_state(state['trajectory_manager_state'])
         self.cell_id_to_key_dict = state['cell_id_to_key_dict']
         self.cells_reached_dict = state['cells_reached_dict']
-
         self.cell_map = CellMapping()
         self.cell_map.load_cell_mapping(state['cell_mapping'])
 

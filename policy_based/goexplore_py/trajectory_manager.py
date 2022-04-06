@@ -253,7 +253,7 @@ class CellTrajectoryManager:
         return save_trajectories
 
     def get_state(self, modified_trajectories=None):
-        
+
         if modified_trajectories is not None:
             cell_trajectories_to_save = modified_trajectories
         else:
