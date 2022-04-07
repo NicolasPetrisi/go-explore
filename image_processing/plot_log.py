@@ -70,7 +70,10 @@ def plot_values(word_dict, x_values, y_values, x_label, y_label, title, name="pl
         label_name = x_label
         print("X-label name was not in the word dictionary! Using log file label name instead")
     plt.xlabel(label_name)
-   
+    
+    # NOTE: If you want a fixed y-axis. Use this line!
+    #plt.ylim([0,1])
+    
     plt.title(title)
     plt.savefig(name)
 
