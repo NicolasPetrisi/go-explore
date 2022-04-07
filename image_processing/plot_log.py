@@ -1,7 +1,33 @@
+from importlib_metadata import DistributionFinder
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import os
+
+word_dict = dict()
+
+word_dict['it'] = 'Iteration'
+word_dict['ret_suc'] = 'Return Sucess'
+word_dict['ret_cum_suc'] = 'Cumulative Return Success'
+word_dict['exp_suc'] = 'Exploration Success'
+word_dict['opt_len'] = 'Optimal Length'
+word_dict['dist_from_opt'] = 'Distance from Optimal Length'
+word_dict['len_mean'] = 'Length Mean'
+word_dict['frames'] = 'Frames'
+word_dict['rew_mean'] = 'Reward Mean'
+word_dict['score'] = 'Score'
+word_dict['ep'] = 'Episode'
+word_dict['cells'] = 'Cells'
+word_dict['arch_suc'] = 'Archive Success'
+word_dict['policy_loss'] = 'Policy Loss'
+word_dict['value_loss'] = 'Value Loss'
+word_dict['l2_loss'] = 'L2 Loss'
+word_dict['policy_entropy'] = 'Policy Entropy'
+word_dict['cells_found_ret'] = 'Cells Found when Returning'
+word_dict['cells_found_rand'] = 'Cells Found when Random Exploring'
+word_dict['cells_found_policy'] = 'Cells Found when Policy Exploring'
+
+
 
 def make_sub_list(input_list,seperator):
     final = []
@@ -28,15 +54,27 @@ def get_values(filepath, x_name, y_name):
                 y_values.append(float(line[y_index]))
         return x_values,y_values
 
-def plot_values(x_values, y_values, x_label, y_label, title, name="plot.png"):
+def plot_values(word_dict, x_values, y_values, x_label, y_label, title, name="plot.png"):
     plt.clf()
     plt.plot(x_values, y_values)
-    plt.ylabel(y_label)
-    plt.xlabel(x_label)
+    if y_label in word_dict:
+        label_name = word_dict[y_label]
+    else:
+        label_name = y_label
+        print("Y-label name was not in the word dictionary! Using log file label name instead")
+    plt.ylabel(label_name)
+
+    if x_label in word_dict:
+        label_name = word_dict[x_label]
+    else:
+        label_name = x_label
+        print("X-label name was not in the word dictionary! Using log file label name instead")
+    plt.xlabel(label_name)
+   
     plt.title(title)
     plt.savefig(name)
 
-def main():
+def main(word_dict):
 
     if not os.path.isdir('plots'):
         os.mkdir('plots')
@@ -63,7 +101,7 @@ def main():
         y_values[i] = y_values[i][:min_len]
 
     for i in range(len(x_values)):
-        plot_values(x_values[i], y_values[i], x_axis_label, y_axis_label, files[i], "plots/" + files[i] + "_" + y_axis_label + "_of_" + x_axis_label + ".png")
+        plot_values(word_dict, x_values[i], y_values[i], x_axis_label, y_axis_label, files[i].split('.')[0], "plots/" + files[i].split('.')[0] + "_" + y_axis_label + "_of_" + x_axis_label + ".png")
 
 
-main()
+main(word_dict)
