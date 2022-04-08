@@ -13,10 +13,10 @@ minimumIterations  : int    = 1
 levelSeed          : str    = "100"
 posSeed            : str    = "0"
 testMode           : str    = "False"
-endTime            : str    = "0.2"
-tempPath           : str    = '/home/nicolas/temp/'
-folder             : str    = "-"
-loadPathModel      : str    = "-"
+endTime            : str    = "0.1"
+tempPath           : str    = '/home/fredrik/temp/'
+folder             : str    = "0071_9eef5ac7c88245778d9f399da7e5c1ed"
+loadPathModel      : str    = "000000000768_model.joblib"
 loadPathArch       : str    = "-"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
@@ -172,6 +172,10 @@ while datetime.now() < datetime.strptime(endTime, format):
         break
         
     first_run = False
+    if continue_run:
+        loadPathArch = "-"
+        loadPathModel = "-"
+        loadPathTrajectory = "-"
     log.flush()
 
 timeTaken = datetime.strptime(datetime.now().strftime(format), format) - datetime.strptime(startTime, format)
