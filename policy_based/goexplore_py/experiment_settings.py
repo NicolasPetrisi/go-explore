@@ -990,7 +990,7 @@ def setup(resolution,
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
-         targeted_exploration = True
+         targeted_exploration = False
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
 

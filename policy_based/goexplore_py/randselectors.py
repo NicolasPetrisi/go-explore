@@ -123,7 +123,7 @@ class MaxScoreCell(AbstractWeight):
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
 
         # FN, If there has been no score found so far or in training mode, choose a cell based on the count visit instead of just a random.
-        if self.max_score == 0:
+        if True or self.max_score == 0:
             if self.attr in special_attributes[cell_key]:
                 value = special_attributes[cell_key][self.attr]
             else:
