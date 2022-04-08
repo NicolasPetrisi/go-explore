@@ -7,12 +7,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# from .basics import *
-# from .import_ai import *
-# from . import montezuma_env
-# from .utils import imdownscale
-
 import numpy as np
 import gym
 import copy
