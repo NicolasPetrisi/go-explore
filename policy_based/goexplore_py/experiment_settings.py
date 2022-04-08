@@ -990,7 +990,7 @@ def setup(resolution,
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
-         targeted_exploration = False
+         targeted_exploration = True
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
 
@@ -1566,7 +1566,7 @@ def parse_arguments():
     # I/O Arguments
     parser.add_argument('--base_path', '-p', type=str, default=DefaultArg('./results/'),
                         help='Folder in which to store results')
-    parser.add_argument('--load_path', type=str, default=DefaultArg(''),
+    parser.add_argument('--load_path', type=str, default=DefaultArg(None),
                         help='Folder from which to load a pre-trained model.')
     parser.add_argument('--fail_on_duplicate', default=DefaultArg(False),
                         dest='fail_on_duplicate', action='store_true',
