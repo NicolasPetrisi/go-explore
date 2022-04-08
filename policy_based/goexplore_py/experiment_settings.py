@@ -52,17 +52,12 @@ logger = logging.getLogger(__name__)
 def get_game(game,
              target_shape,
              max_pix_value,
-             score_objects,
-             objects_from_pixels,
-             objects_remember_rooms,
-             only_keys,
              x_res,
              y_res,
              interval_size,
              seed_low,
              seed_high,
              cell_representation,
-             end_on_death,
              level_seed,
              pos_seed):
     """Creates the inner most environment for the Wrapper being built around the gym environment.
@@ -71,17 +66,12 @@ def get_game(game,
         game (string): The game which to create an environment and build the program for.
         target_shape ((int, int)): What to resize the pixels to in the (x, y) direction for use as a state.
         max_pix_value (int): The maximum value which a pixel can take.
-        score_objects (_type_): _description_
-        objects_from_pixels (_type_): _description_
-        objects_remember_rooms (bool): If the agent should remember objects present in rooms. Only applicable on Montezuma and Pitfall
-        only_keys (bool): _description_
         x_res (float): _description_
         y_res (float): _description_
         interval_size (_type_): _description_
         seed_low (_type_): _description_
         seed_high (_type_): _description_
         cell_representation (CellRepresentationBase): Which cell representation to use.
-        end_on_death (bool): End episode on death.
 
     Raises:
         NotImplementedError: When unknown arguments are used for parameters such as 'game'.
@@ -95,38 +85,7 @@ def get_game(game,
     
     game_lowered = game.lower()
     logger.info(f'Loading game: {game_lowered}')
-    if game_lowered == 'montezuma' or game_lowered == 'montezumarevenge':
-        game_name = 'MontezumaRevenge'
-        game_class = montezuma_env.MyMontezuma
-        game_class.TARGET_SHAPE = target_shape
-        game_class.MAX_PIX_VALUE = max_pix_value
-        game_args = dict(
-            check_death=end_on_death,
-            score_objects=score_objects,
-            objects_from_pixels=objects_from_pixels,
-            objects_remember_rooms=objects_remember_rooms,
-            only_keys=only_keys,
-            cell_representation=cell_representation
-        )
-        grid_resolution = (
-            GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
-            GridDimension('x', x_res), GridDimension('y', y_res)
-        )
-        cell_representation.set_grid_resolution(grid_resolution)
-    elif game_lowered == 'pitfall':
-        game_name = 'Pitfall'
-        game_class = pitfall_env.MyPitfall
-        game_class.TARGET_SHAPE = target_shape
-        game_class.MAX_PIX_VALUE = max_pix_value
-        game_args = dict(
-            cell_representation=cell_representation
-        )
-        grid_resolution = (
-            GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
-            GridDimension('x', x_res), GridDimension('y', y_res)
-        )
-        cell_representation.set_grid_resolution(grid_resolution)
-    elif 'generic' in game_lowered:
+    if 'generic' in game_lowered:
         game_name = game.split('_')[1]
         game_class = generic_atari_env.MyAtari
         game_class.TARGET_SHAPE = target_shape
@@ -663,12 +622,8 @@ def process_defaults(kwargs):
 
 
 def setup(resolution,
-          score_objects,
           base_path,
           game,
-          objects_from_pixels,
-          objects_remember_rooms,
-          only_keys,
           optimize_score,
           use_real_pos,
           resize_x,
@@ -684,7 +639,6 @@ def setup(resolution,
           nb_envs,
           goal_value,
           inc_ent_fac,
-          end_on_death,
           archive_names,
           selector_name,
           frame_resize,
@@ -735,7 +689,6 @@ def setup(resolution,
           no_exploration_gradients,
           frame_history,
           expl_ent_reset,
-          pixel_repetition,
           max_episode_steps,
           sil,
           sil_coef,
@@ -744,7 +697,6 @@ def setup(resolution,
           max_traj_candidates,
           exchange_sil_traj,
           random_exp_prob,
-          mean_repeat,
           checkpoint_first_iteration,
           checkpoint_last_iteration,
           save_archive,
@@ -790,12 +742,8 @@ def setup(resolution,
 
     Args:
         resolution (_type_): _description_
-        score_objects (_type_): _description_
         base_path (_type_): _description_
         game (_type_): _description_
-        objects_from_pixels (_type_): _description_
-        objects_remember_rooms (_type_): _description_
-        only_keys (_type_): _description_
         optimize_score (_type_): _description_
         use_real_pos (_type_): _description_
         resize_x (_type_): _description_
@@ -811,7 +759,6 @@ def setup(resolution,
         nb_envs (_type_): _description_
         goal_value (_type_): _description_
         inc_ent_fac (_type_): _description_
-        end_on_death (_type_): _description_
         archive_names (_type_): _description_
         selector_name (_type_): _description_
         frame_resize (_type_): _description_
@@ -862,7 +809,6 @@ def setup(resolution,
         no_exploration_gradients (_type_): _description_
         frame_history (_type_): _description_
         expl_ent_reset (_type_): _description_
-        pixel_repetition (_type_): _description_
         max_episode_steps (_type_): _description_
         sil (_type_): _description_
         sil_coef (_type_): _description_
@@ -871,7 +817,6 @@ def setup(resolution,
         max_traj_candidates (_type_): _description_
         exchange_sil_traj (_type_): _description_
         random_exp_prob (_type_): _description_
-        mean_repeat (_type_): _description_
         checkpoint_first_iteration (_type_): _description_
         checkpoint_last_iteration (_type_): _description_
         save_archive (_type_): _description_
@@ -975,19 +920,7 @@ def setup(resolution,
 
     # Get the cell representation
     logger.info('Creating cell representation')
-    if cell_representation_name == 'level_room_keys_x_y':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.MontezumaPosLevel)
-        assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'level_room_keys_x_y_score':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.LevelKeysRoomXYScore)
-        assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'room_treasure_x_y':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.PitfallPosLevel)
-        assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'room_x_y':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.RoomXY)
-        assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'generic':
+    if cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
@@ -996,17 +929,12 @@ def setup(resolution,
     game_name, game_class, game_args, grid_resolution = get_game(game=game,
                                                                  target_shape=target_shape,
                                                                  max_pix_value=max_pix_value,
-                                                                 score_objects=score_objects,
-                                                                 objects_from_pixels=objects_from_pixels,
-                                                                 objects_remember_rooms=objects_remember_rooms,
-                                                                 only_keys=only_keys,
                                                                  x_res=x_res,
                                                                  y_res=y_res,
                                                                  interval_size=interval_size,
                                                                  seed_low=seed_low,
                                                                  seed_high=seed_high,
                                                                  cell_representation=cell_representation,
-                                                                 end_on_death=end_on_death,
                                                                  level_seed=level_seed,
                                                                  pos_seed=pos_seed)
 
@@ -1124,7 +1052,6 @@ def setup(resolution,
         raise NotImplementedError('Unknown selector: ' + selector_name)
 
     logger.info('Creating random explorer')
-    #random_explorer = explorers.RepeatedRandomExplorer(mean_repeat)
     random_explorer = explorers.RandomExplorer()
 
     # Get goal explorer
@@ -1536,19 +1463,6 @@ def parse_arguments():
     # Cell representation arguments
     parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('20.48,20.48'),
                         help='Length of the side of a grid cell. A doubled atari frame is 320 by 210.')
-    parser.add_argument('--score_objects', dest='score_objects', default=DefaultArg(True), action='store_false',
-                        help='Use scores in the cell description. Otherwise objects will be used.')
-    parser.add_argument('--objects_from_ram', dest='objects_from_pixels', default=DefaultArg(True),
-                        action='store_false',
-                        help='Get the objects from RAM instead of pixels.')
-    parser.add_argument('--all_objects', dest='only_keys', default=DefaultArg(True), action='store_false',
-                        help='Use all objects in the state instead of just the keys')
-    parser.add_argument('--objects_remember_rooms', dest='objects_remember_rooms', default=DefaultArg(False),
-                        action='store_true',
-                        help='Remember which room the objects picked up came from. Makes it easier to solve the game '
-                             '(because the state encodes the location of the remaining keys anymore), but takes more '
-                             'time/memory space, which in practice makes it worse quite often. Using this is better if '
-                             'running with --no_optimize_score')
     parser.add_argument('--resize_x', '--rx', type=int, default=DefaultArg(64),
                         help='What to resize the pixels to in the x direction for use as a state.')
     parser.add_argument('--resize_y', '--ry', type=int, default=DefaultArg(64),
@@ -1573,9 +1487,7 @@ def parse_arguments():
                         help='Fail if the base directory already exists.')
 
     # Environment arguments
-    parser.add_argument('--end_on_death', dest='end_on_death', default=DefaultArg(True), action='store_true',
-                        help='End episode on death.')
-    parser.add_argument('--game', '-g', type=str, default=DefaultArg('montezuma'),
+    parser.add_argument('--game', '-g', type=str, default=DefaultArg('generic_maze'),
                         help='Determines the game to which apply goexplore.')
     parser.add_argument('--interval_size', type=float, default=DefaultArg(0.1),
                         help='The interval size for robotics envs.')
@@ -1625,7 +1537,7 @@ def parse_arguments():
                              'The first archive in this colon-separated list will be the active archive.')
     parser.add_argument('--no_optimize_score', dest='optimize_score', default=DefaultArg(True), action='store_false',
                         help='Don\'t optimize for score (only speed). Will use fewer "game frames" and come up with '
-                             'faster trajectories with lower scores. If not combined with --objects_remember_rooms and '
+                             'faster trajectories with lower scores. If not combined with '
                              '--objects_from_ram is not enabled, things should run much slower.')
     parser.add_argument('--pre_fill_archive', type=str, default=DefaultArg(None), dest='pre_fill_archive',
                         help='Pre-fill the archive with a predefined set of cells.')
@@ -1732,8 +1644,6 @@ def parse_arguments():
     parser.add_argument('--random_exp_prob', dest='random_exp_prob', type=float, default=DefaultArg(0),
                         help='The probability that we will be taking random actions,'
                              ' rather than sampling from the policy.')
-    parser.add_argument('--mean_repeat', dest='mean_repeat', type=int, default=DefaultArg(20),
-                        help='The expected number of times that an action will be repeated by the random explorer.')
     parser.add_argument('--checkpoint_first_iteration', dest='checkpoint_first_iteration',
                         type=int, default=DefaultArg(1),
                         help='Whether to write a checkpoint for the first iteration')
@@ -1906,7 +1816,6 @@ def parse_arguments():
     safe_set_argument(args, 'seed_high', DefaultArg(None))
     safe_set_argument(args, 'make_video', DefaultArg(True)) #TODO changed here!
     safe_set_argument(args, 'skip', DefaultArg(1))
-    safe_set_argument(args, 'pixel_repetition', DefaultArg(1))
     safe_set_argument(args, 'plot_archive', DefaultArg(True))
     safe_set_argument(args, 'plot_goal', DefaultArg(True))
     safe_set_argument(args, 'plot_grid', DefaultArg(True))
