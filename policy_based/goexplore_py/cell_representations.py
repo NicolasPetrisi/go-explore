@@ -38,8 +38,8 @@ class Generic(CellRepresentationBase):
     """Class to represent Cell used by Fredrik and Nicolas.
        Cells are representated by the x and y position and the done boolean
     """
-    __slots__ = ['_x', '_y', '_level_seed', '_done', 'tuple']   
-    attributes = ('x', 'y', 'level_seed', 'done') 
+    __slots__ = ['_x', '_y', '_done', 'tuple']   
+    attributes = ('x', 'y', 'done') 
     array_length = 3 #NOTE If you change the number of elements in the tuple, set change this accordingly (lenght of tuple)
     supported_games = ('$generic')
 
@@ -47,14 +47,12 @@ class Generic(CellRepresentationBase):
         self._done = None
         self._x = None
         self._y = None
-        self._level_seed = None
         self.tuple = None
 
         if atari_env is not None:
             self._done = atari_env.done
             self._x = atari_env.x
             self._y = atari_env.y
-            self._level_seed = atari_env.level_seed
             self.set_tuple()
             
 
@@ -115,13 +113,6 @@ class Generic(CellRepresentationBase):
         self._y = value
         self.set_tuple()
 
-    @property
-    def level_seed(self):
-        return self._level_seed
-
-    @level_seed.setter
-    def level_seed(self, value):
-        self._level_seed = value
 
     def set_tuple(self):
         self.tuple = (self._x, self._y, self._done)
