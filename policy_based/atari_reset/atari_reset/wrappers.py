@@ -796,13 +796,20 @@ class VideoWriter(MyWrapper):
 
 
         def get_deterministic_color(cell_key):
-            r = int(cell_key.y * 59 % 255)
+            r = int(cell_key.y * 59 % 150)
             g = int(cell_key.x * 59 % 255)
             b = int((cell_key.x + cell_key.y) * 89 % 255)
+            if g == 0:
+                g += 1
+            if b == 0:
+                b += 1
+
             if min(r,g,b) > 100:
                 r = r -100
                 g = g -100
                 b = b -100
+            while r > g + b:
+                r = r/2
             return (r, g, b)
 
 
@@ -839,7 +846,11 @@ class VideoWriter(MyWrapper):
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
                 if self.goal_conditioned_wrapper.goal_explorer.exploration_strategy == 2 or self.goal_conditioned_wrapper.returning: 
-                    self._render_cell(f_out, goal, (255, 0, 0))
+                    color = (255, 0, 0)
+                    self._render_cell(f_out, goal,color )
+                    for cell_key_sibling in self.goal_conditioned_wrapper.archive.cell_map.keys():
+                        if self.goal_conditioned_wrapper.archive.cell_map[cell_key_sibling] == goal:
+                            self._render_cell(f_out, cell_key_sibling, color)
         if self.plot_cell_traj:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
@@ -878,7 +889,9 @@ class VideoWriter(MyWrapper):
             text = "state: exploration (" + str(d[self.goal_conditioned_wrapper.goal_explorer.exploration_strategy]) + ")"
         f_out = cv2.putText(f_out, text, (20, 30), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
         #text = "level_seed: " + str(getattr(current_cell,'level_seed')) + " pos_seed: " + str(self.env.recursive_getattr('pos_seed'))
-        #f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
+        text = "level_seed: " +  str(self.env.recursive_getattr('level_seed')) + " pos_seed: " + str(self.env.recursive_getattr('pos_seed'))
+        f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
+        
         f_out = cv2.putText(f_out, "ep: "+ str(self.local_ep), (20, 90), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
         if 'increase_entropy' in self.goal_conditioned_wrapper.info:
             text = "entropy: " + str(self.goal_conditioned_wrapper.info['increase_entropy'])
