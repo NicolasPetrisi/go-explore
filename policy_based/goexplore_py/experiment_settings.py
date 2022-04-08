@@ -1878,9 +1878,10 @@ def parse_arguments():
                         default=DefaultArg(False), action='store_true',
                         help='If Hampu Cells (dynamic cells) are to be used or not')
     parser.add_argument('--folder', type=str,
-                        default=DefaultArg(''),
+                        default=DefaultArg(None),
                         help='Thr folder containing the model, archive and/or trjectory_file to load')
     parser.add_argument('--trajectory_file', type=str,
+                        default=DefaultArg(None),
                         help='The trajectory file to load, should be paired with an exploration state to load')
 
 

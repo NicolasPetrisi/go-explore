@@ -731,7 +731,7 @@ def run(kwargs):
     kwargs['cell_trajectories_file'] = ''
     if continue_run:
         assert kwargs['expl_state'] is None
-        assert kwargs['load_path'] == ''
+        assert kwargs['load_path'] is None
         assert kwargs['cell_trajectories_file'] == ''
         if os.path.exists(base_path):
             path_to_load, num = find_checkpoint(base_path)
@@ -747,7 +747,7 @@ def run(kwargs):
             kwargs['cell_trajectories_file'] = ''
             local_logger.warning(f'No checkpoint found in: {kwargs["base_path"]} starting new run.')
     else:
-        if kwargs['folder'] != '':
+        if kwargs['folder'] is not None:
             if kwargs['load_path'] is not None:
                 kwargs['load_path'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['load_path']
             if kwargs['expl_state'] is not None:
@@ -755,6 +755,9 @@ def run(kwargs):
             if kwargs['trajectory_file'] is not None:
                 kwargs['cell_trajectories_file'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['trajectory_file']
 
+    print("load path:", kwargs['load_path'])
+    print("expl path:", kwargs['expl_state'])
+    print("traj path:", kwargs['cell_trajectories_file'])
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
     # We need to setup the MPI environment before performing any data processing
