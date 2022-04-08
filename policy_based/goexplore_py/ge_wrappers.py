@@ -222,8 +222,6 @@ class HampuGoalExplorer(GoalExplorer):
         
             if neighbours_dict:
                 try:
-                    print("############################################")
-                    print("exploration choooooose")
                     neighbours = list(neighbours_dict[go_explore_env.archive.cell_map[current_cell]])
                     if len(neighbours) > 0:
                         return random.sample(neighbours, 1)[0]
