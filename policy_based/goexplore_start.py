@@ -755,9 +755,6 @@ def run(kwargs):
             if kwargs['trajectory_file'] is not None:
                 kwargs['cell_trajectories_file'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['trajectory_file']
 
-    print("load path:", kwargs['load_path'])
-    print("expl path:", kwargs['expl_state'])
-    print("traj path:", kwargs['cell_trajectories_file'])
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
     # We need to setup the MPI environment before performing any data processing
