@@ -67,7 +67,10 @@ class CellMapping:
         Returns:
             CellRepresentationBase: The cell which the given cell maps to.
         """
-        return self.__cell_mapping[key]
+        if key in self.__cell_mapping:
+            return self.__cell_mapping[key]
+        else:
+            return key
 
 
     def add_cell(self, cell):
