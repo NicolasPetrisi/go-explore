@@ -213,21 +213,31 @@ class HampuGoalExplorer(GoalExplorer):
 
     def choose(self, go_explore_env):
 
-        # # choose a neighbouring hampu cell to the current cell with 75% proability 
-        # if go_explore_env.archive.cell_map and random.random() > 0.75 :
-        #     current_cell = go_explore_env.last_reached_cell
-        #     trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
-        #     cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
-        #     neighbours_dict = utils.get_neighbours(trajectories, cell_id_to_key_dict)
+        # choose a neighbouring hampu cell to the current cell with 75% proability 
+        if go_explore_env.archive.cell_map and random.random() > 0.75 :
+            current_cell = go_explore_env.last_reached_cell
+            trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
+            cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
+            neighbours_dict = utils.get_neighbours(trajectories, cell_id_to_key_dict)
         
-        #     if neighbours_dict:
-        #         print("############################################")
-        #         print("exploration choooooose")
-        #         neighbours = list(neighbours_dict[go_explore_env.archive.cell_map[current_cell]])
-        #         if len(neighbours) > 0:
-        #             return random.sample(neighbours, 1)[0]
+            if neighbours_dict:
+                try:
+                    print("############################################")
+                    print("exploration choooooose")
+                    neighbours = list(neighbours_dict[go_explore_env.archive.cell_map[current_cell]])
+                    if len(neighbours) > 0:
+                        return random.sample(neighbours, 1)[0]
+                except:
+                    print("cant find key", current_cell)
+                    print("Archive:")
+                    for key in go_explore_env.archive.archive.keys():
+                        print(key)
 
-        # choose a know cell in archive with 25% probability
+                    print("cell map")
+                    for key, value in go_explore_env.archive.cell_map.get_mapping().items():
+                        print(key,value)
+                    raise RuntimeError("current cell not in cell_map")
+        #choose a know cell in archive with 25% probability
         target_cell = go_explore_env.select_cell_from_archive()
         go_explore_env.last_reached_cell = target_cell
         return target_cell
