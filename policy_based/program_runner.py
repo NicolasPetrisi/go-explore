@@ -44,8 +44,8 @@ continue_run       : bool   = False
 if (loadPathArch == '-') != (loadPathTrajectory == '-'):
     print("\n\n<<WARNING>> Only loading one of archive and trajectory can cause fatal problems. This is however not confirmed yet. Loading both are recommended.\n\n")
 
-if continue_run and folder == '-':
-    raise Exception("If using continue you must initially load a model, archive and trajectory!")
+if continue_run and not folder == '-':
+    raise Exception("If using continue you must not initially load!")
 
 
 
