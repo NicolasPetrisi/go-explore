@@ -486,8 +486,8 @@ def _run(**kwargs):
                         print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
                 c_return_succes_rate += success_rate 
 
-            #FN, when using Hampu_Cells it's impossible to calculate the optimal length using the cells since they change over time.
-            if not kwargs['hampu_cells']:
+            #FN, when using Hampu Cells it's impossible to calculate the optimal length using the cells since they change over time.
+            if not kwargs['explorer'] == 'hampu':
                 if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
 
                     start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
@@ -666,7 +666,7 @@ def _run(**kwargs):
     mpi.get_comm_world().barrier()
 
     # FN, One last save to update the archive if Hampu Cells (dynamic cells) are used.
-    if kwargs['hampu_cells'] and hvd.rank() == 0 and not disable_logging:
+    if kwargs['explorer'] == 'hampu' and hvd.rank() == 0 and not disable_logging:
         # Save Archive
         if log_par.save_archive:
             save_state(expl.get_state(True), filename + ARCHIVE_POSTFIX)

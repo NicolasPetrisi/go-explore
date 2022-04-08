@@ -1,3 +1,4 @@
+from argparse import ArgumentError
 import os
 from datetime import datetime
 from datetime import timedelta
@@ -14,15 +15,15 @@ levelSeed          : str    = "100"
 posSeed            : str    = "0"
 testMode           : str    = "False"
 endTime            : str    = "0.1"
-tempPath           : str    = '/home/fredrik/temp/'
-folder             : str    = "0071_9eef5ac7c88245778d9f399da7e5c1ed"
-loadPathModel      : str    = "000000000768_model.joblib"
+tempPath           : str    = '/home/nicolas/temp/'
+folder             : str    = "-"
+loadPathModel      : str    = "-"
 loadPathArch       : str    = "-"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "2"
 videoAllEpisodes   : str    = "True"
-continue_run       : bool   = True
+continue_run       : bool   = False
 #####################
 
 #gameName           : What game to run.
@@ -39,6 +40,14 @@ continue_run       : bool   = True
 #numberOfCores      : How many cores of the CPU to use during the run.
 #videoAllEpisodes   : If True, then a video for every episodes will be made, if False only every min(2^N, 500) video will be made.
 #continue_run       : If True, then Go-Explore will automatically load the most recent run saved in the temp folder when it restarts. For example when minimumIterations is greater than 1.
+
+if (loadPathArch == '-') != (loadPathTrajectory == '-'):
+    print("\n\n<<WARNING>> Only loading one of archive and trajectory can cause fatal problems. This is however not confirmed yet. Loading both are recommended.\n\n")
+
+if continue_run and folder == '-':
+    raise Exception("If using continue you must initially load a model, archive and trajectory!")
+
+
 
 list = os.listdir(tempPath)
 list.sort()

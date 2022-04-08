@@ -784,7 +784,7 @@ def setup(resolution,
           level_seed,
           pos_seed,
           video_all_ep,
-          hampu_cells
+          explorer
           ):
     """Sets up everything needed to start running the experiment.
 
@@ -974,7 +974,6 @@ def setup(resolution,
         max_pix_value = None
 
     # Get the cell representation
-    targeted_exploration = False
     logger.info('Creating cell representation')
     if cell_representation_name == 'level_room_keys_x_y':
         cell_representation = cell_representations.CellRepresentationFactory(cell_representations.MontezumaPosLevel)
@@ -990,7 +989,6 @@ def setup(resolution,
         assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
     elif cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
-         targeted_exploration = False
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
 
@@ -1133,12 +1131,14 @@ def setup(resolution,
     logger.info('Creating goal explorer')
 
     
-    if targeted_exploration:
+    if explorer == 'targeted':
         goal_explorer = ge_wrappers.TargetedGoalExplorer(random_exp_prob, random_explorer)
-    elif hampu_cells:
+    elif explorer == 'hampu':
         goal_explorer = ge_wrappers.HampuGoalExplorer(random_exp_prob, random_explorer)
-    else:
+    elif explorer == 'domain':
         goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
+    else:
+        raise RuntimeError("Chosen Explorer does not exist: " + str(explorer))
     
     # Get frame wrapper
     logger.info('Obtaining frame wrapper')
@@ -1874,15 +1874,15 @@ def parse_arguments():
     parser.add_argument('--test_mode', dest='test_mode',
                         default=DefaultArg(False), action='store_true',
                         help='If the network is to be tested (True) or trained (False).')
-    parser.add_argument('--hampu_cells', dest='hampu_cells',
-                        default=DefaultArg(False), action='store_true',
-                        help='If Hampu Cells (dynamic cells) are to be used or not')
+    parser.add_argument('--explorer', dest='explorer',
+                        type=str, default=DefaultArg('domain'),
+                        help='If dynamic Hampu Cells (hampu), targeted cell (targeted) or domain knowledge (domain) is to be used.')
     parser.add_argument('--folder', type=str,
                         default=DefaultArg(None),
-                        help='Thr folder containing the model, archive and/or trjectory_file to load')
+                        help='The folder containing the model, archive and/or trajectory_file to load.')
     parser.add_argument('--trajectory_file', type=str,
                         default=DefaultArg(None),
-                        help='The trajectory file to load, should be paired with an exploration state to load')
+                        help='The trajectory file to load, should be paired with an exploration state to load.')
 
 
 
