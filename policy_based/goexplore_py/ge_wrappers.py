@@ -1199,7 +1199,7 @@ class SilEnv(MyWrapper):
         self.sil_invalid = sil_invalid
 
     def step(self, *args, **kwargs):
-        if not self.sil_on or hvd.rank() == 0 or True:
+        if not self.sil_on or hvd.rank() == 0:
             obs_and_goal, reward, done, info = self.env.step(*args, **kwargs)
             return obs_and_goal, reward, done, info
         else:
@@ -1236,7 +1236,7 @@ class SilEnv(MyWrapper):
 
     def reset(self):
         self.sil_ready_for_next = True
-        if self.next_trajectory is None or hvd.rank() == 0 or True:
+        if self.next_trajectory is None or hvd.rank() == 0:
             self.sil_on = False
             return self.env.reset()
         else:
