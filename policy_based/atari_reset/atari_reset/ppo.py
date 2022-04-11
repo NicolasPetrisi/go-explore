@@ -255,7 +255,7 @@ class Runner(object):
         self.ar_mb_traj_index = None
         self.ar_mb_traj_len = None
 
-        self.ar_mb_obs_2 = np.zeros(shape=[self.nenv, self.nsteps + self.num_steps_to_cut_left, 64, 64, 3*frame_history], # Org 105,80,12 
+        self.ar_mb_obs_2 = np.zeros(shape=[self.nenv, self.nsteps + self.num_steps_to_cut_left, 128, 128, 3*frame_history], # Org 105,80,12 
                                     dtype=self.model.train_model.X.dtype.name)
         self.obs_final = None
         self.first_rollout = True

@@ -1129,7 +1129,7 @@ class RectColorFrameProcgen(MyWrapper): # TODO Can we remove this wrapper? Does 
     def __init__(self, env):
         """Warp frames to 64x64"""
         MyWrapper.__init__(self, env)
-        self.res = (64, 64, 3)
+        self.res = (128, 128, 3)
         self.net_res = (self.res[1], self.res[0], self.res[2])
         self.observation_space = spaces.Box(low=np.float32(0), high=np.float32(255), shape=self.net_res, dtype=np.uint8)
 

@@ -90,7 +90,7 @@ class MyAtari(MyWrapper):
         self.done = 0
         self.x = oldx
         self.y = oldy
-        return unprocessed
+        return self.get_full_res_image()
 
     def get_full_res_image(self):
         """A higher resolution image of the frame
@@ -155,7 +155,7 @@ class MyAtari(MyWrapper):
         self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
         self.pos = self.cell_representation(self)
 
-        return self.unprocessed_state, reward, done, lol
+        return self.get_full_res_image(), reward, done, lol
 
     def get_pos(self):
         """Get the current pos, a GenericCellRepresentation
