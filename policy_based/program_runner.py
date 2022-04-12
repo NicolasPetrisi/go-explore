@@ -185,6 +185,7 @@ while datetime.now() < datetime.strptime(endTime, format):
         loadPathArch = "-"
         loadPathModel = "-"
         loadPathTrajectory = "-"
+        folder = "-"
     log.flush()
 
 timeTaken = datetime.strptime(datetime.now().strftime(format), format) - datetime.strptime(startTime, format)
