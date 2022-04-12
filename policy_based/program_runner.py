@@ -44,8 +44,6 @@ continue_run       : bool   = False
 if (loadPathArch == '-') != (loadPathTrajectory == '-'):
     print("\n\n<<WARNING>> Only loading one of archive and trajectory can cause fatal problems. This is however not confirmed yet. Loading both are recommended.\n\n")
 
-if continue_run and not folder == '-':
-    raise Exception("If using continue you must not initially load!")
 
 
 
@@ -185,6 +183,7 @@ while datetime.now() < datetime.strptime(endTime, format):
         loadPathArch = "-"
         loadPathModel = "-"
         loadPathTrajectory = "-"
+        folder = "-"
     log.flush()
 
 timeTaken = datetime.strptime(datetime.now().strftime(format), format) - datetime.strptime(startTime, format)
