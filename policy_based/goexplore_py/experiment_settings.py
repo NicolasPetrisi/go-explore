@@ -1579,7 +1579,7 @@ def parse_arguments():
     parser.add_argument('--special_attributes', dest='special_attribute_str',
                         type=str, default=DefaultArg(''),
                         help='Special attributes that can be used for weighting.')
-    parser.add_argument('--max_exploration_steps', dest='max_exploration_steps', type=int, default=DefaultArg(100),
+    parser.add_argument('--max_exploration_steps', dest='max_exploration_steps', type=int, default=DefaultArg(200),
                         help='For how many steps do we explore before choosing a different exploration goal.')
     parser.add_argument('--max_episode_steps', dest='max_episode_steps', type=int, default=DefaultArg(None),
                         help='The total number of steps we can take each episode.')

@@ -113,15 +113,15 @@ CELL_SELECTION_OPTIONS="--selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5
 #CELL_SELECTION_OPTIONS="--selector_weights=target_cell,x,20,y,18,done,0 --base_weight 0"
 
 # When the agent takes too long to reach the next cell, its intropy increases according to (inc_ent_fac*steps)^ent_inc_power.
-# When exploring, this entropy increase starts when it takes more than expl_inc_ent_thresh (50) actions to reach a new cell.
+# When exploring, this entropy increase starts when it takes more than expl_inc_ent_thresh (50) actions to reach the goal.
 # When returning, entropy increase starts relative to the time it originally took to reach the target cell.
-ENTROPY_INC_OPTIONS="--entropy_strategy dynamic_increase --inc_ent_fac 0.01 --ent_inc_power 2 --ret_inc_ent_fac 1 --expl_inc_ent_thresh 50 --expl_ent_reset=on_new_cell --legacy_entropy 0"
+ENTROPY_INC_OPTIONS="--entropy_strategy dynamic_increase --inc_ent_fac 0.01 --ent_inc_power 2 --ret_inc_ent_fac 1 --expl_inc_ent_thresh 50 --expl_ent_reset=on_goal_reached --legacy_entropy 0"
 
 # The cell representation for Montezuma's Revenge is a domain knowledge representation including level, room, number of keys, and the x, y coordinate of the agent.
 # The x, y coordinate is discretized into bins of 36 by 18 pixels (note that the pixel of the x axis are doubled, so this is 18 by 18 on the orignal frame)
 #CELL_REPRESENTATION_OPTIONS="--cell_representation level_room_keys_x_y --resolution=36,18"
 
-CELL_REPRESENTATION_OPTIONS="--cell_representation generic" #TODO change this, should be something like: --cell_representation generic
+CELL_REPRESENTATION_OPTIONS="--cell_representation generic"
 
 # When following a trajectory, the agent is allowed to reach the goal cell, or any of the subsequent soft_traj_win_size (10) - 1 cells.
 # While returning, the episode is terminated if it takes more than max_actions_to_goal (1000) to reach the current goal
