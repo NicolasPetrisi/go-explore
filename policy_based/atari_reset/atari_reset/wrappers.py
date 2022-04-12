@@ -851,6 +851,15 @@ class VideoWriter(MyWrapper):
                     for cell_key_sibling in self.goal_conditioned_wrapper.archive.cell_map.keys():
                         if self.goal_conditioned_wrapper.archive.cell_map[cell_key_sibling] == goal:
                             self._render_cell(f_out, cell_key_sibling, color)
+
+        sub_goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
+        if sub_goal is not None:
+            if self.goal_conditioned_wrapper.returning: 
+                color = (255, 255, 0)
+                self._render_cell(f_out, sub_goal,color )
+                for cell_key_sibling in self.goal_conditioned_wrapper.archive.cell_map.keys():
+                    if self.goal_conditioned_wrapper.archive.cell_map[cell_key_sibling] == sub_goal:
+                        self._render_cell(f_out, cell_key_sibling, color)
         if self.plot_cell_traj:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
@@ -867,12 +876,6 @@ class VideoWriter(MyWrapper):
         # But in case sub-goals are ever wanted in the future due to transition screens where the goal is not
         # in the current game stage, this would be how to add it to the video.
         # In the case of Maze the sub_goal square and final_goal square would always be the same.
-        #if self.plot_sub_goal:
-        #    goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
-        #    if goal is not None:
-        #        if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-        #            #self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
-        #            pass
         #for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
         #    if self.match_attr(cell, current_cell, 'level') and self.match_attr(cell, current_cell, 'room'):
         #        self._render_cell(f_out, cell, (255, 0, 255))
