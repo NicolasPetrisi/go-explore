@@ -402,7 +402,7 @@ def _run(**kwargs):
     while checkpoint_tracker.should_continue(kwargs['test_mode']):
         # Run one iteration
         if hvd.rank() == 0:
-            local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}')
+            local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}, episodes done: {expl.trajectory_gatherer.nb_of_episodes}')
 
         checkpoint_tracker.pre_cycle()
         expl.run_cycle()
