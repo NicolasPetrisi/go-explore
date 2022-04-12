@@ -107,10 +107,10 @@ GAME_OPTIONS="--game generic_${Game}"
 # Extrinsic (game) rewards are clipped to [-2, 2]. Because most Atari games have large rewards, this usually means that extrinsic rewards are twice that of the trajectory rewards.
 REWARD_OPTIONS="--game_reward_factor 1 --goal_reward_factor 1 --clip_game_reward 1 --rew_clip_range=-2,2 --final_goal_reward 3"
 
-# Cell selection is relative to: 1 / (1 + 0.5*number_of_actions_taken_in_cell).
-CELL_SELECTION_OPTIONS="--selector_weights=max_score_cell,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
-#CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
-#CELL_SELECTION_OPTIONS="--selector weighted --selector_weights=target_cell,x,20,y,18,done,0 --base_weight 0"
+# Cell selection is relative to: 1 / (1 + 0.5*number_of_actions_taken_in_cell). 
+#CELL_SELECTION_OPTIONS="--selector_weights=max_score_cell,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
+CELL_SELECTION_OPTIONS="--selector_weights=attr,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"
+#CELL_SELECTION_OPTIONS="--selector_weights=target_cell,x,20,y,18,done,0 --base_weight 0"
 
 # When the agent takes too long to reach the next cell, its intropy increases according to (inc_ent_fac*steps)^ent_inc_power.
 # When exploring, this entropy increase starts when it takes more than expl_inc_ent_thresh (50) actions to reach a new cell.
@@ -127,9 +127,9 @@ CELL_REPRESENTATION_OPTIONS="--cell_representation generic" #TODO change this, s
 # While returning, the episode is terminated if it takes more than max_actions_to_goal (1000) to reach the current goal
 # While exploring, the episode is terminated if it takes more than max_actions_to_new_cell (1000) to discover a new cell
 # When the the final cell is reached, there is a random_exp_prob (0.5) chance that we explore by taking random actions, rather than by sampling from the policy.
-EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 0.65 --delay 0"
+EPISODE_OPTIONS="--trajectory_tracker sparse_soft --soft_traj_win_size 10 --random_exp_prob 0.33 --delay 0"
 
 CHECKPOINT_OPTIONS="--checkpoint_compute ${CHECKPOINT} --clear_checkpoints all --final_goal_or_sub_goal sub_goal"
-TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=sil"
+TRAINING_OPTIONS="--goal_rep raw --no_exploration_gradients --sil=none"
 MISC_OPTIONS="--explorer hampu --early_stopping --log_files __main__ ${video_all_ep} ${ModelLoad} ${ArchLoad} ${MaxTime} ${MaxSteps} ${LevelSeed} ${PosSeed} ${TestNetwork} ${Folder} ${TrajectoryFile} ${Continue}"
 mpirun -n ${NB_MPI_WORKERS} python3 goexplore_start.py --base_path ~/temp --nb_envs ${NB_ENVS_PER_WORKER} ${REWARD_OPTIONS} ${CELL_SELECTION_OPTIONS} ${ENTROPY_INC_OPTIONS} ${CHECKPOINT_OPTIONS} ${CELL_REPRESENTATION_OPTIONS} ${EPISODE_OPTIONS} ${GAME_OPTIONS} ${TRAINING_OPTIONS} ${MISC_OPTIONS}

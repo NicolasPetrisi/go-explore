@@ -213,8 +213,9 @@ class HampuGoalExplorer(GoalExplorer):
 
     def choose(self, go_explore_env):
 
-        # choose a neighbouring hampu cell to the current cell with 75% proability 
-        if go_explore_env.archive.cell_map and random.random() > 0.75 :
+        rand_value = random.random()
+        # FN, choose a neighbouring hampu cell to the current cell with 60% proability 
+        if go_explore_env.archive.cell_map and rand_value < 0.60 :
             current_cell = go_explore_env.last_reached_cell
             trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
             cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
@@ -235,7 +236,14 @@ class HampuGoalExplorer(GoalExplorer):
                     for key, value in go_explore_env.archive.cell_map.get_mapping().items():
                         print(key,value)
                     raise RuntimeError("current cell not in cell_map")
-        #choose a know cell in archive with 25% probability
+        elif rand_value > 0.85:
+            # FN, choose the goal cell with 15% probability if it exists
+            target_cell = go_explore_env.env.recursive_getattr('goal_cell')
+            if target_cell in go_explore_env.archive.archive:
+                go_explore_env.last_reached_cell = target_cell
+                return target_cell
+        
+        # FN, choose a know cell in archive with 25% probability
         target_cell = go_explore_env.select_cell_from_archive()
         go_explore_env.last_reached_cell = target_cell
         return target_cell

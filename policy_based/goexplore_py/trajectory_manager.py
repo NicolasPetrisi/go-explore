@@ -153,6 +153,10 @@ class CellTrajectoryManager:
         print(f'Trajectories loaded: {trajectories_loaded}/{total_trajectories}')
 
     def dump(self, filename):
+        # FN, Full trajectories are never used if SIL is not active. No need to save them.
+        if self.sil == 'none':
+            return
+        
         writer = tf.python_io.TFRecordWriter(filename)
         for key in self.cell_trajectories:
             full_trajectory = self.get_full_trajectory(key)

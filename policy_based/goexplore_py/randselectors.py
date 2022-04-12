@@ -122,8 +122,8 @@ class MaxScoreCell(AbstractWeight):
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
 
-        # FN, If there has been no score found so far or in training mode, choose a cell based on the count visit instead of just a random.
-        if True or self.max_score == 0:
+        # FN, If there has been no score found so far, choose a cell based on the count visit.
+        if self.max_score == 0:
             if self.attr in special_attributes[cell_key]:
                 value = special_attributes[cell_key][self.attr]
             else:
@@ -141,12 +141,11 @@ class MaxScoreCell(AbstractWeight):
         """Used to filter out unwanted cells by multiplying the weight with 0 or 1.
         """
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
-        return 1
 
-        #if cell_key._done and not self.test_mode:
-        #    return 0
-        #else:
-        #    return 1
+        if cell_key._done and not self.test_mode:
+            return 0
+        else:
+            return 1
 
     def __repr__(self):
         return f'MaxScoreCell()'
@@ -552,6 +551,11 @@ class AttrWeight(AbstractWeight):
         self.scalar: float = scalar
 
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
+        # FN, Don't choose a cell which is done, since these will never get to have actions taken in them.
+        # Meaning they will only increase in chance of being selected.
+        if cell_key._done:
+            return 0
+
         if self.attr in special_attributes[cell_key]:
             value = special_attributes[cell_key][self.attr]
         else:

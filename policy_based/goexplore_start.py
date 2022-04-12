@@ -625,7 +625,6 @@ def _run(**kwargs):
                     render_pictures(log_par, expl, filename, prev_checkpoint, merged_dict, sil_trajectories)
 
                 # Save archive state
-                # FN, if SIL is 'none' the saving of archive crashes, this was the quickest fix for now since we were not really interested in the archive.
                 if log_par.save_archive:
                     save_state(expl.get_state(), filename + ARCHIVE_POSTFIX)
                     expl.archive.cell_trajectory_manager.dump(filename + TRAJ_POSTFIX)
@@ -679,7 +678,7 @@ def _run(**kwargs):
     expl.close()
 
 
-def find_checkpoint(base_path):
+def find_checkpoint(base_path, kwargs):
     for path_to_load in sorted(glob.glob(base_path + '/*'), reverse=True):
         local_logger.debug(f'path_to_load: {path_to_load}')
         for job_lib_file in sorted(glob.glob(path_to_load + '/*' + MODEL_POSTFIX), reverse=True):
@@ -687,8 +686,11 @@ def find_checkpoint(base_path):
             num = str(os.path.basename(job_lib_file).split('_')[0])
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix)}')
             arch_exists = os.path.exists(os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix))
-            local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + TRAJ_POSTFIX)}')
-            traj_exists = os.path.exists(os.path.join(path_to_load, num + TRAJ_POSTFIX))
+            if kwargs['sil'] != 'none':
+                local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + TRAJ_POSTFIX)}')
+                traj_exists = os.path.exists(os.path.join(path_to_load, num + TRAJ_POSTFIX))
+            else:
+                traj_exists = True
             if arch_exists and traj_exists:
                 return path_to_load, num
     return None, None
@@ -734,11 +736,12 @@ def run(kwargs):
         assert kwargs['load_path'] is None
         assert kwargs['cell_trajectories_file'] == ''
         if os.path.exists(base_path):
-            path_to_load, num = find_checkpoint(base_path)
+            path_to_load, num = find_checkpoint(base_path, kwargs)
             if path_to_load is not None and num is not None:
                 kwargs['expl_state'] = os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix)
                 kwargs['load_path'] = os.path.join(path_to_load, num + MODEL_POSTFIX)
-                kwargs['cell_trajectories_file'] = os.path.join(path_to_load, num + TRAJ_POSTFIX)
+                if kwargs['sil'] != 'none':
+                    kwargs['cell_trajectories_file'] = os.path.join(path_to_load, num + TRAJ_POSTFIX)
                 local_logger.info(f'Successfully loading from checkpoint: {kwargs["expl_state"]} {kwargs["load_path"]} '
                                   f'{kwargs["cell_trajectories_file"]}')
         if kwargs['expl_state'] is None or kwargs['load_path'] == '':
