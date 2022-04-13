@@ -106,9 +106,10 @@ class Explore:
                  'cycles': self.cycles}
         return state
 
-    def set_state(self, state):
+    def set_state(self, state, test_mode):
         self.archive.set_state(state['archive_state'])
-        self.trajectory_gatherer.set_state(state['gatherer_state'])
+        if not test_mode:
+            self.trajectory_gatherer.set_state(state['gatherer_state'])
         self.frames_compute = state['frames_compute']
         self.cycles = state['cycles']
 

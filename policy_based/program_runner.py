@@ -11,14 +11,14 @@ from signal import SIGINT
 #####################
 gameName           : str    = "maze"
 minimumIterations  : int    = 1
-levelSeed          : str    = "100"
-posSeed            : str    = "0"
-testMode           : str    = "False"
-endTime            : str    = "0.1"
+levelSeed          : str    = "92"
+posSeed            : str    = "2"
+testMode           : bool   = True
+endTime            : str    = "1.0"
 tempPath           : str    = '/home/nicolas/temp/'
-folder             : str    = "-"
-loadPathModel      : str    = "-"
-loadPathArch       : str    = "-"
+folder             : str    = "0000_mmmmmmmmmmmmmmmm"
+loadPathModel      : str    = "000005966782_model.joblib"
+loadPathArch       : str    = "000005966782_arch.gz"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "2"
@@ -86,7 +86,7 @@ log.write("Starting program_runner for: \ngameName=" + gameName +
     "\nendDate=" + str(endTime) +
     "\nlevelSeed="+ levelSeed +
     "\nposSeed=" + posSeed +
-    "\ntestMode=" + testMode + 
+    "\ntestMode=" + str(testMode) + 
     "\n\n")
 
 
@@ -121,7 +121,7 @@ while datetime.now() < datetime.strptime(endTime, format):
     if continue_run and not first_run:
         cont = "True"
 
-    returnValue = os.system("sh run_procgen_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
+    returnValue = os.system("sh run_procgen_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + str(testMode) + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
 
     
     if returnValue != 0:
@@ -185,6 +185,9 @@ while datetime.now() < datetime.strptime(endTime, format):
         loadPathTrajectory = "-"
         folder = "-"
     log.flush()
+
+    if testMode:
+        break
 
 timeTaken = datetime.strptime(datetime.now().strftime(format), format) - datetime.strptime(startTime, format)
 

@@ -303,11 +303,12 @@ class CheckpointTracker:
             bool: If it has converged.
         """
         gatherer = self.expl.trajectory_gatherer
-        epsiodes = gatherer.nb_of_episodes
+        episodes = gatherer.nb_of_episodes
         if test_mode:
-            if  epsiodes >= TEST_EPISODES:
+            print("Episode:", episodes, "/", TEST_EPISODES)
+            if  episodes >= TEST_EPISODES:
                 return True
-        elif epsiodes >= gatherer.log_window_size:
+        elif episodes >= gatherer.log_window_size:
             if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
                 exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen

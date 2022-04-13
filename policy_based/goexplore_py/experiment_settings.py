@@ -1309,14 +1309,15 @@ def setup(resolution,
         logger.info('Loading explorer state')
 
         # FN, copy the previous log file to get nice plots and log file
-        path = '/'.join(expl_state.split('/')[:-1]) + "/log.txt"
-        import shutil
-        shutil.copyfile(path, base_path +"log.txt")
+        if not test_mode:
+            path = '/'.join(expl_state.split('/')[:-1]) + "/log.txt"
+            import shutil
+            shutil.copyfile(path, base_path +"log.txt")
 
         if isinstance(expl_state, str):
             with gzip.open(expl_state, 'rb') as file_handle:
                 expl_state = pickle.load(file_handle)
-        expl.set_state(expl_state)
+        expl.set_state(expl_state, test_mode)
     cell_representation.set_archive(archive)
 
     if len(expl.archive.archive) != 0:
