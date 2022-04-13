@@ -25,15 +25,6 @@ import horovod.tensorflow as hvd
 logger = logging.getLogger(__name__)
 
 
-#def convert_state(state, target_shape, max_pix_value): # TODO remove this??
-#    if target_shape is None:
-#        return None
-#    import cv2
-#    #resized_state = cv2.resize(cv2.cvtColor(state),
-#        #target_shape,
-#        #interpolation=cv2.INTER_AREA)
-#    img =  ((state / 255.0) * max_pix_value).astype(np.uint8)
-#    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
 class GoalConVecFrameStack(VecWrapper):
     """
@@ -1133,7 +1124,7 @@ class RectColorFrame(MyWrapper):
         return self.reshape_obs(obs), reward, done, info
 
 
-class RectColorFrameProcgen(MyWrapper): # TODO Can we remove this wrapper? Does it have to be added?
+class RectColorFrameProcgen(MyWrapper):
     def __init__(self, env):
         """Warp frames to 64x64"""
         MyWrapper.__init__(self, env)

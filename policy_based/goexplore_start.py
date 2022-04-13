@@ -529,6 +529,15 @@ def _run(**kwargs):
                     
 
 
+
+            for k, v in expl.archive.archive.items():
+                print(k, "has neighbours:", v.neighbours)
+
+
+
+
+
+
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
             logger.write('ret_suc', return_success_rate)                # FN, how often the agent successfully returned to the chosen cell.
             logger.write('ret_cum_suc', c_return_succes_rate)           # FN, The cummulative return success rate of all cells chosen at least one.

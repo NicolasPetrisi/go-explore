@@ -6,11 +6,14 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import field
 import warnings as _warnings
 import copy
 from typing import List, Any
 from collections import deque
 import sys
+
+from goexplore_py.cell_representations import CellRepresentationBase
 
 try:
     from dataclasses import dataclass, field as datafield
@@ -115,6 +118,9 @@ class CellInfoStochastic:
     #: The number of times the information of this cell was reset when update-on-reset is enabled
     nb_reset: int = 0
 
+    #: FN, The neighbours of this cell
+    neighbours: set = field(default_factory=set)
+
     def add(self, other):
         self.nb_chosen += other.nb_chosen
         self.nb_reached += other.nb_reached
@@ -124,6 +130,8 @@ class CellInfoStochastic:
         self.nb_failures_above_thresh += other.nb_failures_above_thresh
         self.nb_seen += other.nb_seen
         self.nb_reset += other.nb_reset
+        self.neighbours.update(other.neighbours) # TODO: Lägger den till sig själv som granne???
+        
 
 
 @dataclass

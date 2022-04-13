@@ -173,7 +173,7 @@ class CellRepresentationFactory:
     def set_archive(self, archive):
         self.archive = archive
 
-    def __call__(self, env=None):
+    def __call__(self, env=None, came_from: CellRepresentationBase=None):
         """function that is called when a CellRepresentation is called as a function i.e. as cell_representation(self)
            It calles make which calls the init function in the CellRepresentation and then sets atrributes acording to the grid resolution 
 
@@ -198,8 +198,17 @@ class CellRepresentationFactory:
             cell_representation = self.archive.cell_map[cell_representation]
         else:
            self.archive.add_to_cell_map(cell_representation)
+
+        #print(self.archive.archive.keys())
+
+        if came_from is not None and came_from != cell_representation and\
+                 cell_representation in self.archive.archive and came_from in self.archive.archive:
+            print("HOWDY NEIGHBOR:", came_from, cell_representation)
+            self.archive.archive[cell_representation].neighbours.add(came_from)
+            self.archive.archive[came_from].neighbours.add(cell_representation)
         
         return cell_representation
+
 
     def set_grid_resolution(self, grid_resolution):
         self.grid_resolution = grid_resolution

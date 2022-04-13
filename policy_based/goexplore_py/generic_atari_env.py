@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from turtle import pos
 import numpy as np
 import gym
 import copy
@@ -77,7 +78,7 @@ class MyAtari(MyWrapper):
         self.level_seed = self.org_seed
         self.unprocessed_state = unprocessed
         self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
-        self.pos = self.cell_representation(self)
+        self.pos = self.cell_representation(env=self)
 
 
         goal = get_goal_pos(self.get_full_res_image())
@@ -86,7 +87,7 @@ class MyAtari(MyWrapper):
         self.x = goal[0]
         self.y = goal[1]
         self.done = 1
-        self.goal_cell = self.cell_representation(self)
+        self.goal_cell = self.cell_representation(env=self)
         self.done = 0
         self.x = oldx
         self.y = oldy
@@ -152,8 +153,12 @@ class MyAtari(MyWrapper):
         if reward > 0:
             self.done = done
 
+        old_pos = self.pos
+
         self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
-        self.pos = self.cell_representation(self)
+
+        self.pos = self.cell_representation(env=self, came_from=old_pos)
+
 
         return self.get_full_res_image(), reward, done, lol
 

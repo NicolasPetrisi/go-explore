@@ -11,14 +11,14 @@ from signal import SIGINT
 #####################
 gameName           : str    = "maze"
 minimumIterations  : int    = 1
-levelSeed          : str    = "92"
-posSeed            : str    = "2"
+levelSeed          : str    = "107"
+posSeed            : str    = "0"
 testMode           : bool   = False
-endTime            : str    = "1.0"
+endTime            : str    = "0.1"
 tempPath           : str    = '/home/nicolas/temp/'
-folder             : str    = "0000_mmmmmmmmmmmmmmmm"
-loadPathModel      : str    = "000005966782_model.joblib"
-loadPathArch       : str    = "000005966782_arch.gz"
+folder             : str    = "-"
+loadPathModel      : str    = "-"
+loadPathArch       : str    = "-"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "2"
@@ -174,7 +174,7 @@ while datetime.now() < datetime.strptime(endTime, format):
             posSeed = str(np.random.randint(0,623*1000))
     else:
         log.write("Only " + str(remaining_time) + " hours left but minimum time allowed is " + str(minTimeAllowed) + ". Stopping.\n")
-    if len(errorsHapppened) > 4:
+    if len(errorsHapppened) > 0:
         print("<<WARNING>> More than 4 errors have occured. Something is wrong, stopping program.")
         break
         
