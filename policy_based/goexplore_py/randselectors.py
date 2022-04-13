@@ -89,6 +89,7 @@ class AbstractWeight:
         pass
 
 
+
 class MaxScoreCell(AbstractWeight):
     """Cell selector that during test time gives the highest scoring cell weight 1 and all others 0. If all cells have 0 score 
     or during training training time the weights are given as in the attr class (depending on number of visits to the cell,
