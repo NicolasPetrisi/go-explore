@@ -429,13 +429,19 @@ class StochasticArchive:
 
     def update_neighbours(self):
         print("Updating...")
-        for traj in self.cell_trajectory_manager.cell_trajectories.values():
+        cleared_cells: set() = set()
+        for traj in self.cell_trajectory_manager.cell_trajectories.values():            
             prev_cell_id = None
             for cell_id in traj.cell_ids:
+                cell_key = self.cell_id_to_key_dict[cell_id]
+                cell: data_classes.CellInfoStochastic = self.archive[cell_key]
+
+                if cell_key not in cleared_cells:
+                    cell.neighbours.clear()
+                    cleared_cells.add(cell_key)
+
                 if prev_cell_id is not None:
-                    cell_key = self.cell_id_to_key_dict[cell_id]
                     prev_cell_key = self.cell_id_to_key_dict[prev_cell_id]
-                    cell: data_classes.CellInfoStochastic = self.archive[cell_key]
                     prev_cell: data_classes.CellInfoStochastic = self.archive[prev_cell_key]
 
                     cell.neighbours.add(prev_cell_key)
