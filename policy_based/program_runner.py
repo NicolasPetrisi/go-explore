@@ -10,11 +10,11 @@ from signal import SIGINT
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 1
+minimumIterations  : int    = 2
 levelSeed          : str    = "107"
 posSeed            : str    = "0"
 testMode           : bool   = False
-endTime            : str    = "0.1"
+endTime            : str    = "0.25"
 tempPath           : str    = '/home/nicolas/temp/'
 folder             : str    = "-"
 loadPathModel      : str    = "-"
@@ -23,7 +23,7 @@ loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "2"
 videoAllEpisodes   : str    = "True"
-continue_run       : bool   = False
+continue_run       : bool   = True
 #####################
 
 #gameName           : What game to run.

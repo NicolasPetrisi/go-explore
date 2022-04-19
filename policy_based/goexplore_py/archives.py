@@ -6,6 +6,7 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from copy import deepcopy
 import sys
 from collections import deque, defaultdict
 from typing import Any, Dict, Set, List, Optional, Tuple
@@ -444,6 +445,7 @@ class StochasticArchive:
                     prev_cell_key = self.cell_id_to_key_dict[prev_cell_id]
                     prev_cell: data_classes.CellInfoStochastic = self.archive[prev_cell_key]
 
+                    # NOTE FN, this assumes that it is possible to go both ways between cells. Both from A -> B and B -> A.
                     cell.neighbours.add(prev_cell_key)
                     prev_cell.neighbours.add(cell_key)
 
@@ -452,6 +454,53 @@ class StochasticArchive:
         print("Update complete...")
 
 
+    def otf_trajectory(self, from_cell: CellRepresentationBase, to_cell: CellRepresentationBase, max_depth: int):
+        """On The Fly trajectory creates trajectories on the fly using the neighbours of cells.
+
+        Args:
+            from_cell (CellRepresentationBase): The origin cell.
+            to_cell (CellRepresentationBase): The destination cell.
+            max_depth (int): For how far the search is allowed to go.
+
+        Returns:
+            list (CellRepresentationBase): The path between the two given cells, None if no path could be found or to_cell is None.
+        """
+        
+        if to_cell is None or from_cell == to_cell:
+            return None
+        
+        queue = list()
+        visited = set()
+
+        queue.append([from_cell])
+        visited.add(from_cell)
+
+        while queue:
+            current_traj = queue.pop(0)
+
+            current_cell = current_traj[-1]
+
+            print("cur traj:", current_traj)
+            print("current_CELLASD:", current_cell)
+            
+            for neighbour in self.archive[current_cell].neighbours:
+                if neighbour not in visited:
+                    tmp_list = list(current_traj)
+                    tmp_list.append(neighbour)
+
+                    if neighbour == to_cell:
+                        return tmp_list
+
+                    print("I should append now??")
+                    if len(tmp_list) + 1 < max_depth:
+                        print("APPENDING")
+                        queue.append(tmp_list)
+
+                    visited.add(neighbour)
+            
+        # FN, We will reach here only if we weren't able to find the goal cell.
+        print("NO PATH FOUND")
+        return None
 
 
     def update_goal_info(self, return_goals_chosen, return_goals_reached, sub_goals, inc_ents):

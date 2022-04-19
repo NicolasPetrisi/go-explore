@@ -809,6 +809,12 @@ class GoalConGoExploreEnv(MyWrapper):
         # Choose a goal
         self._choose_return_goal()
 
+        otf_traj = self.archive.otf_trajectory(self.current_cell, self.goal_cell_rep, 100)
+
+        print("Chosen OTF path:", otf_traj)
+        print("Current cell:", self.current_cell)
+        print("Goal cell:", self.goal_cell_rep)
+
         # Return return information
         goal = self._get_nn_goal_rep()
         obs_and_goal = (obs, goal)
