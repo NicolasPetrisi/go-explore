@@ -70,7 +70,7 @@ fi
 # Full experiment: 16
 NB_MPI_WORKERS=${10}
 # Full experiment: 16
-NB_ENVS_PER_WORKER=2
+NB_ENVS_PER_WORKER=16
 
 if [ ${11} != '-' ];
 then
