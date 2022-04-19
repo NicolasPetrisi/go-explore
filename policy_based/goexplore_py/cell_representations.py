@@ -200,12 +200,6 @@ class CellRepresentationFactory:
            self.archive.add_to_cell_map(cell_representation)
 
         #print(self.archive.archive.keys())
-
-        if came_from is not None and came_from != cell_representation and\
-                 cell_representation in self.archive.archive and came_from in self.archive.archive:
-            print("HOWDY NEIGHBOR:", came_from, cell_representation)
-            self.archive.archive[cell_representation].neighbours.add(came_from)
-            self.archive.archive[came_from].neighbours.add(cell_representation)
         
         return cell_representation
 

@@ -421,7 +421,32 @@ class StochasticArchive:
                 # Reduces the reference count of the trajectory, allowing it to be deleted
                 self.cell_trajectory_manager.end_trajectory(self.frames)
             self.frames += self.frame_skip
+
+        self.update_neighbours()
+        
         self.cell_trajectory_manager.finish_update()
+
+
+    def update_neighbours(self):
+        print("Updating...")
+        for traj in self.cell_trajectory_manager.cell_trajectories.values():
+            prev_cell_id = None
+            for cell_id in traj.cell_ids:
+                if prev_cell_id is not None:
+                    cell_key = self.cell_id_to_key_dict[cell_id]
+                    prev_cell_key = self.cell_id_to_key_dict[prev_cell_id]
+                    cell: data_classes.CellInfoStochastic = self.archive[cell_key]
+                    prev_cell: data_classes.CellInfoStochastic = self.archive[prev_cell_key]
+
+                    cell.neighbours.add(prev_cell_key)
+                    prev_cell.neighbours.add(cell_key)
+
+                prev_cell_id = cell_id
+
+        print("Update complete...")
+
+
+
 
     def update_goal_info(self, return_goals_chosen, return_goals_reached, sub_goals, inc_ents):
         for goal_key, reached, sub_goal_key, inc_ent in zip(return_goals_chosen, return_goals_reached, sub_goals,
