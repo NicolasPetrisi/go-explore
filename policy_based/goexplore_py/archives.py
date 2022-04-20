@@ -20,12 +20,13 @@ import goexplore_py.globals as global_const
 from goexplore_py.cell_mapping import CellMapping
 
 class StochasticArchive:
-    def __init__(self, optimize_score, cell_selector, cell_trajectory_manager, max_failed, reset_on_update):
+    def __init__(self, optimize_score, cell_selector, cell_trajectory_manager, max_failed, reset_on_update, otf_trajectories):
         # Archive parameters
         self.optimize_score: bool = optimize_score
         self.max_failed: int = max_failed
         self.failed_threshold: float = 0.9
         self.reset_on_update: bool = reset_on_update
+        self.otf_trajectories = otf_trajectories
 
         self.max_cell_size = 10
 
@@ -352,12 +353,25 @@ class StochasticArchive:
         for element in mb_data:
             assert len(element) == len(mb_data[0]), 'All trajectory information should have the same length!'
 
+        neighbour_list_dict: Dict[int, CellRepresentationBase] = dict()
+
         # Because observations and actions are one element longer than, for example, rewards, this effectively truncates
         # the last action and the last reward from the trajectory.
         for (cell_key, game_reward, trajectory_id, done, ob, goal, action, reward, sil, exp_strat, traj_index,
              traj_len) in zip(*mb_data):
             if sil:
                 continue
+
+            if self.otf_trajectories:
+                if trajectory_id not in neighbour_list_dict:
+                    neighbour_list_dict[trajectory_id] = list()
+                
+                neighbour_list_dict[trajectory_id].append(cell_key)
+
+
+
+
+
 
             if trajectory_id != current_trajectory_id:  # <- This is an optimization to reduce the number of lookups
                 current_trajectory_id = trajectory_id
@@ -425,32 +439,32 @@ class StochasticArchive:
                 self.cell_trajectory_manager.end_trajectory(self.frames)
             self.frames += self.frame_skip
 
-        self.update_neighbours()
+        self.update_neighbours(neighbour_list_dict)
+
         
         self.cell_trajectory_manager.finish_update()
 
 
-    def update_neighbours(self):
+    def update_neighbours(self, neighbour_list_dict: Dict[int, CellRepresentationBase]):
         cleared_cells: set() = set()
-        for traj in self.cell_trajectory_manager.cell_trajectories.values():            
-            prev_cell_id = None
-            for cell_id in traj.cell_ids:
-                cell_key = self.cell_id_to_key_dict[cell_id]
+        for traj in neighbour_list_dict.values():
+            prev_cell_key = None
+            for cell_key in traj:
+                
                 cell: data_classes.CellInfoStochastic = self.archive[cell_key]
 
                 if cell_key not in cleared_cells:
                     cell.neighbours.clear()
                     cleared_cells.add(cell_key)
 
-                if prev_cell_id is not None:
-                    prev_cell_key = self.cell_id_to_key_dict[prev_cell_id]
+                if prev_cell_key is not None:
                     prev_cell: data_classes.CellInfoStochastic = self.archive[prev_cell_key]
 
                     # NOTE FN, this assumes that it is possible to go both ways between cells. Both from A -> B and B -> A.
                     cell.neighbours.add(prev_cell_key)
                     prev_cell.neighbours.add(cell_key)
 
-                prev_cell_id = cell_id
+                prev_cell_key = cell_key
 
 
     def otf_trajectory(self, from_cell: CellRepresentationBase, to_cell: CellRepresentationBase, max_depth: int):
@@ -462,13 +476,12 @@ class StochasticArchive:
             max_depth (int): For how far the search is allowed to go.
 
         Returns:
-            list (CellRepresentationBase): The path between the two given cells
+            trajectory (List[CellRepresentationBase]), goal_cell (CellRepresentationBase): The path between the two given cells in the form of (cell_key, -1). -1 is the number of steps taken inside the cell which we don't know.
         """
-        print("Entering OTF")
         if from_cell not in self.archive or to_cell not in self.archive or from_cell == to_cell:
             return [], from_cell
 
-        print("Passed first check")
+        print("Start : Goal, ", from_cell, ":", to_cell)
 
         queue = list()
         visited = set()
@@ -476,46 +489,53 @@ class StochasticArchive:
         queue.append([(from_cell, -1)])
         visited.add(from_cell)
         dead_ends = list()
+        select_matcher = dict()
         while queue:
             current_traj = queue.pop(0)
 
-            current_cell = current_traj[-1]
+            current_cell = current_traj[-1][0]
 
             print("cur traj:", current_traj)
-            print("current_CELLASD:", current_cell)
             
             neighbour_found = False
-            for neighbour in self.archive[current_cell].neighbours:
-                if neighbour not in visited:
-                    neighbour_found = True
-                    tmp_list = list(current_traj)
-                    tmp_list.append((neighbour, 0))
+            if current_cell in self.archive:
+                for neighbour in self.archive[current_cell].neighbours:
+                    if neighbour not in visited:
+                        neighbour_found = True
+                        tmp_list = list(current_traj)
+                        tmp_list.append((neighbour, -1))
 
-                    if neighbour == to_cell:
-                        return tmp_list, to_cell
+                        if neighbour == to_cell:
+                            return tmp_list, to_cell
 
-                    print("I should append now??")
-                    if len(tmp_list) + 1 < max_depth:
-                        print("APPENDING")
-                        queue.append(tmp_list)
+                        if len(tmp_list) + 1 < max_depth:
+                            queue.append(tmp_list)
 
-                    visited.add(neighbour)
+                        visited.add(neighbour)
             
             if not neighbour_found:
                 dead_ends.append(current_traj)
+                select_matcher[current_traj[-1][0]] = current_traj
             
 
-        # FN, We will reach here only if we weren't able to find the goal cell.
-        print("NO PATH FOUND")
+        # FN, We will reach here only if we weren't able to find the goal cell from the from_cell.
+        # If we can't find the cell, then choose from one of the dead end cells we found during the search according to
+        # the selector.
+        print("No path found! Next attempt")
 
-        select_dict = dict()
-        select_matcher = dict()
+        all_cells = self.cell_selector.choose_cell_key(self.archive)
 
-        for traj in dead_ends:
-            select_dict[traj[-1]] = self.archive[traj[-1]]
-            select_matcher[traj[-1]] = traj
+        chosen_cell = None
 
-        chosen_cell = self.archive.cell_selector.choose_cell_key(select_dict)[0]
+        for elem in all_cells:
+            if elem in select_matcher.keys():
+                chosen_cell = elem
+                break
+
+        print("Chosen cell:", chosen_cell)
+        # TODO There is a rare bug where if all of the dead end cells are new ones that haven't been added to the archive yet,
+        # chosen_cell will still be None from the loop above! Fix this.
+        assert chosen_cell is not None, "None of the ends of the trajectories were present in the archive!"
 
         return select_matcher[chosen_cell], chosen_cell
 
@@ -615,9 +635,9 @@ class StochasticArchive:
 
 
 class DomainKnowledgeArchive(StochasticArchive):
-    def __init__(self, optimize_score, selector, cell_trajectory_manager, grid_info, max_failed, reset_on_update):
+    def __init__(self, optimize_score, selector, cell_trajectory_manager, grid_info, max_failed, reset_on_update, otf_trajectories):
         super(DomainKnowledgeArchive, self).__init__(optimize_score, selector, cell_trajectory_manager, max_failed,
-                                                     reset_on_update)
+                                                     reset_on_update, otf_trajectories)
         self._domain_knowledge_cell_cache = None
         self.grid_info = grid_info
 

@@ -37,12 +37,12 @@ class Selector(object):
 class RandomSelector(Selector):
     def choose_cell_key(self, archive: Dict[Any, CellInfoStochastic], size=1):
         to_choose = list(archive.keys())
-        chosen = np.random.choice(to_choose, size=size)
+        chosen = np.random.choice(to_choose, size=size, replace=False) #FN, NOTE: Using replace as False might be incorrect here.
         return chosen
 
     def choose_cell(self, archive: Dict[Any, CellInfoStochastic], size=1):
         to_choose = list(archive.values())
-        chosen = np.random.choice(to_choose, size=size)
+        chosen = np.random.choice(to_choose, size=size, replace=False) #FN, NOTE: Using replace as False might be incorrect here.
         return chosen
 
 class IterativeSelector(Selector):
@@ -760,7 +760,7 @@ class WeightedSelector(Selector):
             return [self.cells[0]] * size
         probabilities = self.get_probabilities(archive)
         logger.debug(f'probabilities: {probabilities}')
-        selected = np.random.choice(self.cells, size=size, p=probabilities)
+        selected = np.random.choice(self.cells, size=size, p=probabilities, replace=False)
         logger.debug(f'selected cell: {selected}')
         return selected
 

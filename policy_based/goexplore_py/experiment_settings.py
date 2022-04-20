@@ -208,6 +208,7 @@ def hrv_and_tf_init(nb_cpu, nb_envs, seed_offset):
 def get_archive(archive_names,
                 optimize_score,
                 grid_resolution,
+                otf_trajectories,
                 pre_fill_archive: str = None,
                 selector=None,
                 cell_trajectory_manager=None,
@@ -242,7 +243,8 @@ def get_archive(archive_names,
                 cell_trajectory_manager,
                 grid_resolution,
                 max_failed,
-                reset_on_update)
+                reset_on_update,
+                otf_trajectories)
             local_archives.append(domain_knowledge_archive)
         elif archive_name.lower() == 'firstroomonly':
             domain_knowledge_archive = archives.FirstRoomOnlyArchive(
@@ -1086,6 +1088,7 @@ def setup(resolution,
     archive = get_archive(archive_names=archive_names,
                           optimize_score=optimize_score,
                           grid_resolution=grid_resolution,
+                          otf_trajectories=otf_trajectories,
                           pre_fill_archive=pre_fill_archive,
                           selector=selector,
                           cell_trajectory_manager=cell_trajectory_manager,
