@@ -465,18 +465,19 @@ class StochasticArchive:
             max_depth (int): For how far the search is allowed to go.
 
         Returns:
-            list (CellRepresentationBase): The path between the two given cells, None if no path could be found or to_cell is None.
+            list (CellRepresentationBase): The path between the two given cells
         """
-        
-        if to_cell is None or from_cell == to_cell:
-            return None
+
+        if from_cell not in self.archive or to_cell not in self.archive or from_cell == to_cell:
+            return [], from_cell
+
         
         queue = list()
         visited = set()
 
-        queue.append([from_cell])
+        queue.append([(from_cell, -1)])
         visited.add(from_cell)
-
+        dead_ends = list()
         while queue:
             current_traj = queue.pop(0)
 
@@ -485,13 +486,15 @@ class StochasticArchive:
             print("cur traj:", current_traj)
             print("current_CELLASD:", current_cell)
             
+            neighbour_found = False
             for neighbour in self.archive[current_cell].neighbours:
                 if neighbour not in visited:
+                    neighbour_found = True
                     tmp_list = list(current_traj)
-                    tmp_list.append(neighbour)
+                    tmp_list.append((neighbour, 0))
 
                     if neighbour == to_cell:
-                        return tmp_list
+                        return tmp_list, to_cell
 
                     print("I should append now??")
                     if len(tmp_list) + 1 < max_depth:
@@ -500,9 +503,27 @@ class StochasticArchive:
 
                     visited.add(neighbour)
             
+            if not neighbour_found:
+                dead_ends.append(current_traj)
+            
+
         # FN, We will reach here only if we weren't able to find the goal cell.
         print("NO PATH FOUND")
-        return None
+
+        select_dict = dict()
+        select_matcher = dict()
+
+        for traj in dead_ends:
+            select_dict[traj[-1]] = self.archive[traj[-1]]
+            select_matcher[traj[-1]] = traj
+
+        chosen_cell = self.archive.cell_selector.choose_cell_key(select_dict)[0]
+
+        return select_matcher[chosen_cell], chosen_cell
+
+
+
+        
 
 
     def update_goal_info(self, return_goals_chosen, return_goals_reached, sub_goals, inc_ents):

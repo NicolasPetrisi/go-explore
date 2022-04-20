@@ -5,8 +5,8 @@ loadPathModel=-
 loadPathArch=-
 hoursPerLevel=0.12
 levels=2
-startDate=2022-04-19 16:58:18
-endDate=2022-04-19 17:13:18
+startDate=2022-04-20 12:18:52
+endDate=2022-04-20 12:33:52
 levelSeed=107
 posSeed=0
 testMode=False
@@ -15,9 +15,11 @@ testMode=False
 0.25 hours remaining. Starting new run from folder: - with loadPathModel=- and loadPathArch=- of 0.12 hours.
 levelSeed=107
 posSeed=0
+----------
+0.11 hours remaining. Starting new run from folder: - with loadPathModel=- and loadPathArch=- of 0.11 hours.
+levelSeed=107
+posSeed=0
+Only -0.010981705 hours left but minimum time allowed is 0.1. Stopping.
 
-<<INTERRUPT>>: Got keyboard interrupt, stopping program.
 
-<<WARNING>> ['Error code [2]'] errors have occured.
-
-<<WARNING>>: Run finished at 2022-04-19 17:00:23 with 1 errors occuring.
+Run finished successfully at 2022-04-20 12:34:31 with total time of: 0:15:39.

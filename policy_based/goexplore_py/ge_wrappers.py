@@ -409,7 +409,8 @@ class GoalConGoExploreEnv(MyWrapper):
                  cell_selection_modifier: str,
                  traj_modifier: str,
                  fail_ent_inc: str,
-                 final_goal_reward: float):
+                 final_goal_reward: float,
+                 otf_trajectories: bool):
         super(GoalConGoExploreEnv, self).__init__(env)
 
         # Classes provided to the environment
@@ -464,6 +465,10 @@ class GoalConGoExploreEnv(MyWrapper):
         self.cell_reached: Callable[[Any, Any], bool] = cell_reached
         #: Reward obtained for reaching the final goal
         self.final_goal_reward: float = final_goal_reward
+
+        #: FN, If On The Fly Trajectories is to be used
+        self.otf_trajectories: bool = otf_trajectories
+
 
         # Data tracked for reporting
         self.nb_return_goals_reached: int = -1
@@ -531,69 +536,80 @@ class GoalConGoExploreEnv(MyWrapper):
         archive = self.archive.archive
         if len(archive) == 0:
             return
-        self.actions_to_goal = 0
-        goal_cell_rep = self.archive.cell_selector.choose_cell_key(archive)[0]
-        prev_goal_cell_rep = None
-        if self.cell_selection_modifier == 'prev' or self.traj_modifier == 'prev':
-            # Experimental code: instead of always going to the selected cell, sometimes go to cells before the selected
-            # cell, in the hopes of finding a better trajectory to the target cell.
-            temp_goal_cell_info = archive[goal_cell_rep]
-            trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
-                                                                             temp_goal_cell_info.cell_traj_end,
-                                                                             self.archive.cell_id_to_key_dict)
-            if len(trajectory) > 0:
-                seen_cells = set()
-                unique_trajectory = []
-                total_time_spend = 0
-                for cell, time_spend in reversed(trajectory):
-                    total_time_spend += time_spend
-                    if cell not in seen_cells:
-                        unique_trajectory.append((cell, total_time_spend))
-                        seen_cells.add(cell)
+        
+        if self.otf_trajectories:
+            self.actions_to_goal = 0
+            goal_cell_rep = self.archive.cell_selector.choose_cell_key(archive)[0]
+            prev_goal_cell_rep = None
+            if self.cell_selection_modifier == 'prev' or self.traj_modifier == 'prev':
+                # Experimental code: instead of always going to the selected cell, sometimes go to cells before the selected
+                # cell, in the hopes of finding a better trajectory to the target cell.
+                temp_goal_cell_info = archive[goal_cell_rep]
+                trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
+                                                                                temp_goal_cell_info.cell_traj_end,
+                                                                                self.archive.cell_id_to_key_dict)
+                if len(trajectory) > 0:
+                    seen_cells = set()
+                    unique_trajectory = []
+                    total_time_spend = 0
+                    for cell, time_spend in reversed(trajectory):
+                        total_time_spend += time_spend
+                        if cell not in seen_cells:
+                            unique_trajectory.append((cell, total_time_spend))
+                            seen_cells.add(cell)
 
-                offset = np.random.geometric(0.5) - 1
-                while offset >= len(unique_trajectory):
                     offset = np.random.geometric(0.5) - 1
-                prev_goal_cell_rep = unique_trajectory[offset]
-            else:
-                prev_goal_cell_rep = (goal_cell_rep, 0)
-
-        if self.cell_selection_modifier == 'prev':
-            self.goal_cell_rep = prev_goal_cell_rep[0]
-        else:
-            self.goal_cell_rep = goal_cell_rep
-        self.goal_cell_info = archive[self.goal_cell_rep]
-        if self.traj_modifier == 'prev' and prev_goal_cell_rep[0] != goal_cell_rep:
-            temp_goal_cell_info = archive[prev_goal_cell_rep[0]]
-            trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
-                                                                             temp_goal_cell_info.cell_traj_end,
-                                                                             self.archive.cell_id_to_key_dict)
-            final_cell = trajectory[-1]
-            trajectory.pop(-1)
-            trajectory.append((final_cell[0], prev_goal_cell_rep[1]))
-            chosen = self.archive.archive[goal_cell_rep].nb_chosen
-            self.entropy_manager.entropy_cells[final_cell[0]] = goal_cell_rep, (chosen * 0.1) ** 2
-            trajectory.append((goal_cell_rep, 1))
-        else:
-            trajectory = self.archive.cell_trajectory_manager.get_trajectory(self.goal_cell_info.cell_traj_id,
-                                                                             self.goal_cell_info.cell_traj_end,
-                                                                             self.archive.cell_id_to_key_dict)
-
-        if self.fail_ent_inc == 'time' or self.fail_ent_inc == 'cell':
-            for i, (cell_key, time_spend) in enumerate(trajectory):
-                failed = self.archive.archive[cell_key].nb_sub_goal_failed
-                nb_failures_above_thresh = self.archive.archive[cell_key].nb_failures_above_thresh
-                if failed > self.archive.max_failed * self.archive.failed_threshold:
-                    offset = np.random.geometric(0.5) - 1
-                    while i - offset < 0:
+                    while offset >= len(unique_trajectory):
                         offset = np.random.geometric(0.5) - 1
-                    if offset > 0:
-                        if self.fail_ent_inc == 'time':
-                            end_con = np.random.randint(1, 20)
-                        else:
-                            end_con = cell_key
-                        ent_cell = trajectory[i - offset][0]
-                        self.entropy_manager.entropy_cells[ent_cell] = end_con, 1 + (nb_failures_above_thresh * 0.01)
+                    prev_goal_cell_rep = unique_trajectory[offset]
+                else:
+                    prev_goal_cell_rep = (goal_cell_rep, 0)
+
+            if self.cell_selection_modifier == 'prev':
+                self.goal_cell_rep = prev_goal_cell_rep[0]
+            else:
+                self.goal_cell_rep = goal_cell_rep
+            self.goal_cell_info = archive[self.goal_cell_rep]
+            if self.traj_modifier == 'prev' and prev_goal_cell_rep[0] != goal_cell_rep:
+                temp_goal_cell_info = archive[prev_goal_cell_rep[0]]
+                trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
+                                                                                temp_goal_cell_info.cell_traj_end,
+                                                                                self.archive.cell_id_to_key_dict)
+                final_cell = trajectory[-1]
+                trajectory.pop(-1)
+                trajectory.append((final_cell[0], prev_goal_cell_rep[1]))
+                chosen = self.archive.archive[goal_cell_rep].nb_chosen
+                self.entropy_manager.entropy_cells[final_cell[0]] = goal_cell_rep, (chosen * 0.1) ** 2
+                trajectory.append((goal_cell_rep, 1))
+            else:
+                trajectory = self.archive.cell_trajectory_manager.get_trajectory(self.goal_cell_info.cell_traj_id,
+                                                                                self.goal_cell_info.cell_traj_end,
+                                                                                self.archive.cell_id_to_key_dict)
+
+            if self.fail_ent_inc == 'time' or self.fail_ent_inc == 'cell':
+                for i, (cell_key, time_spend) in enumerate(trajectory):
+                    failed = self.archive.archive[cell_key].nb_sub_goal_failed
+                    nb_failures_above_thresh = self.archive.archive[cell_key].nb_failures_above_thresh
+                    if failed > self.archive.max_failed * self.archive.failed_threshold:
+                        offset = np.random.geometric(0.5) - 1
+                        while i - offset < 0:
+                            offset = np.random.geometric(0.5) - 1
+                        if offset > 0:
+                            if self.fail_ent_inc == 'time':
+                                end_con = np.random.randint(1, 20)
+                            else:
+                                end_con = cell_key
+                            ent_cell = trajectory[i - offset][0]
+                            self.entropy_manager.entropy_cells[ent_cell] = end_con, 1 + (nb_failures_above_thresh * 0.01)
+        else:
+            print("OLD TRAJ:", trajectory)
+            trajectory, goal_cell = self.archive.otf_trajectory(self.current_cell, self.goal_cell_rep, 100)
+            
+            self.goal_cell_rep = goal_cell
+            self.goal_cell_info = archive[self.goal_cell_rep]
+            print("NEW COOLER TRAJ:", trajectory)
+
+
 
         self.returning = True
         self.nb_return_goals_chosen += 1
@@ -601,9 +617,19 @@ class GoalConGoExploreEnv(MyWrapper):
         self.return_goals_info_chosen.append(self.goal_cell_info)
         self.return_goals_reached.append(False)
         self.restored.append(False)
+
+
+
+        
+
+
+
         self.sub_goal_cell_rep = self.trajectory_tracker.reset(self.current_cell,
                                                                trajectory,
                                                                self.goal_cell_rep)
+
+
+
         self.steps_to_previous = 0
         self.steps_to_current = 0
         
@@ -808,12 +834,6 @@ class GoalConGoExploreEnv(MyWrapper):
 
         # Choose a goal
         self._choose_return_goal()
-
-        otf_traj = self.archive.otf_trajectory(self.current_cell, self.goal_cell_rep, 100)
-
-        print("Chosen OTF path:", otf_traj)
-        print("Current cell:", self.current_cell)
-        print("Goal cell:", self.goal_cell_rep)
 
         # Return return information
         goal = self._get_nn_goal_rep()
