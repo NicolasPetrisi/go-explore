@@ -537,7 +537,7 @@ class GoalConGoExploreEnv(MyWrapper):
         if len(archive) == 0:
             return
         
-        if self.otf_trajectories:
+        if not self.otf_trajectories:
             self.actions_to_goal = 0
             goal_cell_rep = self.archive.cell_selector.choose_cell_key(archive)[0]
             prev_goal_cell_rep = None
@@ -602,7 +602,6 @@ class GoalConGoExploreEnv(MyWrapper):
                             ent_cell = trajectory[i - offset][0]
                             self.entropy_manager.entropy_cells[ent_cell] = end_con, 1 + (nb_failures_above_thresh * 0.01)
         else:
-            print("OLD TRAJ:", trajectory)
             trajectory, goal_cell = self.archive.otf_trajectory(self.current_cell, self.goal_cell_rep, 100)
             
             self.goal_cell_rep = goal_cell

@@ -431,7 +431,6 @@ class StochasticArchive:
 
 
     def update_neighbours(self):
-        print("Updating...")
         cleared_cells: set() = set()
         for traj in self.cell_trajectory_manager.cell_trajectories.values():            
             prev_cell_id = None
@@ -453,8 +452,6 @@ class StochasticArchive:
 
                 prev_cell_id = cell_id
 
-        print("Update complete...")
-
 
     def otf_trajectory(self, from_cell: CellRepresentationBase, to_cell: CellRepresentationBase, max_depth: int):
         """On The Fly trajectory creates trajectories on the fly using the neighbours of cells.
@@ -467,11 +464,12 @@ class StochasticArchive:
         Returns:
             list (CellRepresentationBase): The path between the two given cells
         """
-
+        print("Entering OTF")
         if from_cell not in self.archive or to_cell not in self.archive or from_cell == to_cell:
             return [], from_cell
 
-        
+        print("Passed first check")
+
         queue = list()
         visited = set()
 
