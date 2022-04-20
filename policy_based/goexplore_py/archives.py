@@ -297,6 +297,8 @@ class StochasticArchive:
                 self.update_cell(cell_key, cell_info)
                 self.cell_selector.cell_update(cell_key)
 
+            self.archive[cell_key].neighbours.update(cell_info.neighbours)
+
         for cell_key, cell_info in updated_info.items():
             self.update_cell_info(cell_key, cell_info)
 
