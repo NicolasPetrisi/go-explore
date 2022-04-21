@@ -723,7 +723,6 @@ class WeightedSelector(Selector):
 
     def get_probabilities(self, archive: Dict[Any, CellInfoStochastic]):
         self.update_weights(archive)
-
         assert len(archive) == len(self.all_weights)
         total = np.sum(self.all_weights)
         probabilities = [w / total for w in self.all_weights]
@@ -760,6 +759,8 @@ class WeightedSelector(Selector):
             return [self.cells[0]] * size
         probabilities = self.get_probabilities(archive)
         logger.debug(f'probabilities: {probabilities}')
+        non_zero_elements = np.count_nonzero(probabilities)
+        size = min(non_zero_elements, size)
         selected = np.random.choice(self.cells, size=size, p=probabilities, replace=False)
         logger.debug(f'selected cell: {selected}')
         return selected

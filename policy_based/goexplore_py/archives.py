@@ -107,33 +107,41 @@ class StochasticArchive:
 
             # FN, Create so called "Hampu Cells". Merging together neighbouring cells with each other to create larger cells.
             mapped_cells: set[CellRepresentationBase] = set()
-            for cell_key in cell_neighbours.keys():
+            for hampu_cell in cell_neighbours.keys():
 
                 #FN, If this is already mapped to a cell this run, don't map others to it, it may cause chain mapping.
-                if cell_key in mapped_cells or self.archive[self.cell_map[cell_key]].score > 0:
+                if hampu_cell in mapped_cells or self.archive[self.cell_map[hampu_cell]].score > 0:
                     continue
 
                 # FN, Sort the neighbouring cells according to their cell size, making Hampu Cells prioritizing merging with smaller neighbours before the larger.
-                neighbours = list(cell_neighbours[cell_key])
+                neighbours = list(cell_neighbours[hampu_cell])
                 neighbours.sort(key=self.cell_map.get_cell_size)
 
-                for neighbour_cell_key in neighbours:
+                for merging_cell in neighbours:
 
-                    if self.cell_map.get_cell_size(cell_key) + self.cell_map.get_cell_size(neighbour_cell_key) <= self.max_cell_size and \
-                        not self.archive[self.cell_map[neighbour_cell_key]].score > 0:
+                    if self.cell_map.get_cell_size(hampu_cell) + self.cell_map.get_cell_size(merging_cell) <= self.max_cell_size and \
+                        not self.archive[self.cell_map[merging_cell]].score > 0:
                         
                         #FN, Only add cells that have not been mapped to another cell yet.
-                        if not neighbour_cell_key in mapped_cells:
-                            self.cell_map[neighbour_cell_key] = self.cell_map[cell_key]
-                            mapped_cells.add(neighbour_cell_key)
-                            mapped_cells.add(cell_key)
+                        if not merging_cell in mapped_cells:
+                            self.cell_map[merging_cell] = self.cell_map[hampu_cell]
+                            print("oöasndfiubasdiufbiasdbf\n\n\n\nöjabdfijabsildfbklasjbfkasjd\n\n\nadjkfnlasbfashdbf   ")
+                            loop_set = set(self.archive[merging_cell].neighbours)
+                            for neghbour_key in loop_set:
+                                self.archive[neghbour_key].neighbours.discard(merging_cell)
+                                self.archive[neghbour_key].neighbours.add(hampu_cell)
+                                self.archive[hampu_cell].neighbours.discard(merging_cell)
+                                self.archive[hampu_cell].neighbours.add(neghbour_key)
+
+                            mapped_cells.add(merging_cell)
+                            mapped_cells.add(hampu_cell)
 
             # FN, Update the cell_id mapping according to the mapping already done in cell_map.
             cell_id_map = dict()
             items = list(self.cell_id_to_key_dict.items())
-            for cell_id, cell_key in items:
+            for cell_id, hampu_cell in items:
                 if cell_id != -1:
-                    mapped_cell_id = self.cell_key_to_id_dict[self.cell_map[cell_key]]
+                    mapped_cell_id = self.cell_key_to_id_dict[self.cell_map[hampu_cell]]
                     cell_id_map[cell_id] = mapped_cell_id
 
                     if cell_id != mapped_cell_id:
@@ -157,6 +165,7 @@ class StochasticArchive:
 
 
         #FN, The final state of the archive to return.
+
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
                  'cell_id_to_key_dict': self.cell_id_to_key_dict,
@@ -478,11 +487,20 @@ class StochasticArchive:
         Returns:
             trajectory (List[CellRepresentationBase]), goal_cell (CellRepresentationBase): The path between the two given cells in the form of (cell_key, -1). -1 is the number of steps taken inside the cell which we don't know.
         """
+        print("Start : Goal, ", from_cell, ":", to_cell)
+        print("-------------archive--------------------")
+        for k in self.archive.keys():
+            print(k)
+        print("")
+
         if from_cell not in self.archive or to_cell not in self.archive or from_cell == to_cell:
             return [], from_cell
+        print("\n\n############## OTF ################")
+        print("----------------nehigbours--------")
+        for k,v in self.archive.items():
+            print(k, v.neighbours)
 
-        print("Start : Goal, ", from_cell, ":", to_cell)
-
+        print("\n")
         queue = list()
         visited = set()
 
@@ -490,15 +508,18 @@ class StochasticArchive:
         visited.add(from_cell)
         dead_ends = list()
         select_matcher = dict()
+        prev_select_matcher = dict()
         while queue:
             current_traj = queue.pop(0)
 
             current_cell = current_traj[-1][0]
 
-            print("cur traj:", current_traj)
+            print("current cell", current_cell)
             
             neighbour_found = False
             if current_cell in self.archive:
+                print("negihbours of current cell:", self.archive[current_cell].neighbours)
+
                 for neighbour in self.archive[current_cell].neighbours:
                     if neighbour not in visited:
                         neighbour_found = True
@@ -516,14 +537,15 @@ class StochasticArchive:
             if not neighbour_found:
                 dead_ends.append(current_traj)
                 select_matcher[current_traj[-1][0]] = current_traj
+                if len(current_traj) >= 2:
+                    prev_select_matcher[current_traj[-2][0]] = current_traj[:-1]
             
 
         # FN, We will reach here only if we weren't able to find the goal cell from the from_cell.
         # If we can't find the cell, then choose from one of the dead end cells we found during the search according to
         # the selector.
         print("No path found! Next attempt")
-
-        all_cells = self.cell_selector.choose_cell_key(self.archive)
+        all_cells = self.cell_selector.choose_cell_key(self.archive, size = len(self.archive))
 
         chosen_cell = None
 
@@ -532,6 +554,12 @@ class StochasticArchive:
                 chosen_cell = elem
                 break
 
+        if chosen_cell is None:
+            for elem in all_cells:
+                if elem in prev_select_matcher.keys():
+                    chosen_cell = elem
+                    break
+        # chosen_cell = from_cell
         print("Chosen cell:", chosen_cell)
         # TODO There is a rare bug where if all of the dead end cells are new ones that haven't been added to the archive yet,
         # chosen_cell will still be None from the loop above! Fix this.

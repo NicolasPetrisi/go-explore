@@ -206,7 +206,7 @@ class HampuGoalExplorer(GoalExplorer):
 
         rand_value = random.random()
         # FN, choose a neighbouring hampu cell to the current cell with 60% proability 
-        if go_explore_env.archive.cell_map and rand_value < 0.60 :
+        if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive and rand_value < 0.60:
             current_cell = go_explore_env.last_reached_cell
             trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
             cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
@@ -603,9 +603,13 @@ class GoalConGoExploreEnv(MyWrapper):
                             self.entropy_manager.entropy_cells[ent_cell] = end_con, 1 + (nb_failures_above_thresh * 0.01)
         else:
             trajectory, goal_cell = self.archive.otf_trajectory(self.current_cell, self.goal_cell_rep, 100)
-            
+
             self.goal_cell_rep = goal_cell
-            self.goal_cell_info = archive[self.goal_cell_rep]
+
+            if goal_cell not in self.archive.archive:
+                self.goal_cell_info = CellInfoStochastic()
+            else:   
+                self.goal_cell_info = archive[self.goal_cell_rep]
             print("NEW COOLER TRAJ:", trajectory)
 
 
