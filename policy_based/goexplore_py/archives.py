@@ -77,6 +77,9 @@ class StochasticArchive:
 
         # FN, NOTE: The resulting cells we end up with when merging together individual cells are refered to as "Hampu Cells".
         if hampu_cells_save:
+            print("--------------------------------------------------\n--------------------------------------------------\n--------------------------------------------------\n")
+            print("CELLMAPPING:", self.cell_map)
+
             for key in self.archive.keys():
                 self.cell_map.add_cell(key)
 
@@ -120,17 +123,18 @@ class StochasticArchive:
                 for merging_cell in neighbours:
 
                     if self.cell_map.get_cell_size(hampu_cell) + self.cell_map.get_cell_size(merging_cell) <= self.max_cell_size and \
-                        not self.archive[self.cell_map[merging_cell]].score > 0:
+                            self.archive[self.cell_map[merging_cell]].score == self.archive[self.cell_map[hampu_cell]].score:
                         
                         #FN, Only add cells that have not been mapped to another cell yet.
                         if not merging_cell in mapped_cells:
                             self.cell_map[merging_cell] = self.cell_map[hampu_cell]
                             print("oöasndfiubasdiufbiasdbf\n\n\n\nöjabdfijabsildfbklasjbfkasjd\n\n\nadjkfnlasbfashdbf   ")
                             loop_set = set(self.archive[merging_cell].neighbours)
+
+                            self.archive[hampu_cell].neighbours.discard(merging_cell)
                             for neghbour_key in loop_set:
                                 self.archive[neghbour_key].neighbours.discard(merging_cell)
                                 self.archive[neghbour_key].neighbours.add(hampu_cell)
-                                self.archive[hampu_cell].neighbours.discard(merging_cell)
                                 self.archive[hampu_cell].neighbours.add(neghbour_key)
 
                             mapped_cells.add(merging_cell)
@@ -662,6 +666,7 @@ class StochasticArchive:
             self.cell_id_to_key_dict[cell_id] = cell_key
             self.cell_key_to_id_dict[cell_key] = cell_id
         self.archive[cell_key] = cell
+        self.cell_map.add_cell(cell_key)
 
 
 class DomainKnowledgeArchive(StochasticArchive):
