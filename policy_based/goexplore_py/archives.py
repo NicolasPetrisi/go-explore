@@ -455,16 +455,16 @@ class StochasticArchive:
 
 
     def update_neighbours(self, neighbour_list_dict: Dict[int, CellRepresentationBase]):
-        cleared_cells: set() = set()
+        #cleared_cells: set() = set()
         for traj in neighbour_list_dict.values():
             prev_cell_key = None
             for cell_key in traj:
                 
                 cell: data_classes.CellInfoStochastic = self.archive[cell_key]
 
-                if cell_key not in cleared_cells:
-                    cell.neighbours.clear()
-                    cleared_cells.add(cell_key)
+                #if cell_key not in cleared_cells:
+                #    cell.neighbours.clear()
+                #    cleared_cells.add(cell_key)
 
                 if prev_cell_key is not None:
                     prev_cell: data_classes.CellInfoStochastic = self.archive[prev_cell_key]
@@ -548,24 +548,26 @@ class StochasticArchive:
         all_cells = self.cell_selector.choose_cell_key(self.archive, size = len(self.archive))
 
         chosen_cell = None
+        looping_matcher = [select_matcher, prev_select_matcher]
 
-        for elem in all_cells:
-            if elem in select_matcher.keys():
-                chosen_cell = elem
-                break
+        matcher_index = -1
+        for matcher in looping_matcher:
+            matcher_index += 1
 
-        if chosen_cell is None:
             for elem in all_cells:
-                if elem in prev_select_matcher.keys():
+                if elem in matcher.keys():
                     chosen_cell = elem
                     break
-        # chosen_cell = from_cell
+            if chosen_cell is not None:
+                break
+            
+
         print("Chosen cell:", chosen_cell)
         # TODO There is a rare bug where if all of the dead end cells are new ones that haven't been added to the archive yet,
-        # chosen_cell will still be None from the loop above! Fix this.
+        # chosen_cell will still be None from the loop above! Fix this?
         assert chosen_cell is not None, "None of the ends of the trajectories were present in the archive!"
 
-        return select_matcher[chosen_cell], chosen_cell
+        return looping_matcher[matcher_index][chosen_cell], chosen_cell
 
 
 
