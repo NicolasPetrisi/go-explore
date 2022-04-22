@@ -124,12 +124,19 @@ class CellMapping:
         except:
             print("CRASHING")
             print("This is cell_mapping:")
-            for k, v in self.__cell_mapping.items():
-                print(k, ":", v)
+
+            tmp_list = list(self.__cell_mapping.keys())
+            tmp_list.sort(key=lambda x: (x.x, x.y))
+            for k in tmp_list:
+                print(k, ":", self.__cell_mapping[k])
+
             print("\n\n")
             print("This is reverse_mapping:")
-            for k, v in self.__reverse_cell_mapping.items():
-                print(k, ":", v)
+            tmp_list = list(self.__reverse_cell_mapping.keys())
+            tmp_list.sort(key=lambda x: (x.x, x.y))
+            for k in tmp_list:
+                print(k, ":", self.__reverse_cell_mapping[k])
+
             raise RuntimeError("WARNING")
 
 
