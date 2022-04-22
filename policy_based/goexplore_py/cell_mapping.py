@@ -117,8 +117,21 @@ class CellMapping:
         if self.__cell_mapping[key_cell] == value_cell:
             return
 
+        try:
+            children = self.__reverse_cell_mapping[key_cell]
+        except:
+            print("CRASHING")
+            print("This is cell_mapping:")
+            for k, v in self.__cell_mapping:
+                print(k, ":", v)
+            print("\n\n")
+            print("This is reverse_mapping:")
+            for k, v in self.__reverse_cell_mapping:
+                print(k, ":", v)
+            raise RuntimeError("WARNING")
 
-        children = self.__reverse_cell_mapping[key_cell]
+
+
         self.__reverse_cell_mapping[key_cell] = set()
         for child in children:
             self.__cell_mapping[child] = value_cell

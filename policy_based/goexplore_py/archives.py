@@ -83,26 +83,35 @@ class StochasticArchive:
             for key in self.archive.keys():
                 self.cell_map.add_cell(key)
 
-
+            print("CREATING HAMPU CELLS")
+            print("CREATING HAMPU CELLS")
+            print("CREATING HAMPU CELLS")
+            print("CREATING HAMPU CELLS")
+            print(len(self.archive.keys()))
             # FN, Create so called "Hampu Cells". Merging together neighbouring cells with each other to create larger cells.
             mapped_cells: set[CellRepresentationBase] = set()
             for hampu_cell in self.archive.keys():
-
+                
                 #FN, If this is already mapped to a cell this run, don't map others to it, it may cause chain mapping.
                 if hampu_cell in mapped_cells:
                     continue
+                mapped_cells.add(hampu_cell)
 
                 # FN, Sort the neighbouring cells according to their cell size, making Hampu Cells prioritizing merging with smaller neighbours before the larger.
                 hampu_neighbours = list(self.archive[hampu_cell].neighbours)
                 hampu_neighbours.sort(key=self.cell_map.get_cell_size)
-
+                print("Hampu Neighbours:", hampu_cell, "has these ->", hampu_neighbours)
                 for merging_cell in hampu_neighbours:
+                    if merging_cell == hampu_cell:
+                        continue
 
                     if self.cell_map.get_cell_size(hampu_cell) + self.cell_map.get_cell_size(merging_cell) <= self.max_cell_size and \
                             self.archive[self.cell_map[merging_cell]].score == self.archive[self.cell_map[hampu_cell]].score:
                         
                         #FN, Only add cells that have not been mapped to another cell yet.
                         if not merging_cell in mapped_cells:
+                            mapped_cells.add(merging_cell)
+
                             self.cell_map[merging_cell] = self.cell_map[hampu_cell]
                             print("Merging Cell : Hampu Cell ->", merging_cell, ":", hampu_cell)
 
@@ -115,9 +124,6 @@ class StochasticArchive:
                             self.archive[hampu_cell].neighbours.discard(merging_cell)
 
                             print("===============================================\n===============================================")
-
-                            mapped_cells.add(merging_cell)
-                            mapped_cells.add(hampu_cell)
 
             # FN, Update the cell_id mapping according to the mapping already done in cell_map.
             cell_id_map = dict()
