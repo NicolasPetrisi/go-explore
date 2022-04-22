@@ -208,25 +208,29 @@ class HampuGoalExplorer(GoalExplorer):
         # FN, choose a neighbouring hampu cell to the current cell with 60% proability 
         if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive and rand_value < 0.60:
             current_cell = go_explore_env.last_reached_cell
-            trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
-            cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
-            neighbours_dict = utils.get_neighbours(trajectories, cell_id_to_key_dict)
+            #trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
+            #cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
+            #neighbours_dict = utils.get_neighbours(trajectories, cell_id_to_key_dict)
         
-            if neighbours_dict:
-                try:
-                    neighbours = list(neighbours_dict[go_explore_env.archive.cell_map[current_cell]])
-                    if len(neighbours) > 0:
-                        return random.sample(neighbours, 1)[0]
-                except:
-                    print("cant find key", current_cell)
-                    print("Archive:")
-                    for key in go_explore_env.archive.archive.keys():
-                        print(key)
+            try:
+                neighbours = go_explore_env.archive.archive[go_explore_env.archive.cell_map[current_cell]].neighbours
+                if len(neighbours) > 0:
 
-                    print("cell map")
-                    for key, value in go_explore_env.archive.cell_map.get_mapping().items():
-                        print(key,value)
-                    raise RuntimeError("current cell not in cell_map")
+                    for elem in neighbours:
+                        # TODO Remove the loop part when we are certain that the neighbours always exist in the archive
+                        assert elem in go_explore_env.archive.archive, "The chosen neighbouring cell does not exist in the arhcive!"    
+                    
+                    return random.sample(neighbours, 1)[0]
+            except:
+                print("cant find key", current_cell)
+                print("Archive:")
+                for key in go_explore_env.archive.archive.keys():
+                    print(key)
+
+                print("cell map")
+                for key, value in go_explore_env.archive.cell_map.get_mapping().items():
+                    print(key,value)
+                raise RuntimeError("current cell not in cell_map")
         elif rand_value > 0.85:
             # FN, choose the goal cell with 15% probability if it exists
             target_cell = go_explore_env.env.recursive_getattr('goal_cell')
@@ -234,7 +238,7 @@ class HampuGoalExplorer(GoalExplorer):
                 go_explore_env.last_reached_cell = target_cell
                 return target_cell
         
-        # FN, choose a know cell in archive with 25% probability
+        # FN, choose a know cell in archive with 25% probability or if all other options fail to find a cell.
         target_cell = go_explore_env.select_cell_from_archive()
         go_explore_env.last_reached_cell = target_cell
         return target_cell

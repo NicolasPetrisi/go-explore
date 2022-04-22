@@ -130,7 +130,6 @@ class CellInfoStochastic:
         self.nb_failures_above_thresh += other.nb_failures_above_thresh
         self.nb_seen += other.nb_seen
         self.nb_reset += other.nb_reset
-        self.neighbours.update(other.neighbours)
         
 
 

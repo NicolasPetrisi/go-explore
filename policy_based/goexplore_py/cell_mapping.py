@@ -51,12 +51,12 @@ class CellMapping:
             return 1
 
     def get_mapping(self):
-        """Returns the core dictionary. This is not meant to be edited!
+        """Returns a copy of the core dictionary.
 
         Returns:
             Dict[CellRepresentationBase, CellRepresentationBase]: The core dictionary.
         """
-        return self.__cell_mapping
+        return dict(self.__cell_mapping)
 
     def __getitem__(self, key):
         """Allows the class to be indexed using [] to get items like a normal dictionary.
@@ -93,7 +93,7 @@ class CellMapping:
         Args:
             cell_mapp (Dict[CellRepresentationBase, CellRepresentationBase]): The core dictionary to load and base itself on.
         """
-        self.__cell_mapping = cell_mapp
+        self.__cell_mapping = dict(cell_mapp)
         for k, v in self.__cell_mapping.items():
             if v not in self.__reverse_cell_mapping:
                 self.__reverse_cell_mapping[v] = set([k])

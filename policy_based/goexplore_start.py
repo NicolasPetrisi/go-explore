@@ -529,9 +529,10 @@ def _run(**kwargs):
                     
 
 
-
-            for k, v in expl.archive.archive.items():
-                print(k, "has neighbours:", v.neighbours)
+            tmp_list = list(expl.archive.archive.keys())
+            tmp_list.sort(key=lambda x: (x.x, x.y))
+            for k in tmp_list:
+                print(k, "has neighbours:", expl.archive.archive[k].neighbours)
 
 
 

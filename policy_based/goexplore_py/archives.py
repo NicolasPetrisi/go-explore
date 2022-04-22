@@ -6,14 +6,12 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from copy import deepcopy
 import sys
 from collections import deque, defaultdict
 from typing import Any, Dict, Set, List, Optional, Tuple
 from goexplore_py.cell_representations import CellRepresentationBase
 import goexplore_py.data_classes as data_classes
 from goexplore_py.trajectory_manager import CellTrajectoryManager
-from goexplore_py.utils import get_neighbours
 import horovod.tensorflow as hvd
 import goexplore_py.globals as global_const
 
@@ -78,49 +76,27 @@ class StochasticArchive:
         # FN, NOTE: The resulting cells we end up with when merging together individual cells are refered to as "Hampu Cells".
         if hampu_cells_save:
             print("--------------------------------------------------\n--------------------------------------------------\n--------------------------------------------------\n")
-            print("CELLMAPPING:", self.cell_map)
+            print("CELLMAPPING K: V")
+            for k in self.cell_map.keys():
+                print(k, ":", self.cell_map[k])
 
             for key in self.archive.keys():
                 self.cell_map.add_cell(key)
 
-            # FN, Find which cell has what neighbour to correctly merge them together as Hampu Cells in the later steps.
-            # A cell neighbour is defined from the trajectories. If a cell comes after another in a trajectory, they are
-            # assumed to be neighbours.
-            cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]]
-            cell_neighbours = get_neighbours(self.cell_trajectory_manager.cell_trajectories, self.cell_id_to_key_dict)
-            # cell_neighbours: Dict[CellRepresentationBase, Set[CellRepresentationBase]] = dict()
-            # for traj in self.cell_trajectory_manager.cell_trajectories.values():
-            #     prev_cell_key = None
-
-            #     for cell_id in traj.cell_ids:
-            #         cell_key = self.cell_id_to_key_dict[cell_id]
-
-            #         if cell_key not in cell_neighbours:
-            #             cell_neighbours[cell_key] = set()
-
-            #         if prev_cell_key is None:
-            #             prev_cell_key = cell_key
-            #             continue
-
-            #         # FN, Define the two cells to be each other's neighbours.
-            #         cell_neighbours[cell_key].add(prev_cell_key)
-            #         cell_neighbours[prev_cell_key].add(cell_key)
-
-            #         prev_cell_key = cell_key
 
             # FN, Create so called "Hampu Cells". Merging together neighbouring cells with each other to create larger cells.
             mapped_cells: set[CellRepresentationBase] = set()
-            for hampu_cell in cell_neighbours.keys():
+            for hampu_cell in self.archive.keys():
 
                 #FN, If this is already mapped to a cell this run, don't map others to it, it may cause chain mapping.
-                if hampu_cell in mapped_cells or self.archive[self.cell_map[hampu_cell]].score > 0:
+                if hampu_cell in mapped_cells:
                     continue
 
                 # FN, Sort the neighbouring cells according to their cell size, making Hampu Cells prioritizing merging with smaller neighbours before the larger.
-                neighbours = list(cell_neighbours[hampu_cell])
-                neighbours.sort(key=self.cell_map.get_cell_size)
+                hampu_neighbours = list(self.archive[hampu_cell].neighbours)
+                hampu_neighbours.sort(key=self.cell_map.get_cell_size)
 
-                for merging_cell in neighbours:
+                for merging_cell in hampu_neighbours:
 
                     if self.cell_map.get_cell_size(hampu_cell) + self.cell_map.get_cell_size(merging_cell) <= self.max_cell_size and \
                             self.archive[self.cell_map[merging_cell]].score == self.archive[self.cell_map[hampu_cell]].score:
@@ -128,14 +104,17 @@ class StochasticArchive:
                         #FN, Only add cells that have not been mapped to another cell yet.
                         if not merging_cell in mapped_cells:
                             self.cell_map[merging_cell] = self.cell_map[hampu_cell]
-                            print("oöasndfiubasdiufbiasdbf\n\n\n\nöjabdfijabsildfbklasjbfkasjd\n\n\nadjkfnlasbfashdbf   ")
-                            loop_set = set(self.archive[merging_cell].neighbours)
+                            print("Merging Cell : Hampu Cell ->", merging_cell, ":", hampu_cell)
 
+                            merge_cell_neighbours = set(self.archive[merging_cell].neighbours)
+                            for neighbour_key in merge_cell_neighbours:
+                                print("Neighbour key:", neighbour_key)
+                                self.archive[neighbour_key].neighbours.discard(merging_cell)
+                                self.archive[neighbour_key].neighbours.add(hampu_cell)
+                                self.archive[hampu_cell].neighbours.add(neighbour_key)
                             self.archive[hampu_cell].neighbours.discard(merging_cell)
-                            for neghbour_key in loop_set:
-                                self.archive[neghbour_key].neighbours.discard(merging_cell)
-                                self.archive[neghbour_key].neighbours.add(hampu_cell)
-                                self.archive[hampu_cell].neighbours.add(neghbour_key)
+
+                            print("===============================================\n===============================================")
 
                             mapped_cells.add(merging_cell)
                             mapped_cells.add(hampu_cell)
@@ -493,7 +472,9 @@ class StochasticArchive:
         """
         print("Start : Goal, ", from_cell, ":", to_cell)
         print("-------------archive--------------------")
-        for k in self.archive.keys():
+        tmp_list = list(self.archive.keys())
+        tmp_list.sort(key=lambda x: (x.x, x.y))
+        for k in tmp_list:
             print(k)
         print("")
 
