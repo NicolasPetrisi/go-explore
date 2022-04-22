@@ -138,11 +138,9 @@ class StochasticArchive:
                                 print("merging_cell", merging_cell, "hampu_cell", hampu_cell)
                                 print("mergin cells negihbours",self.archive[merging_cell].neighbours)
                                 print("mergin cell in archive?:", merging_cell in self.archive)
-                                print("mergin cells macro cell ", self.cell_map[merging_cell    ])
-                                print("----------------reverse_cell_mapp-----------------")
-                                print(self.cell_map.rev())
+                                print("mergin cells macro cell ", self.cell_map[merging_cell])
                                 print("------------------------------------")
-
+                                raise RuntimeError
             # FN, Update the cell_id mapping according to the mapping already done in cell_map.
             cell_id_map = dict()
             items = list(self.cell_id_to_key_dict.items())
