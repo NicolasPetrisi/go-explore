@@ -198,8 +198,6 @@ class CellRepresentationFactory:
             cell_representation = self.archive.cell_map[cell_representation]
         else:
            self.archive.add_to_cell_map(cell_representation)
-
-        #print(self.archive.archive.keys())
         
         return cell_representation
 

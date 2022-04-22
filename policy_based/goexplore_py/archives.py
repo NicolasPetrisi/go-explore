@@ -77,8 +77,11 @@ class StochasticArchive:
         if hampu_cells_save:
             print("--------------------------------------------------\n--------------------------------------------------\n--------------------------------------------------\n")
             print("CELLMAPPING K: V")
-            for k in self.cell_map.keys():
+            tmp_list = list(self.cell_map.keys())
+            tmp_list.sort(key=lambda x: (x.x, x.y))
+            for k in tmp_list:
                 print(k, ":", self.cell_map[k])
+
 
             for key in self.archive.keys():
                 self.cell_map.add_cell(key)
@@ -90,6 +93,7 @@ class StochasticArchive:
                         print("keys meighbours", value.neighbours)
                         print("n:s neighbours", self.archive[n].neighbours) 
                         raise RuntimeError
+            
             print("CREATING HAMPU CELLS")
             print("CREATING HAMPU CELLS")
             print("CREATING HAMPU CELLS")
