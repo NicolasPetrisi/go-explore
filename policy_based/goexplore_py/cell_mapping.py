@@ -100,6 +100,8 @@ class CellMapping:
             else:
                 self.__reverse_cell_mapping[v].add(k)
 
+    def rev(self): #TODO remove this when done with debugging
+        return dict(self.__reverse_cell_mapping)
 
     def __setitem__(self, key_cell, value_cell):
         """Allows the class to use indexing to set items: A[x] = y
@@ -122,11 +124,11 @@ class CellMapping:
         except:
             print("CRASHING")
             print("This is cell_mapping:")
-            for k, v in self.__cell_mapping:
+            for k, v in self.__cell_mapping.items():
                 print(k, ":", v)
             print("\n\n")
             print("This is reverse_mapping:")
-            for k, v in self.__reverse_cell_mapping:
+            for k, v in self.__reverse_cell_mapping.items():
                 print(k, ":", v)
             raise RuntimeError("WARNING")
 

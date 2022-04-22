@@ -24,7 +24,7 @@ class StochasticArchive:
         self.max_failed: int = max_failed
         self.failed_threshold: float = 0.9
         self.reset_on_update: bool = reset_on_update
-        self.otf_trajectories = otf_trajectories
+        self.otf_trajectories: bool = otf_trajectories
 
         self.max_cell_size = 10
 
@@ -83,6 +83,13 @@ class StochasticArchive:
             for key in self.archive.keys():
                 self.cell_map.add_cell(key)
 
+            for key,value in self.archive.items():
+                for n in value.neighbours:
+                    if key not in self.archive[n].neighbours:
+                        print("key ", key, " has negihbour", n, "but it does not have key as neighbour")
+                        print("keys meighbours", value.neighbours)
+                        print("n:s neighbours", self.archive[n].neighbours) 
+                        raise RuntimeError
             print("CREATING HAMPU CELLS")
             print("CREATING HAMPU CELLS")
             print("CREATING HAMPU CELLS")
@@ -110,20 +117,27 @@ class StochasticArchive:
                         
                         #FN, Only add cells that have not been mapped to another cell yet.
                         if not merging_cell in mapped_cells:
-                            mapped_cells.add(merging_cell)
+                            try:
+                                mapped_cells.add(merging_cell)
+                                self.cell_map[merging_cell] = self.cell_map[hampu_cell]
+                                #print("Merging Cell : Hampu Cell ->", merging_cell, ":", hampu_cell)
 
-                            self.cell_map[merging_cell] = self.cell_map[hampu_cell]
-                            print("Merging Cell : Hampu Cell ->", merging_cell, ":", hampu_cell)
-
-                            merge_cell_neighbours = set(self.archive[merging_cell].neighbours)
-                            for neighbour_key in merge_cell_neighbours:
-                                print("Neighbour key:", neighbour_key)
-                                self.archive[neighbour_key].neighbours.discard(merging_cell)
-                                self.archive[neighbour_key].neighbours.add(hampu_cell)
-                                self.archive[hampu_cell].neighbours.add(neighbour_key)
-                            self.archive[hampu_cell].neighbours.discard(merging_cell)
-
-                            print("===============================================\n===============================================")
+                                merge_cell_neighbours = set(self.archive[merging_cell].neighbours)
+                                for neighbour_key in merge_cell_neighbours:
+                                    #print("Neighbour key:", neighbour_key)
+                                    self.archive[neighbour_key].neighbours.discard(merging_cell)
+                                    self.archive[neighbour_key].neighbours.add(hampu_cell)
+                                    self.archive[hampu_cell].neighbours.add(neighbour_key)
+                                self.archive[hampu_cell].neighbours.discard(merging_cell)
+                            except:
+                                print("falied when mergin neighbours")
+                                print("merging_cell", merging_cell, "hampu_cell", hampu_cell)
+                                print("mergin cells negihbours",self.archive[merging_cell].neighbours)
+                                print("mergin cell in archive?:", merging_cell in self.archive)
+                                print("mergin cells macro cell ", self.cell_map[merging_cell    ])
+                                print("----------------reverse_cell_mapp-----------------")
+                                print(self.cell_map.rev())
+                                print("------------------------------------")
 
             # FN, Update the cell_id mapping according to the mapping already done in cell_map.
             cell_id_map = dict()
@@ -143,7 +157,9 @@ class StochasticArchive:
                     cell_infos.append(self.archive[key])
 
             #FN, Modify the remaining objects which we save as the archive.
-            save_trajectories = self.cell_trajectory_manager.update_trajectories(cell_id_map, cell_infos)
+            if not self.otf_trajectories:
+                save_trajectories = self.cell_trajectory_manager.update_trajectories(cell_id_map, cell_infos)
+
             keys = list(self.archive.keys())
             for key in keys:
                 if key != self.cell_map[key]:
@@ -152,8 +168,22 @@ class StochasticArchive:
                     self.archive[self.cell_map[key]].add(info)
 
 
-
         #FN, The final state of the archive to return.
+
+        print("done with get state:")
+
+        print("---------------archive--------------")
+        tmp_list = list(self.archive.keys())
+        tmp_list.sort(key=lambda x: (x.x, x.y))
+        for k in tmp_list:
+            print(k)
+        print("\n")
+        print("----------------neighbours----------------")
+        for k in tmp_list:
+            print("cell:", k,"neighbours:", self.archive[k].neighbours)
+        print(" ")
+
+
 
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
@@ -161,6 +191,14 @@ class StochasticArchive:
                  'cells_reached_dict': self.cells_reached_dict,
                  'cell_mapping': self.cell_map.get_mapping(),
                  }
+        for key,value in self.archive.items():
+            for n in value.neighbours:
+                if key not in self.archive[n].neighbours:
+                    print("FAILURE AFTER HAMPU MERGING BUT NOT BEFORE!")
+                    print("key ", key, " has negihbour", n, "but it does not have key as neighbour")
+                    print("keys meighbours", value.neighbours)
+                    print("n:s neighbours", self.archive[n].neighbours) 
+                    raise RuntimeError
         return state
 
     def set_state(self, state):
@@ -416,10 +454,10 @@ class StochasticArchive:
                                                             traj_len,
                                                             should_reset)
                 self.update_cell(current_cell_key, cell_info)
-                self.updated_cells.add(current_cell_key)
                 if new_cell:
                     self.new_cells[current_cell_key] = ret_discovered
 
+            self.updated_cells.add(current_cell_key)
             cell_info = self.archive[current_cell_key]
             u_cell_info = self.updated_info[current_cell_key]
             cell_info.nb_actions_taken_in_cell += 1
