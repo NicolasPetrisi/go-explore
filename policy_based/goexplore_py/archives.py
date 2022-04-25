@@ -614,6 +614,8 @@ class StochasticArchive:
         for goal_key, reached, sub_goal_key, inc_ent in zip(return_goals_chosen, return_goals_reached, sub_goals,
                                                             inc_ents):
             # - update chosen and reached information
+            if goal_key not in self.archive:
+                continue
             cell_info = self.archive[goal_key]
             u_cell_info = self.updated_info[goal_key]
             cell_info.nb_chosen += 1
