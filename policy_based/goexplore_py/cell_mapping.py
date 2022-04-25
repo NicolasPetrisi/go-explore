@@ -105,6 +105,28 @@ class CellMapping:
     def rev(self): #TODO remove this when done with debugging
         return dict(self.__reverse_cell_mapping)
 
+    def print_legnths(self, string=""):
+        print(string, "len of cell_map", len(self.__cell_mapping))
+        print(string, "len of rev_cell_map", len(self.__reverse_cell_mapping))
+
+    def update(self, other_map):
+        if type(other_map) is not CellMapping:
+            print("other cell map is not a CellMapping, its a:", type(other_map))
+            print("and its value is:", other_map)
+            raise RuntimeError("not a CellMapping")
+        else:
+            for k,v in other_map.get_mapping().items():
+                if k not in self.__cell_mapping:
+                    self.__cell_mapping[k] = v
+        
+        for k, v in self.__cell_mapping.items():
+            if k not in self.__reverse_cell_mapping:
+                self.__reverse_cell_mapping[k] = set()
+            if v not in self.__reverse_cell_mapping:
+                self.__reverse_cell_mapping[v] = set([k])
+            else:
+                self.__reverse_cell_mapping[v].add(k)
+
     def __setitem__(self, key_cell, value_cell):
         """Allows the class to use indexing to set items: A[x] = y
 

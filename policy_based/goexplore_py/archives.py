@@ -291,7 +291,7 @@ class StochasticArchive:
                 self.archive[cell_key].nb_reset += 1
 
     def get_info_to_sync(self) -> Tuple[Dict[int, Any], Dict[Any, data_classes.CellInfoStochastic],
-                                        Dict[Any, Any], Dict[Any, int], Dict[CellRepresentationBase, CellRepresentationBase]]:
+                                        Dict[Any, Any], Dict[Any, int], CellMapping]:
         updated_cell_id_to_key_dict = {}
         updated_cell_info = {}
         for cell in self.updated_cells:
@@ -300,9 +300,9 @@ class StochasticArchive:
         info_to_sync = (updated_cell_id_to_key_dict, updated_cell_info, self.updated_info, self.new_cells, self.cell_map)
         return info_to_sync
 
-    def sync_cells(self, info_to_sync: Tuple[Dict[int, Any], Dict[Any, data_classes.CellInfoStochastic], Any, Any, Dict[CellRepresentationBase, CellRepresentationBase]]):
+    def sync_cells(self, info_to_sync: Tuple[Dict[int, Any], Dict[Any, data_classes.CellInfoStochastic], Any, Any, CellMapping]):
         updated_cell_id_to_key_dict, updated_cell_info, updated_info, new_cells, cell_map = info_to_sync
-        self.cell_map = cell_map
+        self.cell_map.update(cell_map)
         self.cell_id_to_key_dict.update(updated_cell_id_to_key_dict)
         for cell_id, cell_key in updated_cell_id_to_key_dict.items():
             if cell_key not in self.cell_key_to_id_dict:
@@ -482,7 +482,6 @@ class StochasticArchive:
         
         self.cell_trajectory_manager.finish_update()
 
-
     def update_neighbours(self, neighbour_list_dict: Dict[int, CellRepresentationBase]):
         #cleared_cells: set() = set()
         for traj in neighbour_list_dict.values():
@@ -599,10 +598,6 @@ class StochasticArchive:
         assert chosen_cell is not None, "None of the ends of the trajectories were present in the archive!"
 
         return looping_matcher[matcher_index][chosen_cell], chosen_cell
-
-
-
-        
 
 
     def update_goal_info(self, return_goals_chosen, return_goals_reached, sub_goals, inc_ents):
