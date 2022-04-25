@@ -105,9 +105,6 @@ class CellMapping:
     def rev(self): #TODO remove this when done with debugging
         return dict(self.__reverse_cell_mapping)
 
-    def print_legnths(self, string=""):
-        print(string, "len of cell_map", len(self.__cell_mapping))
-        print(string, "len of rev_cell_map", len(self.__reverse_cell_mapping))
 
     def update(self, other_map):
         if type(other_map) is not CellMapping:

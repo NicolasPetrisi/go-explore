@@ -625,7 +625,7 @@ class GoalConGoExploreEnv(MyWrapper):
                 self.goal_cell_info = CellInfoStochastic()
             else:   
                 self.goal_cell_info = archive[self.goal_cell_rep]
-            print("NEW COOLER TRAJ:", trajectory)
+            #print("NEW COOLER TRAJ:", trajectory)
 
 
 

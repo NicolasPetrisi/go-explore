@@ -483,8 +483,6 @@ def _run(**kwargs):
                 if info.nb_chosen > 0:
                     success_rate = info.nb_reached / info.nb_chosen
                     suc_rates.append(success_rate)
-                    if success_rate > 1:
-                        print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
                 c_return_succes_rate += success_rate 
 
             #FN, when using Hampu Cells it's impossible to calculate the optimal length using the cells since they change over time.
@@ -529,10 +527,10 @@ def _run(**kwargs):
                     
 
 
-            tmp_list = list(expl.archive.archive.keys())
-            tmp_list.sort(key=lambda x: (x.x, x.y))
-            for k in tmp_list:
-                print(k, "has neighbours:", expl.archive.archive[k].neighbours)
+            #tmp_list = list(expl.archive.archive.keys())
+            #tmp_list.sort(key=lambda x: (x.x, x.y))
+            #for k in tmp_list:
+            #    print(k, "has neighbours:", expl.archive.archive[k].neighbours)
 
 
 

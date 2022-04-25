@@ -72,8 +72,8 @@ class ReplayTrajectoryExplorer:
         # We have reached the end of our trajectory, a new goal should have been chosen
         if self.action_index >= len(self.trajectory):
             goal = env.recursive_getattr('goal_cell_info')
-            print('Selected goal:', goal_rep)
-            print('Previous goal:', self.current_goal)
+            #print('Selected goal:', goal_rep)
+            #print('Previous goal:', self.current_goal)
             if goal_rep == self.current_goal:
                 print("ERROR: The same goal was selected twice in a row.")
                 raise Exception('The same goal was selected twice in a row.')
@@ -95,7 +95,7 @@ class ReplayTrajectoryExplorer:
             self.action_index += 1
         else:
             action = 0
-        print('In cell:', current_cell, 'Playing action:', self.action_index-1, action, get_action_meaning(action))
+        #print('In cell:', current_cell, 'Playing action:', self.action_index-1, action, get_action_meaning(action))
         return action
 
 
