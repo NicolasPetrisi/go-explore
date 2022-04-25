@@ -95,6 +95,8 @@ class CellMapping:
         """
         self.__cell_mapping = dict(cell_mapp)
         for k, v in self.__cell_mapping.items():
+            if k not in self.__reverse_cell_mapping:
+                self.__reverse_cell_mapping[k] = set()
             if v not in self.__reverse_cell_mapping:
                 self.__reverse_cell_mapping[v] = set([k])
             else:

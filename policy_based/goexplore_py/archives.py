@@ -332,7 +332,7 @@ class StochasticArchive:
                     else:
                         raise RuntimeError('Frames should never be equal!')
 
-            if self.should_accept_cell(cell_key, cell_info.score, cell_info.trajectory_len, cell_info.cell_traj_id):
+            if self.should_accept_cell(cell_key, cell_info.score, cell_info.trajectory_len, cell_info.cell_traj_id, self.otf_trajectories):
                 self.update_cell(cell_key, cell_info)
                 self.cell_selector.cell_update(cell_key)
 
@@ -438,7 +438,7 @@ class StochasticArchive:
 
             traj_id = self.cell_trajectory_manager.cell_trajectory_id
             traj_length = self.cell_trajectory_manager.get_current_trajectory_length()
-            if self.should_accept_cell(current_cell_key, score, length, traj_id):
+            if self.should_accept_cell(current_cell_key, score, length, traj_id, self.otf_trajectories):
                 if current_cell_key in self.archive:
                     should_reset = self.reset_on_update
                     ret_discovered = self.archive[current_cell_key].ret_discovered
@@ -628,15 +628,15 @@ class StochasticArchive:
             self.cells_reached_dict[goal_key].append(reached)
             self.cell_selector.cell_update(goal_key)
 
-    def should_accept_cell(self, potential_cell_key, cur_score, full_traj_len, current_traj_id):
+    def should_accept_cell(self, potential_cell_key, cur_score, full_traj_len, current_traj_id, otf_trajectories):
         if potential_cell_key not in self.archive:
             return True
         potential_cell = self.archive[potential_cell_key]
-        if current_traj_id != -1:
+        if not otf_trajectories and current_traj_id != -1:
             c_tie_breaker = self.cell_trajectory_manager.cell_trajectories[current_traj_id].tie_breaker
         else:
             c_tie_breaker = 1
-        if potential_cell.cell_traj_id != -1:
+        if not otf_trajectories and potential_cell.cell_traj_id != -1:
             p_tie_breaker = self.cell_trajectory_manager.cell_trajectories[potential_cell.cell_traj_id].tie_breaker
         else:
             p_tie_breaker = 1
@@ -717,13 +717,14 @@ class DomainKnowledgeArchive(StochasticArchive):
 
 
 class FirstRoomOnlyArchive(DomainKnowledgeArchive):
-    def should_accept_cell(self, potential_cell_key, potential_cell, cur_score, full_traj_len):
+    def should_accept_cell(self, potential_cell_key, potential_cell, cur_score, full_traj_len, otf_trajectories):
         if potential_cell_key.room != 1:
             return False
         return super(FirstRoomOnlyArchive, self).should_accept_cell(potential_cell_key,
                                                                     potential_cell,
                                                                     cur_score,
-                                                                    full_traj_len)
+                                                                    full_traj_len,
+                                                                    otf_trajectories)
 
 
 class ArchiveCollection:
