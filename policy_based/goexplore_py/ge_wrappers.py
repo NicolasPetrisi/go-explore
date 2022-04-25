@@ -173,9 +173,9 @@ class GoalExplorer:
     def on_reset(self):
         self.exploration_strategy = global_const.EXP_STRAT_NONE
 
-    def on_return(self):
+    def on_return(self, empty_archive):
         self.random_explorer.init_seed()
-        if random.random() < self.random_exp_prob:
+        if not empty_archive and random.random() < self.random_exp_prob:
             self.exploration_strategy = global_const.EXP_STRAT_RAND
         else:
             self.exploration_strategy = global_const.EXP_STRAT_POLICY
@@ -686,7 +686,7 @@ class GoalConGoExploreEnv(MyWrapper):
         self.nb_return_goals_reached += 1
         self.return_goals_reached[-1] = True
         self.last_reached_cell = self.current_cell
-        self.goal_explorer.on_return()
+        self.goal_explorer.on_return(len(self.archive.archive) <= 1)
 
     def _exploration_success(self):
         self.nb_exploration_goals_reached += 1
