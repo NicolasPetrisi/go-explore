@@ -549,8 +549,7 @@ class StochasticArchive:
         queue.append([(from_cell, -1)])
         visited.add(from_cell)
         dead_ends = list()
-        select_matcher = dict()
-        prev_select_matcher = dict()
+        found_cells = set()
         while queue:
             current_traj = queue.pop(0)
 
@@ -566,7 +565,6 @@ class StochasticArchive:
 
                 for neighbour in self.archive[current_cell].neighbours:
                     if neighbour not in visited:
-                        neighbour_found = True
                         tmp_list = list(current_traj)
                         tmp_list.append((neighbour, -1))
 
@@ -574,42 +572,33 @@ class StochasticArchive:
                             return tmp_list, to_cell
 
                         if len(tmp_list) + 1 < max_depth:
+                            neighbour_found = True
                             queue.append(tmp_list)
 
                         visited.add(neighbour)
             
             if not neighbour_found:
                 dead_ends.append(current_traj)
-                select_matcher[current_traj[-1][0]] = current_traj
-                if len(current_traj) >= 2:
-                    prev_select_matcher[current_traj[-2][0]] = current_traj[:-1]
+                found_cells.update([x[0] for x in current_traj])
             
 
         # FN, We will reach here only if we weren't able to find the goal cell from the from_cell.
-        # If we can't find the cell, then choose from one of the dead end cells we found during the search according to
-        # the selector.
-        #print("No path found! Next attempt")
+        # If we can't find the cell, then choose from cells we found during the search according to
+        # the selector and then perform the search again through recursion to get the trajectory
+        # to this chosen cell instead.
+
         all_cells = self.cell_selector.choose_cell_key(self.archive, size = len(self.archive))
 
         chosen_cell = None
-        looping_matcher = [select_matcher, prev_select_matcher]
 
-        matcher_index = -1
-        for matcher in looping_matcher:
-            matcher_index += 1
-
-            for elem in all_cells:
-                if elem in matcher.keys():
-                    chosen_cell = elem
-                    break
-            if chosen_cell is not None:
+        for cell in all_cells:
+            if cell in found_cells:
+                chosen_cell = cell
                 break
-            
 
-        #print("Chosen cell:", chosen_cell)
-        assert chosen_cell is not None, "None of the ends of the trajectories were present in the archive!"
+        assert chosen_cell is not None, "None of the found cells were present in the archive!"
 
-        return looping_matcher[matcher_index][chosen_cell], chosen_cell
+        return self.otf_trajectory(from_cell, chosen_cell, max_depth)
 
 
     def update_goal_info(self, return_goals_chosen, return_goals_reached, sub_goals, inc_ents):
