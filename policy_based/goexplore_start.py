@@ -676,7 +676,7 @@ def _run(**kwargs):
         # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
         if kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
             cells_found_counter_stop = True
-        print("Cells found diff:", cells_found_counter[0], cells_found_counter[-1])
+        #print("Cells found diff:", cells_found_counter[0], cells_found_counter[-1])
 
 
     # FN, only one thread should make plots.
