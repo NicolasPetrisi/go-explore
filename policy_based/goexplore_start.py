@@ -408,6 +408,8 @@ def _run(**kwargs):
     cells_found_counter = deque([-1, -2], maxlen = 30)
     cells_found_counter_stop = False
 
+    has_written_checkpoint = False 
+
     while checkpoint_tracker.should_continue(kwargs['test_mode'], cells_found_counter_stop):
         # Run one iteration
         if hvd.rank() == 0:
@@ -425,6 +427,7 @@ def _run(**kwargs):
 
         # Code that should be executed by all workers at a checkpoint generation
         if checkpoint_tracker.should_write_checkpoint():
+            has_written_checkpoint = True
             local_logger.debug(f'Rank: {hvd.rank()} is exchanging screenshots for checkpoint: {expl.frames_compute}')
             screenshots = expl.trajectory_gatherer.env.recursive_getattr('rooms')
             if screenshot_merge == 'mpi':
@@ -617,6 +620,8 @@ def _run(**kwargs):
 
             # Code that should be executed by only the master at a checkpoint generation
             if checkpoint_tracker.should_write_checkpoint():
+                has_written_checkpoint = True
+                
                 local_logger.info(f'Rank: {hvd.rank()} is writing checkpoint: {expl.frames_compute}')
                 filename = f'{log_par.base_path}/{expl.frames_compute:0{log_par.n_digits}}'
 
@@ -674,9 +679,8 @@ def _run(**kwargs):
 
         cells_found_counter.append(len(expl.archive.archive))
         # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
-        if kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
+        if has_written_checkpoint and kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
             cells_found_counter_stop = True
-        #print("Cells found diff:", cells_found_counter[0], cells_found_counter[-1])
 
 
     # FN, only one thread should make plots.
