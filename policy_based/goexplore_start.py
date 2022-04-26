@@ -461,6 +461,14 @@ def _run(**kwargs):
             expl.sync_before_checkpoint()
             local_logger.debug(f'Rank: {hvd.rank()} is done synchronizing for checkpoint: {expl.frames_compute}')
 
+
+        cells_found_counter.append(len(expl.archive.archive))
+        # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
+        if kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
+            cells_found_counter_stop = True
+        print("Cells found diff:", cells_found_counter[0], cells_found_counter[-1])
+
+
         # Code that should be executed only by the master
         if hvd.rank() == 0 and not disable_logging:
             gatherer = expl.trajectory_gatherer
@@ -541,13 +549,6 @@ def _run(**kwargs):
             #for k in tmp_list:
             #    print(k, "has neighbours:", expl.archive.archive[k].neighbours)
 
-
-
-            cells_found_counter.append(len(expl.archive.archive))
-
-            # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
-            if kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
-                cells_found_counter_stop = True
 
 
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
