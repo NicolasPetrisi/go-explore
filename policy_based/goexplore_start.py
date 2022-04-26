@@ -462,12 +462,6 @@ def _run(**kwargs):
             local_logger.debug(f'Rank: {hvd.rank()} is done synchronizing for checkpoint: {expl.frames_compute}')
 
 
-        cells_found_counter.append(len(expl.archive.archive))
-        # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
-        if kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
-            cells_found_counter_stop = True
-        print("Cells found diff:", cells_found_counter[0], cells_found_counter[-1])
-
 
         # Code that should be executed only by the master
         if hvd.rank() == 0 and not disable_logging:
@@ -677,6 +671,13 @@ def _run(**kwargs):
                     PROFILER.disable()
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
+
+        cells_found_counter.append(len(expl.archive.archive))
+        # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
+        if kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
+            cells_found_counter_stop = True
+        print("Cells found diff:", cells_found_counter[0], cells_found_counter[-1])
+
 
     # FN, only one thread should make plots.
     if hvd.rank() == 0:
