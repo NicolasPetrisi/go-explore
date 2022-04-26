@@ -405,7 +405,7 @@ def _run(**kwargs):
     plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
     plot_x_value = "frames"
 
-    cells_found_counter = deque([-1, -2], maxlen = 20)
+    cells_found_counter = deque([-1, -2], maxlen = 30)
     cells_found_counter_stop = False
 
     while checkpoint_tracker.should_continue(kwargs['test_mode'], cells_found_counter_stop):
