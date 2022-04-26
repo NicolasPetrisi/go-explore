@@ -49,6 +49,8 @@ import goexplore_py.mpi_support as mpi
 from atari_reset.atari_reset.ppo import flatten_lists
 from goexplore_py.data_classes import LogParameters
 
+from collections import deque
+
 local_logger = logging.getLogger(__name__)
 
 compress = gzip
@@ -267,7 +269,7 @@ class CheckpointTracker:
     def should_write_checkpoint(self):
         return self._should_write_checkpoint
 
-    def should_continue(self, test_mode):
+    def should_continue(self, test_mode, cells_found_counter_stop=False):
         """If the program should stop or continue running another cycle.
 
         Args:
@@ -285,6 +287,9 @@ class CheckpointTracker:
         if self.log_par.max_cells is not None and len(self.expl.archive.archive) >= self.log_par.max_cells:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
+            return False
+        if self.early_stopping and cells_found_counter_stop:
+            print("Early stopping to perform hampu cell merge")
             return False
         if self.early_stopping and self.has_converged(test_mode):
             print("Performing early stopping since it's deemed that the agent has converged")
@@ -400,7 +405,10 @@ def _run(**kwargs):
     plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
     plot_x_value = "frames"
 
-    while checkpoint_tracker.should_continue(kwargs['test_mode']):
+    cells_found_counter = deque([-1, -2], maxlen = 20)
+    cells_found_counter_stop = False
+
+    while checkpoint_tracker.should_continue(kwargs['test_mode'], cells_found_counter_stop):
         # Run one iteration
         if hvd.rank() == 0:
             local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}, episodes done: {expl.trajectory_gatherer.nb_of_episodes}')
@@ -484,6 +492,7 @@ def _run(**kwargs):
                     success_rate = info.nb_reached / info.nb_chosen
                     suc_rates.append(success_rate)
                 c_return_succes_rate += success_rate 
+            c_return_succes_rate /= len(expl.archive.archive)
 
             #FN, when using Hampu Cells it's impossible to calculate the optimal length using the cells since they change over time.
             if not kwargs['explorer'] == 'hampu':
@@ -534,7 +543,11 @@ def _run(**kwargs):
 
 
 
+            cells_found_counter.append(len(expl.archive.archive))
 
+            # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
+            if kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
+                cells_found_counter_stop = True
 
 
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
