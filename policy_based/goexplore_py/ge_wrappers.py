@@ -175,7 +175,7 @@ class GoalExplorer:
 
     def on_return(self, empty_archive):
         self.random_explorer.init_seed()
-        if not empty_archive and random.random() < self.random_exp_prob:
+        if empty_archive or random.random() < self.random_exp_prob:
             self.exploration_strategy = global_const.EXP_STRAT_RAND
         else:
             self.exploration_strategy = global_const.EXP_STRAT_POLICY
