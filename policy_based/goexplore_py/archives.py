@@ -559,7 +559,9 @@ class StochasticArchive:
             #print("current cell", current_cell)
             
             neighbour_found = False
-            if current_cell in self.archive:
+            # FN, Reason why we check that the cell is not done is so that we don't try to walk through a state
+            # that is done because we will not be able to walk through the state since the episode ends there.
+            if current_cell in self.archive and not current_cell._done :
                 #print("negihbours of current cell:", self.archive[current_cell].neighbours)
 
                 for neighbour in self.archive[current_cell].neighbours:
