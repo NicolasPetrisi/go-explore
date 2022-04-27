@@ -15,7 +15,6 @@ from goexplore_py.explorers import RepeatedRandomExplorer
 from goexplore_py.data_classes import CellInfoStochastic
 import goexplore_py.mpi_support as mpi
 from atari_reset.atari_reset.ppo import flatten_lists, safemean
-import time
 
 class StochasticGatherer:
     def __init__(self,

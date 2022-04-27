@@ -14,6 +14,8 @@ import glob
 import hashlib
 from contextlib import contextmanager
 import cv2
+from typing import Dict, Set
+from goexplore_py.cell_representations import CellRepresentationBase
 
 GOAL_COLOR = (253,155,37) # FN, NOTE Set these RGB values to one which is unique to the goal in the frame.
 AGENT_COLOR = (187,203,204) # FN, NOTE Set these RGB values to one which is unique to the agent in the frame.
@@ -132,14 +134,16 @@ def get_values(filepath, x_name, y_name):
         x_values (list): x-values to be used in the graph.
         y_values (list): y-values to be used in the graph.
     """
+
+    x_values = []
+    y_values = []
+    
     with open(filepath) as f:
         lines = f.readlines()
         first = make_sub_list(lines, ',')
 
         x_index = first[0].index(x_name)
         y_index = first[0].index(y_name)
-        x_values = []
-        y_values = []
         for line in first[1:]:
             if line[y_index] != 'nan':
                 y = float(line[y_index])

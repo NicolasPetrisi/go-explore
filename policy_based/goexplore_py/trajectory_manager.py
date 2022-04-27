@@ -153,6 +153,10 @@ class CellTrajectoryManager:
         print(f'Trajectories loaded: {trajectories_loaded}/{total_trajectories}')
 
     def dump(self, filename):
+        # FN, Full trajectories are never used if SIL is not active. No need to save them.
+        if self.sil == 'none':
+            return
+        
         writer = tf.python_io.TFRecordWriter(filename)
         for key in self.cell_trajectories:
             full_trajectory = self.get_full_trajectory(key)
@@ -169,14 +173,14 @@ class CellTrajectoryManager:
             for tp in full_trajectory:
                 cell_key, reward, obs_and_goal, action, ge_reward = tp
                 obs, goal = obs_and_goal
-                #cell_key_f = tf.train.Feature(int64_list=tf.train.Int64List(value=cell_key.__getstate__())) #TODO we did this because our attributes are not ints, one is a frame.
+                cell_key_f = tf.train.Feature(int64_list=tf.train.Int64List(value=cell_key.__getstate__())) #TODO we did this because our attributes are not ints, one is a frame.
                 reward_f = tf.train.Feature(float_list=tf.train.FloatList(value=[reward]))
                 obs_f = tf.train.Feature(bytes_list=tf.train.BytesList(value=[obs.tostring()]))
                 goal_f = tf.train.Feature(float_list=tf.train.FloatList(value=goal))
                 action_f = tf.train.Feature(int64_list=tf.train.Int64List(value=[action]))
                 ge_reward_f = tf.train.Feature(float_list=tf.train.FloatList(value=[ge_reward]))
                 feature = {
-                    #'cell_key': cell_key_f,
+                    'cell_key': cell_key_f,
                     'reward': reward_f,
                     'obs': obs_f,
                     'goal': goal_f,
@@ -188,8 +192,78 @@ class CellTrajectoryManager:
             self.write_low_prob_traj_to_disk(key)
         writer.close()
 
-    def get_state(self):
-        state = {'cell_trajectories': self.cell_trajectories,
+
+    def update_trajectories(self, cell_id_map, cell_infos):
+        """" Function to change cell-trajectories depending on a new cell-mappning
+             it also updates the relevant info in the cell-info of the concened cells
+
+        Args:
+            cell_id_map (Dict[int, int]): new cell mappnig to be applied of the cell_ids for the cells
+            cell_infos (List[CellInfoStochastic]): list of cell-infos corresponding to the keys in the new cell mapping 
+
+        Returns:
+            Dict[int, CellTrajectory]: The new trajectories to be saved
+        """
+        assert cell_id_map is not None, "cell_id_map is none"
+
+        # FN, Trajectories to be saved
+        save_trajectories: Dict[int, CellTrajectory] = dict()
+
+        # FN, Dictionary to keep track of how the trajectory changes when merging cells
+        trajectory_ids_dicts: Dict [int, Dict[int,int]] = dict()
+
+        # FN, Change all trajectory to fit the new cell mapping
+        for id, traj in self.cell_trajectories.items():
+
+            # FN, Dictionary that keeps track of all previous length to the new length. used for the trajectory_end variable in cell_info
+            trajectory_id_dict: Dict[int,int] = dict()
+            prev_id = -1
+            new_cell_ids: List[int] = []
+            actions_per_cell: List[int] = []
+
+            num_removed_cells = 0
+
+            for i in range(len(traj.cell_ids)):
+                cell_id = traj.cell_ids[i]
+                new_cell_id = cell_id_map[cell_id]
+                
+                # FN, If the previous cell has the same id as the current we have not changed cell in the new mapping and
+                # it should not be added to the trajectory, i.e. the same cell should not occure after itself in a trajectory
+                if prev_id != new_cell_id:
+                    new_cell_ids.append(new_cell_id)
+                    actions_per_cell.append(traj.actions_per_cell[i])
+                else:
+                    # FN, if we don't end upp in a new cell in the new mapping we need to add the actions taken in cell since we 
+                    # we're still in the same cell
+                    actions_per_cell[-1] += traj.actions_per_cell[i]
+                    num_removed_cells += 1
+
+                trajectory_id_dict[i] = i - num_removed_cells
+                prev_id = new_cell_id
+            
+            assert len(new_cell_ids) == len(actions_per_cell), "actions_per_cell and new_cell_ids must have the same length"
+            traj.cell_ids = new_cell_ids
+            traj.actions_per_cell = actions_per_cell
+            
+            save_trajectories[id] = traj
+            trajectory_ids_dicts[id] = trajectory_id_dict
+
+        # FN, Change the trajectory_end variable for all cell-infos that exsist after the cell merging. The trajectory end varibale 
+        # determine how far you should follow a trajectory in order to get to the target cell and since we potentially reduce the length
+        # of the trajectories we also need to modify this variable. 
+        for info in cell_infos:
+            info.cell_traj_end = trajectory_ids_dicts[info.cell_traj_id][info.cell_traj_end-1] + 1
+
+        return save_trajectories
+
+    def get_state(self, modified_trajectories=None):
+
+        if modified_trajectories is not None:
+            cell_trajectories_to_save = modified_trajectories
+        else:
+            cell_trajectories_to_save = self.cell_trajectories
+
+        state = {'cell_trajectories': cell_trajectories_to_save,
                  'del_policy_new_cells': self.del_policy_new_cells,
                  'del_rand_new_cells': self.del_rand_new_cells,
                  'del_ret_new_cells': self.del_ret_new_cells}

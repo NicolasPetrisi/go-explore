@@ -6,11 +6,14 @@
 #
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import field
 import warnings as _warnings
 import copy
 from typing import List, Any
 from collections import deque
 import sys
+
+from goexplore_py.cell_representations import CellRepresentationBase
 
 try:
     from dataclasses import dataclass, field as datafield
@@ -115,16 +118,25 @@ class CellInfoStochastic:
     #: The number of times the information of this cell was reset when update-on-reset is enabled
     nb_reset: int = 0
 
+    #: FN, The neighbours of this cell
+    neighbours: set = field(default_factory=set)
+
     def add(self, other):
         self.nb_chosen += other.nb_chosen
         self.nb_reached += other.nb_reached
         self.nb_actions_taken_in_cell += other.nb_actions_taken_in_cell
+        self.score += other.score # NOTE This might need to be max(self, other) or similar. In the case of Procgen 'Maze' only one cell has any score hence we don't know how scores should be added.
+        self.nb_sub_goal_failed += other.nb_sub_goal_failed
+        self.nb_failures_above_thresh += other.nb_failures_above_thresh
+        self.nb_seen += other.nb_seen
+        self.nb_reset += other.nb_reset
+        
 
 
 @dataclass
 class TrajectoryElement:
     __slots__ = ['cells', 'action', 'reward', 'done', 'length', 'score', 'restore']
-    cells: {}
+    cells: dict()
     action: int
     reward: float
     done: bool

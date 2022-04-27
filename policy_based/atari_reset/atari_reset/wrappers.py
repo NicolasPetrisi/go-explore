@@ -1,6 +1,7 @@
 """
 // Modifications Copyright (c) 2020 Uber Technologies Inc.
 """
+from curses import color_content
 import os
 import random
 import pickle
@@ -18,10 +19,11 @@ import cv2
 import cloudpickle
 import goexplore_py.mpi_support as mpi
 import logging
+import copy
 logger = logging.getLogger(__name__)
 
 try:
-    from dataclasses import dataclass, field as datafield
+    from dataclasses import field as datafield
 
     def copyfield(data):
         return datafield(default_factory=lambda: copy.deepcopy(data))
@@ -744,7 +746,8 @@ class VideoWriter(MyWrapper):
         self.local_archive = set()
         self.local_ep = 0
         self.video_counter = 0
-        self.video_all_ep = video_all_ep
+        self.video_all_ep = video_all_ep        
+        self.colours = [(255,128,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
 
     def _render_cell(self, canvas, cell, color, overlay=None):
         x_min = int(cell.x * self.x_res)
@@ -791,10 +794,29 @@ class VideoWriter(MyWrapper):
             for x in np.arange(self.x_res, f_out.shape[1], self.x_res):
                 cv2.line(f_out, (0 + int(x), 0), (0 + int(x), 0 + f_out.shape[0]), (127, 127, 127), 1)
 
+
+        def get_deterministic_color(cell_key):
+            r = int(cell_key.y * 59 % 150)
+            g = int(cell_key.x * 59 % 255)
+            b = int((cell_key.x + cell_key.y) * 89 % 255)
+            if g == 0:
+                g += 1
+            if b == 0:
+                b += 1
+
+            if min(r,g,b) > 100:
+                r = r -100
+                g = g -100
+                b = b -100
+            while r > g + b:
+                r = r/2
+            return (r, g, b)
+
+
         current_cell = self.goal_conditioned_wrapper.archive.get_cell_from_env(self.goal_conditioned_wrapper.env)
         if self.plot_archive:
             for cell_key in self.local_archive:
-                if self.match_attr(cell_key, current_cell, 'level_seed'): # and self.match_attr(cell_key, current_cell, 'room'):
+                if self.match_attr(cell_key, current_cell, 'level_seed'):
                     base_brightness = 50
                     if self.plot_return_prob:
                         reached = self.goal_conditioned_wrapper.archive.cells_reached_dict.get(cell_key, [])
@@ -805,14 +827,39 @@ class VideoWriter(MyWrapper):
                         color = (0, r, 100)
                     else:
                         color = (0, 0, 200)
+                    
+                    if cell_key in self.goal_conditioned_wrapper.archive.cell_map:
+                        color = get_deterministic_color(self.goal_conditioned_wrapper.archive.cell_map[cell_key])
+                    else:
+                        color = get_deterministic_color(cell_key)
+                        
                     self._render_cell(f_out, cell_key, color, overlay=f_overlay)
+
+                    for cell_key_sibling in self.goal_conditioned_wrapper.archive.cell_map.keys():
+                        if self.goal_conditioned_wrapper.archive.cell_map[cell_key_sibling] == cell_key:
+                            self._render_cell(f_out, cell_key_sibling, color, overlay=f_overlay)
+
+
         self.local_archive.add(current_cell)
 
         if self.plot_goal:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
                 if self.goal_conditioned_wrapper.goal_explorer.exploration_strategy == 2 or self.goal_conditioned_wrapper.returning: 
-                    self._render_cell(f_out, goal, (255, 0, 0))
+                    color = (255, 0, 0)
+                    self._render_cell(f_out, goal,color )
+                    for cell_key_sibling in self.goal_conditioned_wrapper.archive.cell_map.keys():
+                        if self.goal_conditioned_wrapper.archive.cell_map[cell_key_sibling] == goal:
+                            self._render_cell(f_out, cell_key_sibling, color)
+
+        sub_goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
+        if sub_goal is not None:
+            if self.goal_conditioned_wrapper.returning: 
+                color = (255, 255, 0)
+                self._render_cell(f_out, sub_goal,color )
+                for cell_key_sibling in self.goal_conditioned_wrapper.archive.cell_map.keys():
+                    if self.goal_conditioned_wrapper.archive.cell_map[cell_key_sibling] == sub_goal:
+                        self._render_cell(f_out, cell_key_sibling, color)
         if self.plot_cell_traj:
             goal = self.goal_conditioned_wrapper.goal_cell_rep
             if goal is not None:
@@ -825,15 +872,10 @@ class VideoWriter(MyWrapper):
                     self.time_in_cell -= 1
                     self._render_cell(f_out, traj_cell, (255, 255, 0))
 
-        # FN, NOTE: This code will never run on Procgen's game 'Maze' since we never have any sub-goals.
+        # FN, NOTE: This code will never run on Procgen's game 'Maze' since we never have any sub-goals between screens.
         # But in case sub-goals are ever wanted in the future due to transition screens where the goal is not
         # in the current game stage, this would be how to add it to the video.
-        #if self.plot_sub_goal:
-        #    goal = self.goal_conditioned_wrapper.sub_goal_cell_rep
-        #    if goal is not None:
-        #        if self.match_attr(goal, current_cell, 'level') and self.match_attr(goal, current_cell, 'room'):
-        #            #self._render_cell(f_out, goal, (255, 255, 0), overlay=f_overlay)
-        #            pass
+        # In the case of Maze the sub_goal square and final_goal square would always be the same.
         #for cell in self.goal_conditioned_wrapper.entropy_manager.entropy_cells:
         #    if self.match_attr(cell, current_cell, 'level') and self.match_attr(cell, current_cell, 'room'):
         #        self._render_cell(f_out, cell, (255, 0, 255))
@@ -849,8 +891,10 @@ class VideoWriter(MyWrapper):
         else:
             text = "state: exploration (" + str(d[self.goal_conditioned_wrapper.goal_explorer.exploration_strategy]) + ")"
         f_out = cv2.putText(f_out, text, (20, 30), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
-        text = "level_seed: " + str(getattr(current_cell,'level_seed')) + " pos_seed: " + str(self.env.recursive_getattr('pos_seed'))
+        #text = "level_seed: " + str(getattr(current_cell,'level_seed')) + " pos_seed: " + str(self.env.recursive_getattr('pos_seed'))
+        text = "level_seed: " +  str(self.env.recursive_getattr('level_seed')) + " pos_seed: " + str(self.env.recursive_getattr('pos_seed'))
         f_out = cv2.putText(f_out, text, (20, 60), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
+        
         f_out = cv2.putText(f_out, "ep: "+ str(self.local_ep), (20, 90), cv2.FONT_HERSHEY_PLAIN, 1.5, (255, 255, 255), 1)
         if 'increase_entropy' in self.goal_conditioned_wrapper.info:
             text = "entropy: " + str(self.goal_conditioned_wrapper.info['increase_entropy'])
@@ -1034,8 +1078,6 @@ def my_wrapper(env,
         env = ClipRewardEnv(env)
     if sticky:
         env = StickyActionEnv(env)
-    #if noops:  #TODO for some fucking reason, this crashes Alien? maybe it's a predator :)))))
-    #    env = NoopEnv(env)
     if ignore_negative_rewards:
         env = IgnoreNegativeRewardEnv(env)
     env = MaxAndSkipEnv(env, skip=skip)

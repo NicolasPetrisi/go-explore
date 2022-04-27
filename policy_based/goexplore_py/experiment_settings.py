@@ -32,8 +32,6 @@ import goexplore_py.randselectors as randselectors
 import goexplore_py.archives as archives
 import goexplore_py.goal_representations as goal_rep
 import goexplore_py.trajectory_gatherers as trajectory_gatherers
-import goexplore_py.montezuma_env as montezuma_env
-import goexplore_py.pitfall_env as pitfall_env
 import goexplore_py.generic_atari_env as generic_atari_env
 import goexplore_py.generic_goal_conditioned_env as generic_goal_conditioned_env
 import goexplore_py.explorers as explorers
@@ -54,17 +52,12 @@ logger = logging.getLogger(__name__)
 def get_game(game,
              target_shape,
              max_pix_value,
-             score_objects,
-             objects_from_pixels,
-             objects_remember_rooms,
-             only_keys,
              x_res,
              y_res,
              interval_size,
              seed_low,
              seed_high,
              cell_representation,
-             end_on_death,
              level_seed,
              pos_seed):
     """Creates the inner most environment for the Wrapper being built around the gym environment.
@@ -73,17 +66,12 @@ def get_game(game,
         game (string): The game which to create an environment and build the program for.
         target_shape ((int, int)): What to resize the pixels to in the (x, y) direction for use as a state.
         max_pix_value (int): The maximum value which a pixel can take.
-        score_objects (_type_): _description_
-        objects_from_pixels (_type_): _description_
-        objects_remember_rooms (bool): If the agent should remember objects present in rooms. Only applicable on Montezuma and Pitfall
-        only_keys (bool): _description_
         x_res (float): _description_
         y_res (float): _description_
         interval_size (_type_): _description_
         seed_low (_type_): _description_
         seed_high (_type_): _description_
         cell_representation (CellRepresentationBase): Which cell representation to use.
-        end_on_death (bool): End episode on death.
 
     Raises:
         NotImplementedError: When unknown arguments are used for parameters such as 'game'.
@@ -97,38 +85,7 @@ def get_game(game,
     
     game_lowered = game.lower()
     logger.info(f'Loading game: {game_lowered}')
-    if game_lowered == 'montezuma' or game_lowered == 'montezumarevenge':
-        game_name = 'MontezumaRevenge'
-        game_class = montezuma_env.MyMontezuma
-        game_class.TARGET_SHAPE = target_shape
-        game_class.MAX_PIX_VALUE = max_pix_value
-        game_args = dict(
-            check_death=end_on_death,
-            score_objects=score_objects,
-            objects_from_pixels=objects_from_pixels,
-            objects_remember_rooms=objects_remember_rooms,
-            only_keys=only_keys,
-            cell_representation=cell_representation
-        )
-        grid_resolution = (
-            GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
-            GridDimension('x', x_res), GridDimension('y', y_res)
-        )
-        cell_representation.set_grid_resolution(grid_resolution)
-    elif game_lowered == 'pitfall':
-        game_name = 'Pitfall'
-        game_class = pitfall_env.MyPitfall
-        game_class.TARGET_SHAPE = target_shape
-        game_class.MAX_PIX_VALUE = max_pix_value
-        game_args = dict(
-            cell_representation=cell_representation
-        )
-        grid_resolution = (
-            GridDimension('level', 1), GridDimension('objects', 1), GridDimension('room', 1),
-            GridDimension('x', x_res), GridDimension('y', y_res)
-        )
-        cell_representation.set_grid_resolution(grid_resolution)
-    elif 'generic' in game_lowered:
+    if 'generic' in game_lowered:
         game_name = game.split('_')[1]
         game_class = generic_atari_env.MyAtari
         game_class.TARGET_SHAPE = target_shape
@@ -251,6 +208,7 @@ def hrv_and_tf_init(nb_cpu, nb_envs, seed_offset):
 def get_archive(archive_names,
                 optimize_score,
                 grid_resolution,
+                otf_trajectories,
                 pre_fill_archive: str = None,
                 selector=None,
                 cell_trajectory_manager=None,
@@ -285,7 +243,8 @@ def get_archive(archive_names,
                 cell_trajectory_manager,
                 grid_resolution,
                 max_failed,
-                reset_on_update)
+                reset_on_update,
+                otf_trajectories)
             local_archives.append(domain_knowledge_archive)
         elif archive_name.lower() == 'firstroomonly':
             domain_knowledge_archive = archives.FirstRoomOnlyArchive(
@@ -476,7 +435,8 @@ def get_env(game_name,
             traj_modifier,
             fail_ent_inc,
             final_goal_reward,
-            video_all_ep
+            video_all_ep,
+            otf_trajectories
             ):
     """Creates all environments for all workers to run with Horovod.
 
@@ -610,7 +570,8 @@ def get_env(game_name,
                 cell_selection_modifier=cell_selection_modifier,
                 traj_modifier=traj_modifier,
                 fail_ent_inc=fail_ent_inc,
-                final_goal_reward=final_goal_reward
+                final_goal_reward=final_goal_reward,
+                otf_trajectories=otf_trajectories
             )
 
             if video_writer:
@@ -665,12 +626,8 @@ def process_defaults(kwargs):
 
 
 def setup(resolution,
-          score_objects,
           base_path,
           game,
-          objects_from_pixels,
-          objects_remember_rooms,
-          only_keys,
           optimize_score,
           use_real_pos,
           resize_x,
@@ -686,7 +643,6 @@ def setup(resolution,
           nb_envs,
           goal_value,
           inc_ent_fac,
-          end_on_death,
           archive_names,
           selector_name,
           frame_resize,
@@ -737,7 +693,6 @@ def setup(resolution,
           no_exploration_gradients,
           frame_history,
           expl_ent_reset,
-          pixel_repetition,
           max_episode_steps,
           sil,
           sil_coef,
@@ -746,7 +701,6 @@ def setup(resolution,
           max_traj_candidates,
           exchange_sil_traj,
           random_exp_prob,
-          mean_repeat,
           checkpoint_first_iteration,
           checkpoint_last_iteration,
           save_archive,
@@ -785,17 +739,16 @@ def setup(resolution,
           weight_based_skew,
           level_seed,
           pos_seed,
-          video_all_ep):
+          video_all_ep,
+          explorer,
+          otf_trajectories
+          ):
     """Sets up everything needed to start running the experiment.
 
     Args:
         resolution (_type_): _description_
-        score_objects (_type_): _description_
         base_path (_type_): _description_
         game (_type_): _description_
-        objects_from_pixels (_type_): _description_
-        objects_remember_rooms (_type_): _description_
-        only_keys (_type_): _description_
         optimize_score (_type_): _description_
         use_real_pos (_type_): _description_
         resize_x (_type_): _description_
@@ -811,7 +764,6 @@ def setup(resolution,
         nb_envs (_type_): _description_
         goal_value (_type_): _description_
         inc_ent_fac (_type_): _description_
-        end_on_death (_type_): _description_
         archive_names (_type_): _description_
         selector_name (_type_): _description_
         frame_resize (_type_): _description_
@@ -862,7 +814,6 @@ def setup(resolution,
         no_exploration_gradients (_type_): _description_
         frame_history (_type_): _description_
         expl_ent_reset (_type_): _description_
-        pixel_repetition (_type_): _description_
         max_episode_steps (_type_): _description_
         sil (_type_): _description_
         sil_coef (_type_): _description_
@@ -871,7 +822,6 @@ def setup(resolution,
         max_traj_candidates (_type_): _description_
         exchange_sil_traj (_type_): _description_
         random_exp_prob (_type_): _description_
-        mean_repeat (_type_): _description_
         checkpoint_first_iteration (_type_): _description_
         checkpoint_last_iteration (_type_): _description_
         save_archive (_type_): _description_
@@ -974,23 +924,9 @@ def setup(resolution,
         max_pix_value = None
 
     # Get the cell representation
-    targeted_exploration = False
     logger.info('Creating cell representation')
-    if cell_representation_name == 'level_room_keys_x_y':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.MontezumaPosLevel)
-        assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'level_room_keys_x_y_score':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.LevelKeysRoomXYScore)
-        assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'room_treasure_x_y':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.PitfallPosLevel)
-        assert cell_representation.supported(game.lower()), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'room_x_y':
-        cell_representation = cell_representations.CellRepresentationFactory(cell_representations.RoomXY)
-        assert cell_representation.supported(game.lower().split('_')[1]), cell_representation_name + ' does not support ' + game
-    elif cell_representation_name == 'generic':
+    if cell_representation_name == 'generic':
          cell_representation = cell_representations.CellRepresentationFactory(cell_representations.Generic)
-         targeted_exploration = True
     else:
         raise NotImplementedError('Unknown cell representation: ' + cell_representation_name)
 
@@ -998,17 +934,12 @@ def setup(resolution,
     game_name, game_class, game_args, grid_resolution = get_game(game=game,
                                                                  target_shape=target_shape,
                                                                  max_pix_value=max_pix_value,
-                                                                 score_objects=score_objects,
-                                                                 objects_from_pixels=objects_from_pixels,
-                                                                 objects_remember_rooms=objects_remember_rooms,
-                                                                 only_keys=only_keys,
                                                                  x_res=x_res,
                                                                  y_res=y_res,
                                                                  interval_size=interval_size,
                                                                  seed_low=seed_low,
                                                                  seed_high=seed_high,
                                                                  cell_representation=cell_representation,
-                                                                 end_on_death=end_on_death,
                                                                  level_seed=level_seed,
                                                                  pos_seed=pos_seed)
 
@@ -1126,17 +1057,20 @@ def setup(resolution,
         raise NotImplementedError('Unknown selector: ' + selector_name)
 
     logger.info('Creating random explorer')
-    #random_explorer = explorers.RepeatedRandomExplorer(mean_repeat)
     random_explorer = explorers.RandomExplorer()
 
     # Get goal explorer
     logger.info('Creating goal explorer')
 
     
-    if targeted_exploration:
+    if explorer == 'targeted':
         goal_explorer = ge_wrappers.TargetedGoalExplorer(random_exp_prob, random_explorer)
-    else:
+    elif explorer == 'hampu':
+        goal_explorer = ge_wrappers.HampuGoalExplorer(random_exp_prob, random_explorer)
+    elif explorer == 'domain':
         goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
+    else:
+        raise RuntimeError("Chosen Explorer does not exist: " + str(explorer))
     
     # Get frame wrapper
     logger.info('Obtaining frame wrapper')
@@ -1154,12 +1088,14 @@ def setup(resolution,
     archive = get_archive(archive_names=archive_names,
                           optimize_score=optimize_score,
                           grid_resolution=grid_resolution,
+                          otf_trajectories=otf_trajectories,
                           pre_fill_archive=pre_fill_archive,
                           selector=selector,
                           cell_trajectory_manager=cell_trajectory_manager,
                           max_failed=max_failed,
                           reset_on_update=reset_on_update)
 
+    cell_representation.set_archive(archive)
     logger.info('Defining cell reached operator')
 
     def cell_equals(x, y):
@@ -1288,7 +1224,8 @@ def setup(resolution,
                   traj_modifier=traj_modifier,
                   fail_ent_inc=fail_ent_inc,
                   final_goal_reward=final_goal_reward,
-                  video_all_ep=video_all_ep
+                  video_all_ep=video_all_ep,
+                  otf_trajectories=otf_trajectories
                   )
 
     # Get the policy
@@ -1377,10 +1314,18 @@ def setup(resolution,
 
     if expl_state is not None:
         logger.info('Loading explorer state')
+
+        # FN, copy the previous log file to get nice plots and log file
+        if not test_mode:
+            path = '/'.join(expl_state.split('/')[:-1]) + "/log.txt"
+            import shutil
+            shutil.copyfile(path, base_path +"log.txt")
+
         if isinstance(expl_state, str):
             with gzip.open(expl_state, 'rb') as file_handle:
                 expl_state = pickle.load(file_handle)
-        expl.set_state(expl_state)
+        expl.set_state(expl_state, test_mode)
+    cell_representation.set_archive(archive)
 
     if len(expl.archive.archive) != 0:
         logger.info('Archive is initialized: recalculating trajectory id...')
@@ -1496,6 +1441,8 @@ def del_out_of_setup_args(kwargs):
     del kwargs['log_info']
     del kwargs['log_files']
     del kwargs['early_stopping']
+    del kwargs['folder']
+    del kwargs['trajectory_file']
     return kwargs
 
 
@@ -1524,19 +1471,6 @@ def parse_arguments():
     # Cell representation arguments
     parser.add_argument('--resolution', '--res', type=str, default=DefaultArg('20.48,20.48'),
                         help='Length of the side of a grid cell. A doubled atari frame is 320 by 210.')
-    parser.add_argument('--score_objects', dest='score_objects', default=DefaultArg(True), action='store_false',
-                        help='Use scores in the cell description. Otherwise objects will be used.')
-    parser.add_argument('--objects_from_ram', dest='objects_from_pixels', default=DefaultArg(True),
-                        action='store_false',
-                        help='Get the objects from RAM instead of pixels.')
-    parser.add_argument('--all_objects', dest='only_keys', default=DefaultArg(True), action='store_false',
-                        help='Use all objects in the state instead of just the keys')
-    parser.add_argument('--objects_remember_rooms', dest='objects_remember_rooms', default=DefaultArg(False),
-                        action='store_true',
-                        help='Remember which room the objects picked up came from. Makes it easier to solve the game '
-                             '(because the state encodes the location of the remaining keys anymore), but takes more '
-                             'time/memory space, which in practice makes it worse quite often. Using this is better if '
-                             'running with --no_optimize_score')
     parser.add_argument('--resize_x', '--rx', type=int, default=DefaultArg(64),
                         help='What to resize the pixels to in the x direction for use as a state.')
     parser.add_argument('--resize_y', '--ry', type=int, default=DefaultArg(64),
@@ -1554,16 +1488,14 @@ def parse_arguments():
     # I/O Arguments
     parser.add_argument('--base_path', '-p', type=str, default=DefaultArg('./results/'),
                         help='Folder in which to store results')
-    parser.add_argument('--load_path', type=str, default=DefaultArg(''),
+    parser.add_argument('--load_path', type=str, default=DefaultArg(None),
                         help='Folder from which to load a pre-trained model.')
     parser.add_argument('--fail_on_duplicate', default=DefaultArg(False),
                         dest='fail_on_duplicate', action='store_true',
                         help='Fail if the base directory already exists.')
 
     # Environment arguments
-    parser.add_argument('--end_on_death', dest='end_on_death', default=DefaultArg(False), action='store_true',
-                        help='End episode on death.')
-    parser.add_argument('--game', '-g', type=str, default=DefaultArg('montezuma'),
+    parser.add_argument('--game', '-g', type=str, default=DefaultArg('generic_maze'),
                         help='Determines the game to which apply goexplore.')
     parser.add_argument('--interval_size', type=float, default=DefaultArg(0.1),
                         help='The interval size for robotics envs.')
@@ -1613,7 +1545,7 @@ def parse_arguments():
                              'The first archive in this colon-separated list will be the active archive.')
     parser.add_argument('--no_optimize_score', dest='optimize_score', default=DefaultArg(True), action='store_false',
                         help='Don\'t optimize for score (only speed). Will use fewer "game frames" and come up with '
-                             'faster trajectories with lower scores. If not combined with --objects_remember_rooms and '
+                             'faster trajectories with lower scores. If not combined with '
                              '--objects_from_ram is not enabled, things should run much slower.')
     parser.add_argument('--pre_fill_archive', type=str, default=DefaultArg(None), dest='pre_fill_archive',
                         help='Pre-fill the archive with a predefined set of cells.')
@@ -1646,7 +1578,7 @@ def parse_arguments():
                         help='How to track trajectories for returning to a cell, if such functionality is desired.'
                              'Options are: dummy, reward_only, and sequential')
     parser.add_argument('--selector', dest='selector_name',
-                        type=str, default=DefaultArg('random'),
+                        type=str, default=DefaultArg('weighted'),
                         help='How to select cells to return to. '
                              'Options are: random, mr_curriculum, iterative, and weighted.')
     parser.add_argument('--selector_weights', dest='selector_weights_str',
@@ -1655,7 +1587,7 @@ def parse_arguments():
     parser.add_argument('--special_attributes', dest='special_attribute_str',
                         type=str, default=DefaultArg(''),
                         help='Special attributes that can be used for weighting.')
-    parser.add_argument('--max_exploration_steps', dest='max_exploration_steps', type=int, default=DefaultArg(100),
+    parser.add_argument('--max_exploration_steps', dest='max_exploration_steps', type=int, default=DefaultArg(200),
                         help='For how many steps do we explore before choosing a different exploration goal.')
     parser.add_argument('--max_episode_steps', dest='max_episode_steps', type=int, default=DefaultArg(None),
                         help='The total number of steps we can take each episode.')
@@ -1720,8 +1652,6 @@ def parse_arguments():
     parser.add_argument('--random_exp_prob', dest='random_exp_prob', type=float, default=DefaultArg(0),
                         help='The probability that we will be taking random actions,'
                              ' rather than sampling from the policy.')
-    parser.add_argument('--mean_repeat', dest='mean_repeat', type=int, default=DefaultArg(20),
-                        help='The expected number of times that an action will be repeated by the random explorer.')
     parser.add_argument('--checkpoint_first_iteration', dest='checkpoint_first_iteration',
                         type=int, default=DefaultArg(1),
                         help='Whether to write a checkpoint for the first iteration')
@@ -1765,7 +1695,7 @@ def parse_arguments():
                         help='Placeholder for providing no option')
     parser.add_argument('--max_actions_to_goal', dest='max_actions_to_goal',
                         type=int, default=DefaultArg(-1),
-                        help='The maximum number of actions the agent gets to reach a chosen goal. When using gym3, early reset is not allowed hence this should not be used for Procgen.')
+                        help='The maximum number of actions the agent gets to reach a chosen goal.')
     parser.add_argument('--max_actions_to_new_cell', dest='max_actions_to_new_cell',
                         type=int, default=DefaultArg(-1),
                         help='The maximum number of actions the agent gets to reach a new cell')
@@ -1782,7 +1712,7 @@ def parse_arguments():
                         type=str, default=DefaultArg(None),
                         help='The go-explore state to load')
     parser.add_argument('--warm_up_cycles', dest='warm_up_cycles',
-                        type=int, default=DefaultArg(10),
+                        type=int, default=DefaultArg(1),
                         help='How many warmup cycles to perform when continuing from a checkpoint')
     parser.add_argument('--continue', dest='continue',
                         default=DefaultArg(False), action='store_true',
@@ -1862,7 +1792,23 @@ def parse_arguments():
     parser.add_argument('--test_mode', dest='test_mode',
                         default=DefaultArg(False), action='store_true',
                         help='If the network is to be tested (True) or trained (False).')
+    parser.add_argument('--explorer', dest='explorer',
+                        type=str, default=DefaultArg('domain'),
+                        help='If dynamic Hampu Cells (hampu), targeted cell (targeted) or domain knowledge (domain) is to be used.')
+    parser.add_argument('--folder', type=str,
+                        default=DefaultArg(None),
+                        help='The folder containing the model, archive and/or trajectory_file to load.')
+    parser.add_argument('--trajectory_file', type=str,
+                        default=DefaultArg(None),
+                        help='The trajectory file to load, should be paired with an exploration state to load.')
+    parser.add_argument('--otf_trajectories', dest='otf_trajectories',
+                        default=DefaultArg(True), action='store_true',
+                        help='If trajectories should be constructed on the fly (True) or trajectories from the archive should be used.\
+                            OTF-trajectories are required to use multiple starting positions.')
+    
 
+
+                        
 
 
 
@@ -1886,7 +1832,6 @@ def parse_arguments():
     safe_set_argument(args, 'seed_high', DefaultArg(None))
     safe_set_argument(args, 'make_video', DefaultArg(True)) #TODO changed here!
     safe_set_argument(args, 'skip', DefaultArg(1))
-    safe_set_argument(args, 'pixel_repetition', DefaultArg(1))
     safe_set_argument(args, 'plot_archive', DefaultArg(True))
     safe_set_argument(args, 'plot_goal', DefaultArg(True))
     safe_set_argument(args, 'plot_grid', DefaultArg(True))

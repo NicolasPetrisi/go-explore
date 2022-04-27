@@ -1,4 +1,3 @@
-
 # Copyright (c) 2020 Uber Technologies, Inc.
 
 # Licensed under the Uber Non-Commercial License (the "License");
@@ -8,66 +7,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-# from .basics import *
-# from .import_ai import *
-# from . import montezuma_env
-# from .utils import imdownscale
-
+import code
+from tkinter.tix import CELL
+from turtle import listen, pos
+from xmlrpc.client import Boolean
+from goexplore_py.cell_representations import CellRepresentationBase
 import numpy as np
 import gym
 import copy
-from typing import Tuple, List
 import typing
 from atari_reset.atari_reset.wrappers import MyWrapper
 import numpy as np
-import cv2
-import goexplore_py.utils
 
-from goexplore_py.utils import bytes2floatArr, get_goal_pos, AGENT_COLOR
-
-
-class AtariPosLevel:
-    """old code for an atari enviroment, don't think it runs
-
-    Returns:
-        _type_: _description_
-    """
-    __slots__ = ['level', 'score', 'room', 'x', 'y', 'tuple']
-
-    def __init__(self, level=0, score=0, room=0, x=0, y=0):
-        self.level = level
-        self.score = score
-        self.room = room
-        self.x = x
-        self.y = y
-
-        self.set_tuple()
-
-    def set_tuple(self):
-        self.tuple = (self.level, self.score, self.room, self.x, self.y)
-
-    def __hash__(self):
-        return hash(self.tuple)
-
-    def __eq__(self, other):
-        if not isinstance(other, AtariPosLevel):
-            return False
-        return self.tuple == other.tuple
-
-    def __setstate__(self, d):
-        self.level, self.score, self.room, self.x, self.y = d
-        self.tuple = d
-
-    def __repr__(self):
-        return f'Level={self.level} Room={self.room} Objects={self.score} x={self.x} y={self.y}'
-
-def clip(a, m, M):
-    if a < m:
-        return m
-    if a > M:
-        return M
-    return a
+from goexplore_py.utils import get_goal_pos, AGENT_COLOR
 
 
 class MyAtari(MyWrapper):
@@ -111,12 +63,14 @@ class MyAtari(MyWrapper):
         self.env = self.make_env()
         super(MyAtari, self).__init__(self.env)
         self.env.reset()
+        self.potential_cells = None
 
     def __getattr__(self, e):
         return getattr(self.env, e)
 
     def make_env(self):
         return gym.make(self.name, distribution_mode=self.distribution_mode, render_mode="rgb_array" , start_level=self.org_seed, use_sequential_levels=self.use_sequential_levels, num_levels = self.num_levels, restrict_themes = self.restrict_themes, pos_seed = self.pos_seed)
+    
     def reset(self) -> np.ndarray:
         """reseting an enviroment to the start state
 
@@ -129,7 +83,7 @@ class MyAtari(MyWrapper):
         self.level_seed = self.org_seed
         self.unprocessed_state = unprocessed
         self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
-        self.pos = self.cell_representation(self)
+        self.pos = self.cell_representation(env=self)
 
 
         goal = get_goal_pos(self.get_full_res_image())
@@ -138,11 +92,14 @@ class MyAtari(MyWrapper):
         self.x = goal[0]
         self.y = goal[1]
         self.done = 1
-        self.goal_cell = self.cell_representation(self)
+        self.goal_cell = self.cell_representation(env=self)
         self.done = 0
         self.x = oldx
         self.y = oldy
-        return unprocessed
+
+        if self.potential_cells is None:
+            self.potential_cells = self.get_reachable_cells()
+        return self.get_full_res_image()
 
     def get_full_res_image(self):
         """A higher resolution image of the frame
@@ -151,6 +108,74 @@ class MyAtari(MyWrapper):
             _type_: Full image for video/image, resolution (512,512,3) in procgen
         """
         return self.env.render(mode="rgb_array")
+
+
+
+    def get_reachable_cells(self) -> typing.List[CellRepresentationBase]:
+        """ function that returns every cell that's not a way in the procgen game maze. 
+            To determine if a cell is a wall the rgb-value is checked for the x,y cordinates
+            fo the cell and see if they match the rgb-value of walls. Note that this returns a list 
+            of single cells, i.e. hampu cells are not regarded in this funcion
+
+        Returns:
+            List[CellRepresentationBase]: a list of all cells that are not walls
+        """
+        potential_cells = list()
+        for x in range(25):
+            for y in range(25):
+                cell = self.cell_representation(None)
+                cell.x = x
+                cell.y = y
+                cell.done = 0
+                potential_cells.append(cell)
+
+        def is_wall(start_x,end_x,start_y,end_y, full_image) -> bool:
+
+            if full_image is None:
+                print("Imgae is none")
+                return True
+            if len(full_image) == 0:
+                print("empty image")
+                return True
+            r_g_b = list()
+            for i in range(3):
+                mean = np.mean(full_image[start_x:end_x, start_y:end_y, i])
+                r_g_b.append(mean)
+
+            # FN, since the walls have a pattern and the number of pixels of a cells may differ with one pixel in x and y
+            # a mean in used instead of a hard-coded value to be more robust
+            min_r_wall = 185
+            max_r_wall = 205
+            min_g_wall = 135
+            max_g_wall = 155
+            min_b_wall = 85
+            max_b_wall = 105
+
+            return r_g_b[0] > min_r_wall and r_g_b[0] < max_r_wall\
+                and r_g_b[1] > min_g_wall and r_g_b[1] < max_g_wall\
+                and r_g_b[2] > min_b_wall and r_g_b[2] < max_b_wall\
+
+
+        saved_cells = list(potential_cells)
+        full_res_image = self.get_full_res_image()
+        for p_cell in potential_cells:
+            start_x = int(p_cell.x * 20.48)
+            end_x = int(start_x + 20.48)
+            start_y = int(p_cell.y * 20.48)
+            end_y = int(start_y + 20.48)
+
+            if is_wall(start_x,end_x,start_y,end_y, full_res_image):
+                saved_cells.remove(p_cell)
+            
+            # FN, assuming that the program is done in the goal cell we set the _done varaible in the cell accordingly
+            elif p_cell.x == self.goal_cell.x and p_cell.y == self.goal_cell.y:
+                tmp_cell = p_cell
+                saved_cells.remove(p_cell)
+                tmp_cell.done = 1
+                saved_cells.append(tmp_cell)
+ 
+        return saved_cells
+
 
     def get_restore(self):
         """This method does not run, maybe an relic from robustified version?
@@ -199,15 +224,19 @@ class MyAtari(MyWrapper):
         self.unprocessed_state, reward, done, lol = self.env.step(action)
         self.level_seed = lol['level_seed']
 
-        # FN, Assuming that the spisodes terminate when reward is found and the position of the agent is at the goal when it happens
+        # FN, Assuming that the episodes terminate when reward is found and the position of the agent is at the goal when it happens
         # This is because procgen end the episodes before the agent actaully enters the goal space
         if reward > 0:
             self.done = done
 
-        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
-        self.pos = self.cell_representation(self)
+        old_pos = self.pos
 
-        return self.unprocessed_state, reward, done, lol
+        self.pos_from_unprocessed_state(self.get_face_pixels(self.get_full_res_image()))
+
+        self.pos = self.cell_representation(env=self, came_from=old_pos)
+
+
+        return self.get_full_res_image(), reward, done, lol
 
     def get_pos(self):
         """Get the current pos, a GenericCellRepresentation

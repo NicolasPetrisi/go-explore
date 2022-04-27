@@ -97,8 +97,8 @@ class Explore:
         del to_send[hvd.rank()]
         self.archive.sync_info(to_send)
 
-    def get_state(self):
-        archive_state = self.archive.get_state()
+    def get_state(self, finalSave=False):
+        archive_state = self.archive.get_state(finalSave)
         gatherer_state = self.trajectory_gatherer.get_state()
         state = {'archive_state': archive_state,
                  'gatherer_state': gatherer_state,
@@ -106,16 +106,17 @@ class Explore:
                  'cycles': self.cycles}
         return state
 
-    def set_state(self, state):
+    def set_state(self, state, test_mode):
         self.archive.set_state(state['archive_state'])
-        self.trajectory_gatherer.set_state(state['gatherer_state'])
+        if not test_mode:
+            self.trajectory_gatherer.set_state(state['gatherer_state'])
         self.frames_compute = state['frames_compute']
         self.cycles = state['cycles']
 
         # Send loaded information to sub-processes
         new_cell_trajectory_info = self.archive.cell_trajectory_manager.get_info_to_sync()
         new_archive_info = self.archive.get_info_to_sync()
-        new_archive_info = (self.archive.cell_id_to_key_dict, new_archive_info[1], new_archive_info[2], set())
+        new_archive_info = (self.archive.cell_id_to_key_dict, new_archive_info[1], new_archive_info[2], set(), new_archive_info[4])
         to_send = [(new_cell_trajectory_info, new_archive_info)]
         self.trajectory_gatherer.env.recursive_call_method('update_archive', (to_send,))
 
@@ -207,7 +208,9 @@ class Explore:
         local_frames = self.trajectory_gatherer.processed_frames
         global_frames = mpi.COMM_WORLD.allgather(local_frames)
         prev_frames = self.frames_compute
+
         self.frames_compute += sum(global_frames)
+        
         #list_time.append(time.perf_counter())
         self.archive.frame_skip = self.trajectory_gatherer.frame_skip
         self.archive.frames = prev_frames + sum(global_frames[0:hvd.rank()])

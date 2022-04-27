@@ -1,26 +1,29 @@
+from argparse import ArgumentError
 import os
-import time
 from datetime import datetime
 from datetime import timedelta
 import numpy as np
-from signal import SIGINT, siginterrupt
+from signal import SIGINT
 
 # Set any unwished arguments (except gameName) to "-" if they are not desired,
 # they will get default arguments in Go-Explore.
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 1
-levelSeed          : str    = "92"
+minimumIterations  : int    = 2
+levelSeed          : str    = "107"
 posSeed            : str    = "0"
-testMode           : str    = "False"
-endTime            : str    = "0.1"
+testMode           : bool   = False
+endTime            : str    = "0.25"
 tempPath           : str    = '/home/nicolas/temp/'
+folder             : str    = "-"
 loadPathModel      : str    = "-"
 loadPathArch       : str    = "-"
+loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
-numberOfCores      : str    = "1"
-videoAllEpisodes   : str    = "False"
+numberOfCores      : str    = "2"
+videoAllEpisodes   : str    = "True"
+continue_run       : bool   = True
 #####################
 
 #gameName           : What game to run.
@@ -30,20 +33,23 @@ videoAllEpisodes   : str    = "False"
 #testMode           : If the network should be freezed and tested or not.
 #endTime            : At what time and date the run should be finished (YYYY-mm-dd HH:MM:SS). Alternativelly set to number of hours as a float (X). The time will be divided equally between iterations.
 #tempPath           : Set this to the path to your 'temp' folder where the models from Go-Explore are stored. In ubuntu WSL it would probably be '/home/USERNAME/temp/' 
+#folder             : Which folder in tempPath that the model, archive and trajectory file resides.
 #loadPathModel      : If a model is to be loaded initially, specify path from tempPath here.
 #loadPathArch       : The archive to load initially, specify path from tempPath here.
 #stepsPerIteration  : The maximum steps per iteration.
 #numberOfCores      : How many cores of the CPU to use during the run.
 #videoAllEpisodes   : If True, then a video for every episodes will be made, if False only every min(2^N, 500) video will be made.
+#continue_run       : If True, then Go-Explore will automatically load the most recent run saved in the temp folder when it restarts. For example when minimumIterations is greater than 1.
+
+if (loadPathArch == '-') != (loadPathTrajectory == '-'):
+    print("\n\n<<WARNING>> Only loading one of archive and trajectory can cause fatal problems. This is however not confirmed yet. Loading both are recommended.\n\n")
+
+
+
 
 list = os.listdir(tempPath)
 list.sort()
 
-if loadPathModel != "-":
-    loadPathModel = tempPath + loadPathModel
-
-if loadPathArch != "-":
-    loadPathArch = tempPath + loadPathArch
 
 format = "%Y-%m-%d %H:%M:%S"
 startTime = datetime.now().strftime(format)
@@ -70,7 +76,8 @@ hoursPerIteration = str(round(maxHours/minimumIterations, 2))
 logName = "program_runner_log.txt"
 
 log  = open(logName, "w+")
-log.write("Starting program_runner for: \ngameName=" + gameName + 
+log.write("Starting program_runner for: \ngameName=" + gameName +
+    "\nfolder=" + folder + 
     "\nloadPathModel=" + loadPathModel + 
     "\nloadPathArch=" + loadPathArch + 
     "\nhoursPerLevel=" + hoursPerIteration + 
@@ -79,7 +86,7 @@ log.write("Starting program_runner for: \ngameName=" + gameName +
     "\nendDate=" + str(endTime) +
     "\nlevelSeed="+ levelSeed +
     "\nposSeed=" + posSeed +
-    "\ntestMode=" + testMode + 
+    "\ntestMode=" + str(testMode) + 
     "\n\n")
 
 
@@ -90,6 +97,7 @@ minTimeAllowed = 0.1
 print("Starting the first run out of " + str(minimumIterations) + " runs at " + str(datetime.now().strftime(format)))   
 print("Expected to be finished at", str(endTime)) 
 print("Making video for every episode:", videoAllEpisodes)
+first_run = True
 
 while datetime.now() < datetime.strptime(endTime, format):
 
@@ -100,7 +108,7 @@ while datetime.now() < datetime.strptime(endTime, format):
         hoursPerIteration = str(round(remaining_time, 2))
 
     log.write("----------\n")
-    tmpString = str(remaining_time) + " hours remaining. Starting new run for loadPathModel=" + loadPathModel + " and loadPathArch=" + loadPathArch + " of " + hoursPerIteration + " hours.\n"
+    tmpString = str(remaining_time) + " hours remaining. Starting new run from folder: " + folder + " with loadPathModel=" + loadPathModel + " and loadPathArch=" + loadPathArch + " of " + hoursPerIteration + " hours.\n"
     log.write(tmpString)
     log.write("levelSeed=" + levelSeed + "\n")
     log.write("posSeed=" + posSeed + "\n")
@@ -109,7 +117,11 @@ while datetime.now() < datetime.strptime(endTime, format):
     print(tmpString)
     log.flush()
 
-    returnValue = os.system("sh generic_atari_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + testMode + " " + videoAllEpisodes + " " + numberOfCores)
+    cont = "-"
+    if continue_run and not first_run:
+        cont = "True"
+
+    returnValue = os.system("sh run_procgen_game.sh " + gameName + " " + loadPathModel + " " + loadPathArch + " " + hoursPerIteration + " " + stepsPerIteration + " " + levelSeed + " " + posSeed + " " + str(testMode) + " " + videoAllEpisodes + " " + numberOfCores + " " + folder + " " + loadPathTrajectory + " " + cont)
 
     
     if returnValue != 0:
@@ -130,42 +142,52 @@ while datetime.now() < datetime.strptime(endTime, format):
     # Load the next run if this wasn't the last.
     remaining_time = (datetime.strptime(endTime, format) - datetime.now()).total_seconds()/3600
     if remaining_time > minTimeAllowed:
-        prevLoadPath = loadPathModel
-        list = os.listdir(tempPath)
-        list.sort()
-        loadPathModel = tempPath + list[-1] + "/"
+        if not continue_run:
+            prevLoadPath = loadPathModel
+            list = os.listdir(tempPath)
+            list.sort()
+            loadPathModel = tempPath + list[-1] + "/"
 
 
-        files = os.listdir(loadPathModel)
+            files = os.listdir(loadPathModel)
 
 
-        modelFiles = []
-        for file in files:
-            if file.endswith(".joblib"):
-                modelFiles.append(file)
+            modelFiles = []
+            for file in files:
+                if file.endswith(".joblib"):
+                    modelFiles.append(file)
 
-        if len(modelFiles) > 0:
-            loadPathModel = loadPathModel + modelFiles[-1]
-        else:
-            errorsHapppened.append("no .joblib file found")
+            if len(modelFiles) > 0:
+                loadPathModel = loadPathModel + modelFiles[-1]
+            else:
+                errorsHapppened.append("no .joblib file found")
 
-            tmpString = "<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPathModel + "\n"
-            log.write(tmpString)
-            print(tmpString)
+                tmpString = "<<ERROR>>: Could not find any '.joblib' file at the location: " + loadPathModel + "\n"
+                log.write(tmpString)
+                print(tmpString)
 
-            loadPathModel = prevLoadPath
+                loadPathModel = prevLoadPath
 
-            tmpString = "Using model from previous run instead located at: " + loadPathModel + "\n"
-            log.write(tmpString)
-            print(tmpString)
-        posSeed = str(np.random.randint(0,623*1000))
-
-    if len(errorsHapppened) > 4:
+                tmpString = "Using model from previous run instead located at: " + loadPathModel + "\n"
+                log.write(tmpString)
+                print(tmpString)
+            posSeed = str(np.random.randint(0,623*1000))
+    else:
+        log.write("Only " + str(remaining_time) + " hours left but minimum time allowed is " + str(minTimeAllowed) + ". Stopping.\n")
+    if len(errorsHapppened) > 0:
         print("<<WARNING>> More than 4 errors have occured. Something is wrong, stopping program.")
         break
         
-
+    first_run = False
+    if continue_run:
+        loadPathArch = "-"
+        loadPathModel = "-"
+        loadPathTrajectory = "-"
+        folder = "-"
     log.flush()
+
+    if testMode:
+        break
 
 timeTaken = datetime.strptime(datetime.now().strftime(format), format) - datetime.strptime(startTime, format)
 

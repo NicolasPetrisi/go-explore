@@ -49,6 +49,8 @@ import goexplore_py.mpi_support as mpi
 from atari_reset.atari_reset.ppo import flatten_lists
 from goexplore_py.data_classes import LogParameters
 
+from collections import deque
+
 local_logger = logging.getLogger(__name__)
 
 compress = gzip
@@ -268,7 +270,7 @@ class CheckpointTracker:
     def should_write_checkpoint(self):
         return self._should_write_checkpoint
 
-    def should_continue(self, test_mode, expl):
+    def should_continue(self, test_mode, cells_found_counter_stop=False):
         """If the program should stop or continue running another cycle.
 
         Args:
@@ -287,10 +289,12 @@ class CheckpointTracker:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
-        if self.early_stopping and self.has_converged(test_mode, expl):
-            print("########################################################################\n\
-Performing early stopping since it's deemed that the agent has converged\n\
-########################################################################")
+        if self.early_stopping and cells_found_counter_stop:
+            print("Early stopping to perform hampu cell merge")
+            return False
+        if self.early_stopping and self.has_converged(test_mode):
+            print("Performing early stopping since it's deemed that the agent has converged")
+
             return False
         return True
 
@@ -308,10 +312,11 @@ Performing early stopping since it's deemed that the agent has converged\n\
         gatherer = self.expl.trajectory_gatherer
         episodes = gatherer.nb_of_episodes
         if test_mode:
+            print("Episode:", episodes, "/", TEST_EPISODES)
             if  episodes >= TEST_EPISODES:
                 return True
         elif episodes >= gatherer.log_window_size:
-            if gatherer.nb_return_goals_chosen > 0 and expl.archive.max_score > 0:
+            if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
                 
                 if return_success_rate > CONVERGENCE_THRESHOLD_SUC and gatherer.std < CONVERGENCE_THRESHOLD_STD:
@@ -354,6 +359,14 @@ def _run(**kwargs):
     traj_logger = None
     if hvd.rank() == 0 and not disable_logging:
         logger = SimpleLogger(log_par.base_path + '/log.txt')
+        # FN, if we copied the load path, parse the first line containing 
+        # the values to log and give it to the logger
+        if os.stat(log_par.base_path + '/log.txt').st_size != 0:
+            with open(log_par.base_path + '/log.txt') as f:
+                line = f.readline()
+                tmp = line.split(", ")
+                logger.column_names = tmp
+                logger.first_line = False
         traj_logger = SimpleLogger(log_par.base_path + '/traj_log.txt')
 
     ########################
@@ -388,14 +401,20 @@ def _run(**kwargs):
     
     start_coords = (-1, -1)
     optimal_length = -1
+    dist_from_opt_traj = -1
 
     plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
     plot_x_value = "frames"
 
-    while checkpoint_tracker.should_continue(kwargs['test_mode'], expl):
+    cells_found_counter = deque([-1, -2], maxlen = 30)
+    cells_found_counter_stop = False
+
+    has_written_checkpoint = False 
+
+    while checkpoint_tracker.should_continue(kwargs['test_mode'], cells_found_counter_stop):
         # Run one iteration
         if hvd.rank() == 0:
-            local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}')
+            local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}, episodes done: {expl.trajectory_gatherer.nb_of_episodes}')
 
         checkpoint_tracker.pre_cycle()
         expl.run_cycle()
@@ -409,6 +428,7 @@ def _run(**kwargs):
 
         # Code that should be executed by all workers at a checkpoint generation
         if checkpoint_tracker.should_write_checkpoint():
+            has_written_checkpoint = True
             local_logger.debug(f'Rank: {hvd.rank()} is exchanging screenshots for checkpoint: {expl.frames_compute}')
             screenshots = expl.trajectory_gatherer.env.recursive_getattr('rooms')
             if screenshot_merge == 'mpi':
@@ -445,10 +465,17 @@ def _run(**kwargs):
             expl.sync_before_checkpoint()
             local_logger.debug(f'Rank: {hvd.rank()} is done synchronizing for checkpoint: {expl.frames_compute}')
 
+
+
         # Code that should be executed only by the master
         if hvd.rank() == 0 and not disable_logging:
             gatherer = expl.trajectory_gatherer
             
+            # print("archive keys")
+            # for key in expl.archive.archive.keys():
+            #     print(key)
+            # print("archive keys")
+
             return_success_rate = -1
             if gatherer.nb_return_goals_chosen > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
@@ -470,48 +497,56 @@ def _run(**kwargs):
                 if info.nb_chosen > 0:
                     success_rate = info.nb_reached / info.nb_chosen
                     suc_rates.append(success_rate)
-                    if success_rate > 1:
-                        print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
                 c_return_succes_rate += success_rate 
+            c_return_succes_rate /= len(expl.archive.archive)
 
-            if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
+            #FN, when using Hampu Cells it's impossible to calculate the optimal length using the cells since they change over time.
+            if not kwargs['explorer'] == 'hampu':
+                if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
 
-                start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
+                    start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
 
 
-                def breadth_first_search(first_pos):
-                    queue = []
-                    visited = set()
+                    def breadth_first_search(first_pos):
+                        queue = []
+                        visited = set()
 
-                    queue.append((first_pos, 0)) # ((x, y), depth)
-                    visited.add(first_pos)
+                        queue.append((first_pos, 0)) # ((x, y), depth)
+                        visited.add(first_pos)
 
-                    while queue:
-                        current_pos, depth = queue.pop(0)
+                        while queue:
+                            current_pos, depth = queue.pop(0)
 
-                        for cell, info in expl.archive.archive.items():
-                            if (cell.x, cell.y) not in visited and \
-                                    (((cell.x == current_pos[0] + 1 or cell.x == current_pos[0] - 1) and cell.y == current_pos[1]) or \
-                                    (cell.x == current_pos[0] and (cell.y == current_pos[1] + 1 or cell.y == current_pos[1] - 1))):
-                                if info.score > 0:
-                                    return depth + 1
+                            for cell, info in expl.archive.archive.items():
+                                if (cell.x, cell.y) not in visited and \
+                                        (((cell.x == current_pos[0] + 1 or cell.x == current_pos[0] - 1) and cell.y == current_pos[1]) or \
+                                        (cell.x == current_pos[0] and (cell.y == current_pos[1] + 1 or cell.y == current_pos[1] - 1))):
+                                    if info.score > 0:
+                                        return depth + 1
 
-                                queue.append(((cell.x, cell.y), depth + 1))
-                                visited.add((cell.x, cell.y))
+                                    queue.append(((cell.x, cell.y), depth + 1))
+                                    visited.add((cell.x, cell.y))
+                        
+                        # FN, If we reach this statement, then we found no path when one should exist.
+                        raise Exception("No path from start position to goal was found")
+            
+                    optimal_length = breadth_first_search(start_coords)
+
+                dist_from_opt_traj = -1
+                if kwargs["pos_seed"] != -1:
+                    for k,v in expl.archive.archive.items():
+                        if v.score > 0:
+                            dist_from_opt_traj = v.trajectory_len - optimal_length
+                            assert dist_from_opt_traj >= 0, "WARNING: The bug where starting position is 1 off is still present."
+                            break
                     
-                    # If we reach this statement, then we found no path when one should exist.
-                    raise Exception("No path from start position to goal was found")
-        
-                optimal_length = breadth_first_search(start_coords)
 
-            dist_from_opt_traj = -1
-            if kwargs["pos_seed"] != -1:
-                for k,v in expl.archive.archive.items():
-                    if v.score > 0:
-                        dist_from_opt_traj = v.trajectory_len - optimal_length
-                        assert dist_from_opt_traj >= 0, "WARNING: The bug where starting position is 1 off is still present."
-                        break
-                    
+
+            #tmp_list = list(expl.archive.archive.keys())
+            #tmp_list.sort(key=lambda x: (x.x, x.y))
+            #for k in tmp_list:
+            #    print(k, "has neighbours:", expl.archive.archive[k].neighbours)
+
 
 
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
@@ -565,7 +600,6 @@ def _run(**kwargs):
             logger.write('cells_found_policy', cells_found_policy)
             logger.flush()
 
-
             if checkpoint_tracker.n_iters % 10 == 0:
                 for y_value in plot_y_values:
                     make_plot(log_par.base_path, plot_x_value, y_value, kwargs['level_seed'])
@@ -587,6 +621,8 @@ def _run(**kwargs):
 
             # Code that should be executed by only the master at a checkpoint generation
             if checkpoint_tracker.should_write_checkpoint():
+                has_written_checkpoint = True
+                
                 local_logger.info(f'Rank: {hvd.rank()} is writing checkpoint: {expl.frames_compute}')
                 filename = f'{log_par.base_path}/{expl.frames_compute:0{log_par.n_digits}}'
 
@@ -612,8 +648,7 @@ def _run(**kwargs):
                     render_pictures(log_par, expl, filename, prev_checkpoint, merged_dict, sil_trajectories)
 
                 # Save archive state
-                # FN, if SIL is 'none' the saving of archive crashes, this was the quickest fix for now since we were not really interested in the archive.
-                if log_par.save_archive and expl.archive.cell_trajectory_manager.sil != "none":
+                if log_par.save_archive:
                     save_state(expl.get_state(), filename + ARCHIVE_POSTFIX)
                     expl.archive.cell_trajectory_manager.dump(filename + TRAJ_POSTFIX)
 
@@ -643,6 +678,12 @@ def _run(**kwargs):
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
 
+        cells_found_counter.append(len(expl.archive.archive))
+        # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
+        if has_written_checkpoint and kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
+            cells_found_counter_stop = True
+
+
     # FN, only one thread should make plots.
     if hvd.rank() == 0:
         for y_value in plot_y_values:
@@ -651,10 +692,22 @@ def _run(**kwargs):
     
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
+
+    # FN, One last save to update the archive if Hampu Cells (dynamic cells) are used.
+    if kwargs['explorer'] == 'hampu' and hvd.rank() == 0 and not disable_logging:
+        # Save Archive
+        if log_par.save_archive:
+            save_state(expl.get_state(True), filename + ARCHIVE_POSTFIX)
+            expl.archive.cell_trajectory_manager.dump(filename + TRAJ_POSTFIX)
+
+        # Save model
+        if log_par.save_model:
+            expl.trajectory_gatherer.save_model(filename + MODEL_POSTFIX)
+
     expl.close()
 
 
-def find_checkpoint(base_path):
+def find_checkpoint(base_path, kwargs):
     for path_to_load in sorted(glob.glob(base_path + '/*'), reverse=True):
         local_logger.debug(f'path_to_load: {path_to_load}')
         for job_lib_file in sorted(glob.glob(path_to_load + '/*' + MODEL_POSTFIX), reverse=True):
@@ -662,8 +715,11 @@ def find_checkpoint(base_path):
             num = str(os.path.basename(job_lib_file).split('_')[0])
             local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix)}')
             arch_exists = os.path.exists(os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix))
-            local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + TRAJ_POSTFIX)}')
-            traj_exists = os.path.exists(os.path.join(path_to_load, num + TRAJ_POSTFIX))
+            if kwargs['sil'] != 'none':
+                local_logger.debug(f'Looking for: {os.path.join(path_to_load, num + TRAJ_POSTFIX)}')
+                traj_exists = os.path.exists(os.path.join(path_to_load, num + TRAJ_POSTFIX))
+            else:
+                traj_exists = True
             if arch_exists and traj_exists:
                 return path_to_load, num
     return None, None
@@ -706,14 +762,15 @@ def run(kwargs):
     kwargs['cell_trajectories_file'] = ''
     if continue_run:
         assert kwargs['expl_state'] is None
-        assert kwargs['load_path'] == ''
+        assert kwargs['load_path'] is None
         assert kwargs['cell_trajectories_file'] == ''
         if os.path.exists(base_path):
-            path_to_load, num = find_checkpoint(base_path)
+            path_to_load, num = find_checkpoint(base_path, kwargs)
             if path_to_load is not None and num is not None:
                 kwargs['expl_state'] = os.path.join(path_to_load, num + ARCHIVE_POSTFIX + compress_suffix)
                 kwargs['load_path'] = os.path.join(path_to_load, num + MODEL_POSTFIX)
-                kwargs['cell_trajectories_file'] = os.path.join(path_to_load, num + TRAJ_POSTFIX)
+                if kwargs['sil'] != 'none':
+                    kwargs['cell_trajectories_file'] = os.path.join(path_to_load, num + TRAJ_POSTFIX)
                 local_logger.info(f'Successfully loading from checkpoint: {kwargs["expl_state"]} {kwargs["load_path"]} '
                                   f'{kwargs["cell_trajectories_file"]}')
         if kwargs['expl_state'] is None or kwargs['load_path'] == '':
@@ -721,10 +778,17 @@ def run(kwargs):
             kwargs['load_path'] = ''
             kwargs['cell_trajectories_file'] = ''
             local_logger.warning(f'No checkpoint found in: {kwargs["base_path"]} starting new run.')
+    else:
+        if kwargs['folder'] is not None:
+            if kwargs['load_path'] is not None:
+                kwargs['load_path'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['load_path']
+            if kwargs['expl_state'] is not None:
+                kwargs['expl_state'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['expl_state']
+            if kwargs['trajectory_file'] is not None:
+                kwargs['cell_trajectories_file'] = kwargs['base_path'] + "/"+ kwargs['folder'] + "/" + kwargs['trajectory_file']
 
     if os.path.exists(base_path) and fail_on_duplicate:
         raise Exception('Experiment: ' + base_path + ' already exists!')
-
     # We need to setup the MPI environment before performing any data processing
     nb_cpu = 0 #NOTE This was 4. Setting to 0 means the computer picks an appropriate number instead.
     session, master_seed = hrv_and_tf_init(nb_cpu, kwargs['nb_envs'],  kwargs['seed'])

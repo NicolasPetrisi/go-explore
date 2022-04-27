@@ -13,7 +13,6 @@ import numpy as np
 from collections import defaultdict
 from typing import List, Any, Dict
 from .data_classes import CellInfoStochastic
-from .cell_representations import MontezumaPosLevel
 logger = logging.getLogger(__name__)
 
 
@@ -38,12 +37,12 @@ class Selector(object):
 class RandomSelector(Selector):
     def choose_cell_key(self, archive: Dict[Any, CellInfoStochastic], size=1):
         to_choose = list(archive.keys())
-        chosen = np.random.choice(to_choose, size=size)
+        chosen = np.random.choice(to_choose, size=size, replace=False) #FN, NOTE: Using replace as False might be incorrect here.
         return chosen
 
     def choose_cell(self, archive: Dict[Any, CellInfoStochastic], size=1):
         to_choose = list(archive.values())
-        chosen = np.random.choice(to_choose, size=size)
+        chosen = np.random.choice(to_choose, size=size, replace=False) #FN, NOTE: Using replace as False might be incorrect here.
         return chosen
 
 class IterativeSelector(Selector):
@@ -90,6 +89,7 @@ class AbstractWeight:
         pass
 
 
+
 class MaxScoreCell(AbstractWeight):
     """Cell selector that during test time gives the highest scoring cell weight 1 and all others 0. If all cells have 0 score 
     or during training training time the weights are given as in the attr class (depending on number of visits to the cell,
@@ -123,7 +123,7 @@ class MaxScoreCell(AbstractWeight):
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
 
-        # FN, If there has been no score found so far or in training mode, choose a cell based on the count visit instead of just a random.
+        # FN, If there has been no score found so far, choose a cell based on the count visit.
         if self.max_score == 0:
             if self.attr in special_attributes[cell_key]:
                 value = special_attributes[cell_key][self.attr]
@@ -142,12 +142,11 @@ class MaxScoreCell(AbstractWeight):
         """Used to filter out unwanted cells by multiplying the weight with 0 or 1.
         """
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
-        return 1
 
-        #if cell_key._done and not self.test_mode:
-        #    return 0
-        #else:
-        #    return 1
+        if cell_key.done and not self.test_mode:
+            return 0
+        else:
+            return 1
 
     def __repr__(self):
         return f'MaxScoreCell()'
@@ -387,7 +386,7 @@ class NeighborWeights(AbstractWeight):
         return f'NeighborWeights(horiz={self.horiz}, vert={self.vert}, score_low={self.score_low}, ' \
                f'score_high={self.score_high})'
 
-    def get_neighbor(self, pos: MontezumaPosLevel, offset):
+    def get_neighbor(self, pos, offset):
         x = pos.x + offset[0]
         y = pos.y + offset[1]
         room = pos.room
@@ -416,7 +415,7 @@ class NeighborWeights(AbstractWeight):
         res = self.game.make_pos(pos.objects, new_pos)
         return res
 
-    def no_neighbor(self, pos: MontezumaPosLevel, offset, known_cells):
+    def no_neighbor(self, pos, offset, known_cells):
         return self.get_neighbor(pos, offset) not in known_cells
 
     def convert_score(self, e):
@@ -427,9 +426,9 @@ class NeighborWeights(AbstractWeight):
         return number_of_set_bits(e)
 
     def additive_weight(self,
-                        pos: MontezumaPosLevel,
+                        pos,
                         cell: CellInfoStochastic,
-                        known_cells: Dict[MontezumaPosLevel, CellInfoStochastic],
+                        known_cells,
                         special_attributes):
         possible_scores = self.sorted_scores
 
@@ -553,6 +552,11 @@ class AttrWeight(AbstractWeight):
         self.scalar: float = scalar
 
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
+        # FN, Don't choose a cell which is done, since these will never get to have actions taken in them.
+        # Meaning they will only increase in chance of being selected.
+        if cell_key.done:
+            return 0
+
         if self.attr in special_attributes[cell_key]:
             value = special_attributes[cell_key][self.attr]
         else:
@@ -720,7 +724,6 @@ class WeightedSelector(Selector):
 
     def get_probabilities(self, archive: Dict[Any, CellInfoStochastic]):
         self.update_weights(archive)
-
         assert len(archive) == len(self.all_weights)
         total = np.sum(self.all_weights)
         probabilities = [w / total for w in self.all_weights]
@@ -757,7 +760,9 @@ class WeightedSelector(Selector):
             return [self.cells[0]] * size
         probabilities = self.get_probabilities(archive)
         logger.debug(f'probabilities: {probabilities}')
-        selected = np.random.choice(self.cells, size=size, p=probabilities)
+        non_zero_elements = np.count_nonzero(probabilities)
+        size = min(non_zero_elements, size)
+        selected = np.random.choice(self.cells, size=size, p=probabilities, replace=False)
         logger.debug(f'selected cell: {selected}')
         return selected
 

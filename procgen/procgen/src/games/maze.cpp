@@ -116,6 +116,7 @@ class MazeGame : public BasicAbstractGame {
         
         int selector = 0;
         if(options.pos_seed == -1){
+            srand(time(NULL));
             selector = rand();
         }
         else {
