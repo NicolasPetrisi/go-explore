@@ -63,7 +63,7 @@ class MyAtari(MyWrapper):
         self.env = self.make_env()
         super(MyAtari, self).__init__(self.env)
         self.env.reset()
-        self.reachable_cells = None
+        self.possible_cells = None
 
     def __getattr__(self, e):
         return getattr(self.env, e)
@@ -97,8 +97,8 @@ class MyAtari(MyWrapper):
         self.x = oldx
         self.y = oldy
 
-        if self.reachable_cells is None:
-            self.reachable_cells = self.get_reachable_cells()
+        if self.possible_cells is None:
+            self.possible_cells = self.get_reachable_cells()
         return self.get_full_res_image()
 
     def get_full_res_image(self):

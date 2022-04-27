@@ -204,7 +204,6 @@ class HampuGoalExplorer(GoalExplorer):
 
     def choose(self, go_explore_env):
 
-        rand_value = random.random()
         # FN, choose a neighbouring hampu cell to the current cell with 60% proability 
         if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive and rand_value < 0.60:
             current_cell = go_explore_env.last_reached_cell
