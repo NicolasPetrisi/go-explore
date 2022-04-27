@@ -61,7 +61,8 @@ MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
 TEST_EPISODES = 100
-CONVERGENCE_THRESHOLD_SUC = 0.9 # The success rate for return and policy exploration needed for early stopping.
+CONVERGENCE_THRESHOLD_SUC = 0.98 # The success rate for return and policy exploration needed for early stopping.
+CONVERGENCE_THRESHOLD_STD = 0.2
 
 CHECKPOINT_ABBREVIATIONS = {
     'model': MODEL_POSTFIX,
@@ -235,7 +236,7 @@ class CheckpointTracker:
             self.will_log_warmup = True
             self.log_warmup = False
 
-    def calc_write_checkpoint(self, test_mode):
+    def calc_write_checkpoint(self, test_mode, expl):
         if self.log_par.checkpoint_compute is not None:
             passed_compute_thresh = (self.old_compute // self.log_par.checkpoint_compute !=
                                      self.expl.frames_compute // self.log_par.checkpoint_compute)
@@ -251,7 +252,7 @@ class CheckpointTracker:
         else:
             first_it = False
         if self.log_par.checkpoint_first_iteration:
-            last_it = not self.should_continue(test_mode)
+            last_it = not self.should_continue(test_mode, expl)
         else:
             last_it = False
         if self.log_par.checkpoint_time is not None:
@@ -293,10 +294,11 @@ class CheckpointTracker:
             return False
         if self.early_stopping and self.has_converged(test_mode):
             print("Performing early stopping since it's deemed that the agent has converged")
+
             return False
         return True
 
-    def has_converged(self, test_mode):
+    def has_converged(self, test_mode, expl):
         """Check if the network has converged according to the TEST_EPISODES and CONVERGENCE_THRESHOLD_SUC.
         If test_mode is True, convergence is based on the number of episodes completed, Note that it will run one cycle after the desired number are reached.
         If test_mode is False, convergence is based on return and policy-exploration success rate being above CONVERGENCE_THRESHOLD_SUC.
@@ -316,9 +318,8 @@ class CheckpointTracker:
         elif episodes >= gatherer.log_window_size:
             if gatherer.nb_return_goals_chosen > 0 and gatherer.nb_policy_exploration_goal_chosen > 0:
                 return_success_rate = gatherer.nb_return_goals_reached / gatherer.nb_return_goals_chosen
-                exploration_success_rate = gatherer.nb_policy_exploration_goal_reached / gatherer.nb_policy_exploration_goal_chosen
                 
-                if return_success_rate > CONVERGENCE_THRESHOLD_SUC and exploration_success_rate > CONVERGENCE_THRESHOLD_SUC:
+                if return_success_rate > CONVERGENCE_THRESHOLD_SUC and gatherer.std < CONVERGENCE_THRESHOLD_STD:
                     return True
         
         return False
@@ -421,7 +422,7 @@ def _run(**kwargs):
 
         write_checkpoint = None
         if hvd.rank() == 0:
-            write_checkpoint = checkpoint_tracker.calc_write_checkpoint(kwargs['test_mode'])
+            write_checkpoint = checkpoint_tracker.calc_write_checkpoint(kwargs['test_mode'], expl)
         write_checkpoint = mpi.get_comm_world().bcast(write_checkpoint, root=0)
         checkpoint_tracker.set_should_write_checkpoint(write_checkpoint)
 

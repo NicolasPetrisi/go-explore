@@ -21,5 +21,6 @@ levelSeed=107
 posSeed=0
 Only -0.020776688055555555 hours left but minimum time allowed is 0.1. Stopping.
 
+<<ERROR>>: Program returned error code: [256].
 
 Run finished successfully at 2022-04-20 16:51:39 with total time of: 0:16:14.
