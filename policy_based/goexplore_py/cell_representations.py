@@ -70,7 +70,7 @@ class Generic(CellRepresentationBase):
 
     @property
     def x(self):
-        """to be able to reach the x attribute nicly
+        """to be able to reach the x attribute nicely
             NOTE if objcted was not created from CellRepresentationFactory and using it's __call__ method 
             this can be a flot, otherwise it's allways an int
 
@@ -93,7 +93,7 @@ class Generic(CellRepresentationBase):
 
     @property
     def y(self):
-        """to be able to reach the y attribute nicly
+        """to be able to reach the y attribute nicely
             NOTE if objcted was not created from CellRepresentationFactory and using it's __call__ method 
             this can be a flot, otherwise it's allways an int
 
@@ -105,7 +105,7 @@ class Generic(CellRepresentationBase):
 
     @y.setter
     def y(self, value):
-        """setting the x-value
+        """setting the y-value
 
         Args:
             value (any): The value to set the y postion to
@@ -113,6 +113,25 @@ class Generic(CellRepresentationBase):
         self._y = value
         self.set_tuple()
 
+    @property
+    def done(self):
+        """to be able to reach the done attribute nicely
+
+        Returns:
+            int: done postion
+
+        """
+        return self._done
+
+    @done.setter
+    def done(self, value):
+        """setting the done-value
+
+        Args:
+            value (any): The value to set the done postion to
+        """
+        self._done = value
+        self.set_tuple()
 
     def set_tuple(self):
         self.tuple = (self._x, self._y, self._done)
