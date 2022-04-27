@@ -205,8 +205,9 @@ class HampuGoalExplorer(GoalExplorer):
     def choose(self, go_explore_env):
 
         rand_value = random.random()
-        # FN, choose a neighbouring hampu cell to the current cell with 60% proability 
-        if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive and rand_value < 0.60:
+        # FN, choose a neighbouring hampu cell to the current cell with 50% proability 
+        if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive\
+             and rand_value < 0.50:
             current_cell = go_explore_env.last_reached_cell
             #trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
             #cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
@@ -242,26 +243,22 @@ class HampuGoalExplorer(GoalExplorer):
 
                     
                 raise RuntimeError("current cell not in cell_map")
-        elif rand_value < 0.70:
+        elif rand_value < 0.60:
             # FN, choose the goal cell with 10% probability if it exists
             target_cell = go_explore_env.env.recursive_getattr('goal_cell')
             if target_cell in go_explore_env.archive.archive:
                 go_explore_env.last_reached_cell = target_cell
                 return target_cell
-        elif rand_value < 0.85:
-            # FN, choose a random cell on the screen with 15% probability.
-            reachable_cells = go_explore_env.env.recursive_getattr('reachable_cells')
-            target_cell = random.choice(reachable_cells)
-            go_explore_env.last_reached_cell = target_cell
+                
+        elif rand_value < 0.80:
+            # FN, choose a know cell in archive with 20% probability or if all other options fail to find a cell.
+            go_explore_env.last_reached_cell = go_explore_env.select_cell_from_archive()
+            return go_explore_env.last_reached_cell
 
-            print(target_cell)
 
-            return target_cell
-        
-        # FN, choose a know cell in archive with 15% probability or if all other options fail to find a cell.
-        target_cell = go_explore_env.select_cell_from_archive()
-        go_explore_env.last_reached_cell = target_cell
-        return target_cell
+        # FN, choose a random cell (known or unknown) with 20% probability.
+        go_explore_env.last_reached_cell = random.choice(go_explore_env.env.recursive_getattr('potential_cells'))
+        return go_explore_env.last_reached_cell
 
 
 class DomKnowNeighborGoalExplorer(GoalExplorer):
