@@ -142,7 +142,7 @@ class MaxScoreCell(AbstractWeight):
         """
         assert self.max_score != -float('inf'), 'Max score was not initialized!'
 
-        if cell_key._done and not self.test_mode:
+        if cell_key.done and not self.test_mode:
             return 0
         else:
             return 1
@@ -553,7 +553,7 @@ class AttrWeight(AbstractWeight):
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
         # FN, Don't choose a cell which is done, since these will never get to have actions taken in them.
         # Meaning they will only increase in chance of being selected.
-        if cell_key._done:
+        if cell_key.done:
             return 0
 
         if self.attr in special_attributes[cell_key]:

@@ -126,7 +126,7 @@ class MyAtari(MyWrapper):
                 cell = self.cell_representation(None)
                 cell.x = x
                 cell.y = y
-                cell._done = 0
+                cell.done = 0
                 potential_cells.append(cell)
 
         def is_wall(start_x,end_x,start_y,end_y, full_image) -> bool:
@@ -171,7 +171,7 @@ class MyAtari(MyWrapper):
             elif p_cell.x == self.goal_cell.x and p_cell.y == self.goal_cell.y:
                 tmp_cell = p_cell
                 saved_cells.remove(p_cell)
-                tmp_cell._done = 1
+                tmp_cell.done = 1
                 saved_cells.append(tmp_cell)
  
         return saved_cells
