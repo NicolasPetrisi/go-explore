@@ -250,7 +250,8 @@ class HampuGoalExplorer(GoalExplorer):
                 return target_cell
         elif rand_value < 0.85:
             # FN, choose a random cell on the screen with 15% probability.
-            target_cell = go_explore_env.env.recursive_getattr('reachable_cells')
+            reachable_cells = go_explore_env.env.recursive_getattr('reachable_cells')
+            target_cell = random.choice(reachable_cells)
             go_explore_env.last_reached_cell = target_cell
 
             print(target_cell)
