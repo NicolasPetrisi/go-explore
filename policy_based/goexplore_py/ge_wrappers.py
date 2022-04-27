@@ -171,9 +171,16 @@ class GoalExplorer:
         self.random_explorer = random_explorer
 
     def on_reset(self):
+        """When a reset has been called, set exploration strategy to none to flag that it is not exploring.
+        """
         self.exploration_strategy = global_const.EXP_STRAT_NONE
 
     def on_return(self, empty_archive):
+        """When a return is successful, choose one of the random or policy exploration strategies.
+
+        Args:
+            empty_archive (bool): If the current archive is empty or not, if empty then choose random exploration strategy.
+        """
         self.random_explorer.init_seed()
         if empty_archive or random.random() < self.random_exp_prob:
             self.exploration_strategy = global_const.EXP_STRAT_RAND
@@ -181,12 +188,32 @@ class GoalExplorer:
             self.exploration_strategy = global_const.EXP_STRAT_POLICY
 
     def overwrite_action(self, env, policy_action):
+        """If random exploration is being used, then overwrite the chosen action with a random action instead.
+        A much more efficient way to do this would be to not calculate an action to take before overwriting it.
+        Save time by checking if the strategy is random before selecting action.
+
+        Args:
+            env (_type_): The environment where the action is taken.
+            policy_action (_type_): What action the policy strategy has come up with prior to calling this method.
+
+        Returns:
+            _type_: The chosen action, either a random one if random strategy or simply return the paramtere fed to the method.
+        """
         if self.exploration_strategy == global_const.EXP_STRAT_RAND:
             return self.random_explorer.get_action(env)
         else:
             return policy_action
 
     def choose(self, go_explore_env):
+        """Defines how an exploration goal is chosen and returns the chosen cell.
+
+        Args:
+            go_explore_env (_type_): The environment to choose an exploration goal from.
+
+        Returns:
+            _type_: The goal cell for the exploration.
+
+        """
         raise NotImplementedError('GoalExplorers need to implement a choose method.')
 
 class TargetedGoalExplorer(GoalExplorer):
