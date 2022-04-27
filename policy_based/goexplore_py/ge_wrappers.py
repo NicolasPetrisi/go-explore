@@ -209,54 +209,27 @@ class HampuGoalExplorer(GoalExplorer):
         if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive\
              and rand_value < 0.50:
             current_cell = go_explore_env.last_reached_cell
-            #trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
-            #cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
-            #neighbours_dict = utils.get_neighbours(trajectories, cell_id_to_key_dict)
-        
-            try:
-                neighbours = go_explore_env.archive.archive[go_explore_env.archive.cell_map[current_cell]].neighbours
-                if len(neighbours) > 0:
+           
+            neighbours = go_explore_env.archive.archive[go_explore_env.archive.cell_map[current_cell]].neighbours
+            if len(neighbours) > 0:
+                target_cell = random.sample(neighbours, 1)[0]
+                assert target_cell in go_explore_env.archive.archive, "The chosen neighbouring cell does not exist in the archive!"    
+                return target_cell
 
-                    for elem in neighbours:
-                        # TODO Remove the loop part when we are certain that the neighbours always exist in the archive
-                        assert elem in go_explore_env.archive.archive, "The chosen neighbouring cell does not exist in the archive!"    
-                    
-                    return random.sample(neighbours, 1)[0]
-            except:
-                print("cant find key", current_cell)
-                print("Archive:")
-
-                tmp_list = list(go_explore_env.archive.archive.keys())
-                tmp_list.sort(key=lambda x: (x.x, x.y))
-                for k in tmp_list:
-                    print(k)
-
-                print("########")
-                print("cell map")
-                for key, value in go_explore_env.archive.cell_map.get_mapping().items():
-                    print(key,value)
-
-                tmp_list = list(go_explore_env.archive.cell_map.get_mapping().keys())
-                tmp_list.sort(key=lambda x: (x.x, x.y))
-                for k in tmp_list:
-                    print(k, ":", go_explore_env.archive.cell_map.get_mapping()[k])
-
-                    
-                raise RuntimeError("current cell not in cell_map")
         elif rand_value < 0.60:
             # FN, choose the goal cell with 10% probability if it exists
             target_cell = go_explore_env.env.recursive_getattr('goal_cell')
             if target_cell in go_explore_env.archive.archive:
                 go_explore_env.last_reached_cell = target_cell
                 return target_cell
-                
+
         elif rand_value < 0.80:
-            # FN, choose a know cell in archive with 20% probability or if all other options fail to find a cell.
+            # FN, choose a know cell in archive with 20% probability.
             go_explore_env.last_reached_cell = go_explore_env.select_cell_from_archive()
             return go_explore_env.last_reached_cell
 
 
-        # FN, choose a random cell (known or unknown) with 20% probability.
+        # FN, choose a random cell (known or unknown) with 20% probability or if all other options fail to find a cell.
         go_explore_env.last_reached_cell = random.choice(go_explore_env.env.recursive_getattr('potential_cells'))
         return go_explore_env.last_reached_cell
 
