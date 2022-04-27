@@ -63,7 +63,7 @@ class MyAtari(MyWrapper):
         self.env = self.make_env()
         super(MyAtari, self).__init__(self.env)
         self.env.reset()
-        self.possible_cells = None
+        self.potential_cells = None
 
     def __getattr__(self, e):
         return getattr(self.env, e)
@@ -97,8 +97,8 @@ class MyAtari(MyWrapper):
         self.x = oldx
         self.y = oldy
 
-        if self.possible_cells is None:
-            self.possible_cells = self.get_reachable_cells()
+        if self.potential_cells is None:
+            self.potential_cells = self.get_reachable_cells()
         return self.get_full_res_image()
 
     def get_full_res_image(self):
@@ -112,54 +112,68 @@ class MyAtari(MyWrapper):
 
 
     def get_reachable_cells(self) -> typing.List[CellRepresentationBase]:
-        
-        potentail_cells = list()
+        """ function that returns every cell that's not a way in the procgen game maze. 
+            To determine if a cell is a wall the rgb-value is checked for the x,y cordinates
+            fo the cell and see if they match the rgb-value of walls. Note that this returns a list 
+            of single cells, i.e. hampu cells are not regarded in this funcion
+
+        Returns:
+            List[CellRepresentationBase]: a list of all cells that are not walls
+        """
+        potential_cells = list()
         for x in range(25):
             for y in range(25):
                 cell = self.cell_representation(None)
                 cell.x = x
                 cell.y = y
                 cell._done = 0
-                potentail_cells.append(cell)
+                potential_cells.append(cell)
 
         def is_wall(start_x,end_x,start_y,end_y, full_image) -> bool:
+
             if full_image is None:
-                print("Imgae is none while building pot_cells, BAD")
-                return (-1,-1)
+                print("Imgae is none")
+                return True
             if len(full_image) == 0:
                 print("empty image")
-                return False
+                return True
             r_g_b = list()
             for i in range(3):
                 mean = np.mean(full_image[start_x:end_x, start_y:end_y, i])
                 r_g_b.append(mean)
 
+            # FN, since the walls have a pattern and the number of pixels of a cells may differ with one pixel in x and y
+            # a mean in used instead of a hard-coded value to be more robust
             min_r_wall = 185
             max_r_wall = 205
             min_g_wall = 135
             max_g_wall = 155
             min_b_wall = 85
             max_b_wall = 105
+
             return r_g_b[0] > min_r_wall and r_g_b[0] < max_r_wall\
                 and r_g_b[1] > min_g_wall and r_g_b[1] < max_g_wall\
                 and r_g_b[2] > min_b_wall and r_g_b[2] < max_b_wall\
-            
-        saved_cells = list(potentail_cells)
-        for p_cell in potentail_cells:
+
+
+        saved_cells = list(potential_cells)
+        full_res_image = self.get_full_res_image()
+        for p_cell in potential_cells:
             start_x = int(p_cell.x * 20.48)
             end_x = int(start_x + 20.48)
             start_y = int(p_cell.y * 20.48)
             end_y = int(start_y + 20.48)
 
-            if is_wall(start_x,end_x,start_y,end_y, self.get_full_res_image()):
+            if is_wall(start_x,end_x,start_y,end_y, full_res_image):
                 saved_cells.remove(p_cell)
+            
+            # FN, assuming that the program is done in the goal cell we set the _done varaible in the cell accordingly
             elif p_cell.x == self.goal_cell.x and p_cell.y == self.goal_cell.y:
                 tmp_cell = p_cell
                 saved_cells.remove(p_cell)
                 tmp_cell._done = 1
                 saved_cells.append(tmp_cell)
-                print(tmp_cell)
-        print(len(saved_cells) ,"cells found which was not a wall")   
+ 
         return saved_cells
 
 
