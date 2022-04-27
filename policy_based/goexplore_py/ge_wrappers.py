@@ -242,14 +242,22 @@ class HampuGoalExplorer(GoalExplorer):
 
                     
                 raise RuntimeError("current cell not in cell_map")
-        elif rand_value > 0.85:
-            # FN, choose the goal cell with 15% probability if it exists
+        elif rand_value < 0.70:
+            # FN, choose the goal cell with 10% probability if it exists
             target_cell = go_explore_env.env.recursive_getattr('goal_cell')
             if target_cell in go_explore_env.archive.archive:
                 go_explore_env.last_reached_cell = target_cell
                 return target_cell
+        elif rand_value < 0.85:
+            # FN, choose a random cell on the screen with 15% probability.
+            target_cell = go_explore_env.env.recursive_getattr('reachable_cells')
+            go_explore_env.last_reached_cell = target_cell
+
+            print(target_cell)
+
+            return target_cell
         
-        # FN, choose a know cell in archive with 25% probability or if all other options fail to find a cell.
+        # FN, choose a know cell in archive with 15% probability or if all other options fail to find a cell.
         target_cell = go_explore_env.select_cell_from_archive()
         go_explore_env.last_reached_cell = target_cell
         return target_cell
