@@ -1078,8 +1078,6 @@ def my_wrapper(env,
         env = ClipRewardEnv(env)
     if sticky:
         env = StickyActionEnv(env)
-    #if noops:  #TODO for some fucking reason, this crashes Alien? maybe it's a predator :)))))
-    #    env = NoopEnv(env)
     if ignore_negative_rewards:
         env = IgnoreNegativeRewardEnv(env)
     env = MaxAndSkipEnv(env, skip=skip)

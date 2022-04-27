@@ -208,10 +208,9 @@ class Explore:
         local_frames = self.trajectory_gatherer.processed_frames
         global_frames = mpi.COMM_WORLD.allgather(local_frames)
         prev_frames = self.frames_compute
-        if not self.warm_up:
-            self.frames_compute += sum(global_frames)
-        else:
-            global_frames = [0 for elem in range(hvd.rank())]
+
+        self.frames_compute += sum(global_frames)
+        
         #list_time.append(time.perf_counter())
         self.archive.frame_skip = self.trajectory_gatherer.frame_skip
         self.archive.frames = prev_frames + sum(global_frames[0:hvd.rank()])

@@ -49,6 +49,8 @@ import goexplore_py.mpi_support as mpi
 from atari_reset.atari_reset.ppo import flatten_lists
 from goexplore_py.data_classes import LogParameters
 
+from collections import deque
+
 local_logger = logging.getLogger(__name__)
 
 compress = gzip
@@ -267,7 +269,7 @@ class CheckpointTracker:
     def should_write_checkpoint(self):
         return self._should_write_checkpoint
 
-    def should_continue(self, test_mode):
+    def should_continue(self, test_mode, cells_found_counter_stop=False):
         """If the program should stop or continue running another cycle.
 
         Args:
@@ -285,6 +287,9 @@ class CheckpointTracker:
         if self.log_par.max_cells is not None and len(self.expl.archive.archive) >= self.log_par.max_cells:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
+            return False
+        if self.early_stopping and cells_found_counter_stop:
+            print("Early stopping to perform hampu cell merge")
             return False
         if self.early_stopping and self.has_converged(test_mode):
             print("Performing early stopping since it's deemed that the agent has converged")
@@ -400,7 +405,12 @@ def _run(**kwargs):
     plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
     plot_x_value = "frames"
 
-    while checkpoint_tracker.should_continue(kwargs['test_mode']):
+    cells_found_counter = deque([-1, -2], maxlen = 30)
+    cells_found_counter_stop = False
+
+    has_written_checkpoint = False 
+
+    while checkpoint_tracker.should_continue(kwargs['test_mode'], cells_found_counter_stop):
         # Run one iteration
         if hvd.rank() == 0:
             local_logger.info(f'Running cycle: {checkpoint_tracker.n_iters}, episodes done: {expl.trajectory_gatherer.nb_of_episodes}')
@@ -417,6 +427,7 @@ def _run(**kwargs):
 
         # Code that should be executed by all workers at a checkpoint generation
         if checkpoint_tracker.should_write_checkpoint():
+            has_written_checkpoint = True
             local_logger.debug(f'Rank: {hvd.rank()} is exchanging screenshots for checkpoint: {expl.frames_compute}')
             screenshots = expl.trajectory_gatherer.env.recursive_getattr('rooms')
             if screenshot_merge == 'mpi':
@@ -453,6 +464,8 @@ def _run(**kwargs):
             expl.sync_before_checkpoint()
             local_logger.debug(f'Rank: {hvd.rank()} is done synchronizing for checkpoint: {expl.frames_compute}')
 
+
+
         # Code that should be executed only by the master
         if hvd.rank() == 0 and not disable_logging:
             gatherer = expl.trajectory_gatherer
@@ -483,9 +496,8 @@ def _run(**kwargs):
                 if info.nb_chosen > 0:
                     success_rate = info.nb_reached / info.nb_chosen
                     suc_rates.append(success_rate)
-                    if success_rate > 1:
-                        print("WEON-WEON-WEON succes_rate of over 1, succes_rate: ", success_rate)
                 c_return_succes_rate += success_rate 
+            c_return_succes_rate /= len(expl.archive.archive)
 
             #FN, when using Hampu Cells it's impossible to calculate the optimal length using the cells since they change over time.
             if not kwargs['explorer'] == 'hampu':
@@ -527,6 +539,13 @@ def _run(**kwargs):
                             assert dist_from_opt_traj >= 0, "WARNING: The bug where starting position is 1 off is still present."
                             break
                     
+
+
+            #tmp_list = list(expl.archive.archive.keys())
+            #tmp_list.sort(key=lambda x: (x.x, x.y))
+            #for k in tmp_list:
+            #    print(k, "has neighbours:", expl.archive.archive[k].neighbours)
+
 
 
             logger.write('it', checkpoint_tracker.n_iters)              # FN, the current cycle number.
@@ -601,6 +620,8 @@ def _run(**kwargs):
 
             # Code that should be executed by only the master at a checkpoint generation
             if checkpoint_tracker.should_write_checkpoint():
+                has_written_checkpoint = True
+                
                 local_logger.info(f'Rank: {hvd.rank()} is writing checkpoint: {expl.frames_compute}')
                 filename = f'{log_par.base_path}/{expl.frames_compute:0{log_par.n_digits}}'
 
@@ -655,6 +676,12 @@ def _run(**kwargs):
                     PROFILER.disable()
                     PROFILER.dump_stats(filename + '.stats')
                     PROFILER.enable()
+
+        cells_found_counter.append(len(expl.archive.archive))
+        # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
+        if has_written_checkpoint and kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
+            cells_found_counter_stop = True
+
 
     # FN, only one thread should make plots.
     if hvd.rank() == 0:

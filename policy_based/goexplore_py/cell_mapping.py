@@ -51,12 +51,12 @@ class CellMapping:
             return 1
 
     def get_mapping(self):
-        """Returns the core dictionary. This is not meant to be edited!
+        """Returns a copy of the core dictionary.
 
         Returns:
             Dict[CellRepresentationBase, CellRepresentationBase]: The core dictionary.
         """
-        return self.__cell_mapping
+        return dict(self.__cell_mapping)
 
     def __getitem__(self, key):
         """Allows the class to be indexed using [] to get items like a normal dictionary.
@@ -93,13 +93,36 @@ class CellMapping:
         Args:
             cell_mapp (Dict[CellRepresentationBase, CellRepresentationBase]): The core dictionary to load and base itself on.
         """
-        self.__cell_mapping = cell_mapp
+        self.__cell_mapping = dict(cell_mapp)
         for k, v in self.__cell_mapping.items():
+            if k not in self.__reverse_cell_mapping:
+                self.__reverse_cell_mapping[k] = set()
             if v not in self.__reverse_cell_mapping:
                 self.__reverse_cell_mapping[v] = set([k])
             else:
                 self.__reverse_cell_mapping[v].add(k)
 
+    def rev(self): #TODO remove this when done with debugging
+        return dict(self.__reverse_cell_mapping)
+
+
+    def update(self, other_map):
+        if type(other_map) is not CellMapping:
+            print("other cell map is not a CellMapping, its a:", type(other_map))
+            print("and its value is:", other_map)
+            raise RuntimeError("not a CellMapping")
+        else:
+            for k,v in other_map.get_mapping().items():
+                if k not in self.__cell_mapping:
+                    self.__cell_mapping[k] = v
+        
+        for k, v in self.__cell_mapping.items():
+            if k not in self.__reverse_cell_mapping:
+                self.__reverse_cell_mapping[k] = set()
+            if v not in self.__reverse_cell_mapping:
+                self.__reverse_cell_mapping[v] = set([k])
+            else:
+                self.__reverse_cell_mapping[v].add(k)
 
     def __setitem__(self, key_cell, value_cell):
         """Allows the class to use indexing to set items: A[x] = y
@@ -117,8 +140,28 @@ class CellMapping:
         if self.__cell_mapping[key_cell] == value_cell:
             return
 
+        try:
+            children = self.__reverse_cell_mapping[key_cell]
+        except:
+            print("CRASHING")
+            print("This is cell_mapping:")
 
-        children = self.__reverse_cell_mapping[key_cell]
+            tmp_list = list(self.__cell_mapping.keys())
+            tmp_list.sort(key=lambda x: (x.x, x.y))
+            for k in tmp_list:
+                print(k, ":", self.__cell_mapping[k])
+
+            print("\n\n")
+            print("This is reverse_mapping:")
+            tmp_list = list(self.__reverse_cell_mapping.keys())
+            tmp_list.sort(key=lambda x: (x.x, x.y))
+            for k in tmp_list:
+                print(k, ":", self.__reverse_cell_mapping[k])
+
+            raise RuntimeError("WARNING")
+
+
+
         self.__reverse_cell_mapping[key_cell] = set()
         for child in children:
             self.__cell_mapping[child] = value_cell

@@ -25,15 +25,6 @@ import horovod.tensorflow as hvd
 logger = logging.getLogger(__name__)
 
 
-#def convert_state(state, target_shape, max_pix_value): # TODO remove this??
-#    if target_shape is None:
-#        return None
-#    import cv2
-#    #resized_state = cv2.resize(cv2.cvtColor(state),
-#        #target_shape,
-#        #interpolation=cv2.INTER_AREA)
-#    img =  ((state / 255.0) * max_pix_value).astype(np.uint8)
-#    return cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])[1].flatten().tobytes()
 
 class GoalConVecFrameStack(VecWrapper):
     """
@@ -180,22 +171,49 @@ class GoalExplorer:
         self.random_explorer = random_explorer
 
     def on_reset(self):
+        """When a reset has been called, set exploration strategy to none to flag that it is not exploring.
+        """
         self.exploration_strategy = global_const.EXP_STRAT_NONE
 
-    def on_return(self):
+    def on_return(self, empty_archive):
+        """When a return is successful, choose one of the random or policy exploration strategies.
+
+        Args:
+            empty_archive (bool): If the current archive is empty or not, if empty then choose random exploration strategy.
+        """
         self.random_explorer.init_seed()
-        if random.random() < self.random_exp_prob:
+        if empty_archive or random.random() < self.random_exp_prob:
             self.exploration_strategy = global_const.EXP_STRAT_RAND
         else:
             self.exploration_strategy = global_const.EXP_STRAT_POLICY
 
     def overwrite_action(self, env, policy_action):
+        """If random exploration is being used, then overwrite the chosen action with a random action instead.
+        A much more efficient way to do this would be to not calculate an action to take before overwriting it.
+        Save time by checking if the strategy is random before selecting action.
+
+        Args:
+            env (_type_): The environment where the action is taken.
+            policy_action (_type_): What action the policy strategy has come up with prior to calling this method.
+
+        Returns:
+            _type_: The chosen action, either a random one if random strategy or simply return the paramtere fed to the method.
+        """
         if self.exploration_strategy == global_const.EXP_STRAT_RAND:
             return self.random_explorer.get_action(env)
         else:
             return policy_action
 
     def choose(self, go_explore_env):
+        """Defines how an exploration goal is chosen and returns the chosen cell.
+
+        Args:
+            go_explore_env (_type_): The environment to choose an exploration goal from.
+
+        Returns:
+            _type_: The goal cell for the exploration.
+
+        """
         raise NotImplementedError('GoalExplorers need to implement a choose method.')
 
 class TargetedGoalExplorer(GoalExplorer):
@@ -214,39 +232,33 @@ class HampuGoalExplorer(GoalExplorer):
     def choose(self, go_explore_env):
 
         rand_value = random.random()
-        # FN, choose a neighbouring hampu cell to the current cell with 60% proability 
-        if go_explore_env.archive.cell_map and rand_value < 0.60 :
+        # FN, choose a neighbouring hampu cell to the current cell with 50% proability 
+        if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive\
+             and rand_value < 0.50:
             current_cell = go_explore_env.last_reached_cell
-            trajectories = go_explore_env.archive.cell_trajectory_manager.cell_trajectories
-            cell_id_to_key_dict = go_explore_env.archive.cell_id_to_key_dict
-            neighbours_dict = utils.get_neighbours(trajectories, cell_id_to_key_dict)
-        
-            if neighbours_dict:
-                try:
-                    neighbours = list(neighbours_dict[go_explore_env.archive.cell_map[current_cell]])
-                    if len(neighbours) > 0:
-                        return random.sample(neighbours, 1)[0]
-                except:
-                    print("cant find key", current_cell)
-                    print("Archive:")
-                    for key in go_explore_env.archive.archive.keys():
-                        print(key)
+           
+            neighbours = go_explore_env.archive.archive[go_explore_env.archive.cell_map[current_cell]].neighbours
+            if len(neighbours) > 0:
+                target_cell = random.sample(neighbours, 1)[0]
+                assert target_cell in go_explore_env.archive.archive, "The chosen neighbouring cell does not exist in the archive!"    
+                return target_cell
 
-                    print("cell map")
-                    for key, value in go_explore_env.archive.cell_map.get_mapping().items():
-                        print(key,value)
-                    raise RuntimeError("current cell not in cell_map")
-        elif rand_value > 0.85:
-            # FN, choose the goal cell with 15% probability if it exists
+        elif rand_value < 0.60:
+            # FN, choose the goal cell with 10% probability if it exists
             target_cell = go_explore_env.env.recursive_getattr('goal_cell')
             if target_cell in go_explore_env.archive.archive:
                 go_explore_env.last_reached_cell = target_cell
                 return target_cell
-        
-        # FN, choose a know cell in archive with 25% probability
-        target_cell = go_explore_env.select_cell_from_archive()
-        go_explore_env.last_reached_cell = target_cell
-        return target_cell
+
+        elif rand_value < 0.80:
+            # FN, choose a know cell in archive with 20% probability.
+            go_explore_env.last_reached_cell = go_explore_env.select_cell_from_archive()
+            return go_explore_env.last_reached_cell
+
+
+        # FN, choose a random cell (known or unknown) with 20% probability or if all other options fail to find a cell.
+        go_explore_env.last_reached_cell = random.choice(go_explore_env.env.recursive_getattr('potential_cells'))
+        return go_explore_env.last_reached_cell
 
 
 class DomKnowNeighborGoalExplorer(GoalExplorer):
@@ -418,7 +430,8 @@ class GoalConGoExploreEnv(MyWrapper):
                  cell_selection_modifier: str,
                  traj_modifier: str,
                  fail_ent_inc: str,
-                 final_goal_reward: float):
+                 final_goal_reward: float,
+                 otf_trajectories: bool):
         super(GoalConGoExploreEnv, self).__init__(env)
 
         # Classes provided to the environment
@@ -473,6 +486,10 @@ class GoalConGoExploreEnv(MyWrapper):
         self.cell_reached: Callable[[Any, Any], bool] = cell_reached
         #: Reward obtained for reaching the final goal
         self.final_goal_reward: float = final_goal_reward
+
+        #: FN, If On The Fly Trajectories is to be used
+        self.otf_trajectories: bool = otf_trajectories
+
 
         # Data tracked for reporting
         self.nb_return_goals_reached: int = -1
@@ -540,69 +557,83 @@ class GoalConGoExploreEnv(MyWrapper):
         archive = self.archive.archive
         if len(archive) == 0:
             return
-        self.actions_to_goal = 0
-        goal_cell_rep = self.archive.cell_selector.choose_cell_key(archive)[0]
-        prev_goal_cell_rep = None
-        if self.cell_selection_modifier == 'prev' or self.traj_modifier == 'prev':
-            # Experimental code: instead of always going to the selected cell, sometimes go to cells before the selected
-            # cell, in the hopes of finding a better trajectory to the target cell.
-            temp_goal_cell_info = archive[goal_cell_rep]
-            trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
-                                                                             temp_goal_cell_info.cell_traj_end,
-                                                                             self.archive.cell_id_to_key_dict)
-            if len(trajectory) > 0:
-                seen_cells = set()
-                unique_trajectory = []
-                total_time_spend = 0
-                for cell, time_spend in reversed(trajectory):
-                    total_time_spend += time_spend
-                    if cell not in seen_cells:
-                        unique_trajectory.append((cell, total_time_spend))
-                        seen_cells.add(cell)
+        
+        if not self.otf_trajectories:
+            self.actions_to_goal = 0
+            goal_cell_rep = self.archive.cell_selector.choose_cell_key(archive)[0]
+            prev_goal_cell_rep = None
+            if self.cell_selection_modifier == 'prev' or self.traj_modifier == 'prev':
+                # Experimental code: instead of always going to the selected cell, sometimes go to cells before the selected
+                # cell, in the hopes of finding a better trajectory to the target cell.
+                temp_goal_cell_info = archive[goal_cell_rep]
+                trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
+                                                                                temp_goal_cell_info.cell_traj_end,
+                                                                                self.archive.cell_id_to_key_dict)
+                if len(trajectory) > 0:
+                    seen_cells = set()
+                    unique_trajectory = []
+                    total_time_spend = 0
+                    for cell, time_spend in reversed(trajectory):
+                        total_time_spend += time_spend
+                        if cell not in seen_cells:
+                            unique_trajectory.append((cell, total_time_spend))
+                            seen_cells.add(cell)
 
-                offset = np.random.geometric(0.5) - 1
-                while offset >= len(unique_trajectory):
                     offset = np.random.geometric(0.5) - 1
-                prev_goal_cell_rep = unique_trajectory[offset]
-            else:
-                prev_goal_cell_rep = (goal_cell_rep, 0)
-
-        if self.cell_selection_modifier == 'prev':
-            self.goal_cell_rep = prev_goal_cell_rep[0]
-        else:
-            self.goal_cell_rep = goal_cell_rep
-        self.goal_cell_info = archive[self.goal_cell_rep]
-        if self.traj_modifier == 'prev' and prev_goal_cell_rep[0] != goal_cell_rep:
-            temp_goal_cell_info = archive[prev_goal_cell_rep[0]]
-            trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
-                                                                             temp_goal_cell_info.cell_traj_end,
-                                                                             self.archive.cell_id_to_key_dict)
-            final_cell = trajectory[-1]
-            trajectory.pop(-1)
-            trajectory.append((final_cell[0], prev_goal_cell_rep[1]))
-            chosen = self.archive.archive[goal_cell_rep].nb_chosen
-            self.entropy_manager.entropy_cells[final_cell[0]] = goal_cell_rep, (chosen * 0.1) ** 2
-            trajectory.append((goal_cell_rep, 1))
-        else:
-            trajectory = self.archive.cell_trajectory_manager.get_trajectory(self.goal_cell_info.cell_traj_id,
-                                                                             self.goal_cell_info.cell_traj_end,
-                                                                             self.archive.cell_id_to_key_dict)
-
-        if self.fail_ent_inc == 'time' or self.fail_ent_inc == 'cell':
-            for i, (cell_key, time_spend) in enumerate(trajectory):
-                failed = self.archive.archive[cell_key].nb_sub_goal_failed
-                nb_failures_above_thresh = self.archive.archive[cell_key].nb_failures_above_thresh
-                if failed > self.archive.max_failed * self.archive.failed_threshold:
-                    offset = np.random.geometric(0.5) - 1
-                    while i - offset < 0:
+                    while offset >= len(unique_trajectory):
                         offset = np.random.geometric(0.5) - 1
-                    if offset > 0:
-                        if self.fail_ent_inc == 'time':
-                            end_con = np.random.randint(1, 20)
-                        else:
-                            end_con = cell_key
-                        ent_cell = trajectory[i - offset][0]
-                        self.entropy_manager.entropy_cells[ent_cell] = end_con, 1 + (nb_failures_above_thresh * 0.01)
+                    prev_goal_cell_rep = unique_trajectory[offset]
+                else:
+                    prev_goal_cell_rep = (goal_cell_rep, 0)
+
+            if self.cell_selection_modifier == 'prev':
+                self.goal_cell_rep = prev_goal_cell_rep[0]
+            else:
+                self.goal_cell_rep = goal_cell_rep
+            self.goal_cell_info = archive[self.goal_cell_rep]
+            if self.traj_modifier == 'prev' and prev_goal_cell_rep[0] != goal_cell_rep:
+                temp_goal_cell_info = archive[prev_goal_cell_rep[0]]
+                trajectory = self.archive.cell_trajectory_manager.get_trajectory(temp_goal_cell_info.cell_traj_id,
+                                                                                temp_goal_cell_info.cell_traj_end,
+                                                                                self.archive.cell_id_to_key_dict)
+                final_cell = trajectory[-1]
+                trajectory.pop(-1)
+                trajectory.append((final_cell[0], prev_goal_cell_rep[1]))
+                chosen = self.archive.archive[goal_cell_rep].nb_chosen
+                self.entropy_manager.entropy_cells[final_cell[0]] = goal_cell_rep, (chosen * 0.1) ** 2
+                trajectory.append((goal_cell_rep, 1))
+            else:
+                trajectory = self.archive.cell_trajectory_manager.get_trajectory(self.goal_cell_info.cell_traj_id,
+                                                                                self.goal_cell_info.cell_traj_end,
+                                                                                self.archive.cell_id_to_key_dict)
+
+            if self.fail_ent_inc == 'time' or self.fail_ent_inc == 'cell':
+                for i, (cell_key, time_spend) in enumerate(trajectory):
+                    failed = self.archive.archive[cell_key].nb_sub_goal_failed
+                    nb_failures_above_thresh = self.archive.archive[cell_key].nb_failures_above_thresh
+                    if failed > self.archive.max_failed * self.archive.failed_threshold:
+                        offset = np.random.geometric(0.5) - 1
+                        while i - offset < 0:
+                            offset = np.random.geometric(0.5) - 1
+                        if offset > 0:
+                            if self.fail_ent_inc == 'time':
+                                end_con = np.random.randint(1, 20)
+                            else:
+                                end_con = cell_key
+                            ent_cell = trajectory[i - offset][0]
+                            self.entropy_manager.entropy_cells[ent_cell] = end_con, 1 + (nb_failures_above_thresh * 0.01)
+        else:
+            trajectory, goal_cell = self.archive.otf_trajectory(self.current_cell, self.goal_cell_rep, 100)
+
+            self.goal_cell_rep = goal_cell
+
+            if goal_cell not in self.archive.archive:
+                self.goal_cell_info = CellInfoStochastic()
+            else:   
+                self.goal_cell_info = archive[self.goal_cell_rep]
+            #print("NEW COOLER TRAJ:", trajectory)
+
+
 
         self.returning = True
         self.nb_return_goals_chosen += 1
@@ -610,9 +641,19 @@ class GoalConGoExploreEnv(MyWrapper):
         self.return_goals_info_chosen.append(self.goal_cell_info)
         self.return_goals_reached.append(False)
         self.restored.append(False)
+
+
+
+        
+
+
+
         self.sub_goal_cell_rep = self.trajectory_tracker.reset(self.current_cell,
                                                                trajectory,
                                                                self.goal_cell_rep)
+
+
+
         self.steps_to_previous = 0
         self.steps_to_current = 0
         
@@ -651,7 +692,7 @@ class GoalConGoExploreEnv(MyWrapper):
         self.nb_return_goals_reached += 1
         self.return_goals_reached[-1] = True
         self.last_reached_cell = self.current_cell
-        self.goal_explorer.on_return()
+        self.goal_explorer.on_return(len(self.archive.archive) <= 1)
 
     def _exploration_success(self):
         self.nb_exploration_goals_reached += 1
@@ -1133,7 +1174,7 @@ class RectColorFrame(MyWrapper):
         return self.reshape_obs(obs), reward, done, info
 
 
-class RectColorFrameProcgen(MyWrapper): # TODO Can we remove this wrapper? Does it have to be added?
+class RectColorFrameProcgen(MyWrapper):
     def __init__(self, env):
         """Warp frames to 64x64"""
         MyWrapper.__init__(self, env)

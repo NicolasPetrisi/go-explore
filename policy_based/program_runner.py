@@ -10,20 +10,20 @@ from signal import SIGINT
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 1
-levelSeed          : str    = "92"
-posSeed            : str    = "2"
-testMode           : bool   = True
-endTime            : str    = "1.0"
+minimumIterations  : int    = 2
+levelSeed          : str    = "107"
+posSeed            : str    = "0"
+testMode           : bool   = False
+endTime            : str    = "0.25"
 tempPath           : str    = '/home/nicolas/temp/'
-folder             : str    = "0000_mmmmmmmmmmmmmmmm"
-loadPathModel      : str    = "000005966782_model.joblib"
-loadPathArch       : str    = "000005966782_arch.gz"
+folder             : str    = "-"
+loadPathModel      : str    = "-"
+loadPathArch       : str    = "-"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
 numberOfCores      : str    = "2"
 videoAllEpisodes   : str    = "True"
-continue_run       : bool   = False
+continue_run       : bool   = True
 #####################
 
 #gameName           : What game to run.
@@ -174,7 +174,7 @@ while datetime.now() < datetime.strptime(endTime, format):
             posSeed = str(np.random.randint(0,623*1000))
     else:
         log.write("Only " + str(remaining_time) + " hours left but minimum time allowed is " + str(minTimeAllowed) + ". Stopping.\n")
-    if len(errorsHapppened) > 4:
+    if len(errorsHapppened) > 0:
         print("<<WARNING>> More than 4 errors have occured. Something is wrong, stopping program.")
         break
         
