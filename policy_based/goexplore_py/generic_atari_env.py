@@ -60,6 +60,8 @@ class MyAtari(MyWrapper):
         self.restrict_themes = restrict_themes
         self.pos_seed = pos_seed
 
+        # FN, this varibale is for when we want to be able to reproduce a random sequence of starting positions in procgen, should start at least 2
+        self.reset_counter = 2  
         self.env = self.make_env()
         super(MyAtari, self).__init__(self.env)
         self.env.reset()
@@ -69,7 +71,11 @@ class MyAtari(MyWrapper):
         return getattr(self.env, e)
 
     def make_env(self):
-        return gym.make(self.name, distribution_mode=self.distribution_mode, render_mode="rgb_array" , start_level=self.org_seed, use_sequential_levels=self.use_sequential_levels, num_levels = self.num_levels, restrict_themes = self.restrict_themes, pos_seed = self.pos_seed)
+        if self.pos_seed < -1:
+            chosen_pos = -self.reset_counter
+        else:
+            chosen_pos = self.pos
+        return gym.make(self.name, distribution_mode=self.distribution_mode, render_mode="rgb_array" , start_level=self.org_seed, use_sequential_levels=self.use_sequential_levels, num_levels = self.num_levels, restrict_themes = self.restrict_themes, pos_seed = chosen_pos)
     
     def reset(self) -> np.ndarray:
         """reseting an enviroment to the start state
@@ -77,6 +83,7 @@ class MyAtari(MyWrapper):
         Returns:
             np.ndarray: observation of the start frame (64,64,3) in procgen
         """
+        self.reset_counter += 1
         self.env = self.make_env()
         unprocessed = self.env.reset()
         self.done = 0

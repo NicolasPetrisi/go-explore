@@ -118,10 +118,13 @@ class MazeGame : public BasicAbstractGame {
         if(options.pos_seed == -1){
             srand(time(NULL));
             selector = rand();
-        }
-        else {
+        } else if (options.pos_seed < -1){
+            srand(options.pos_seed * -1);
+            selector = rand();
+        }else {
             selector = options.pos_seed;
         }
+
         int index = selector % free_spaces.size();
         int startx = std::get<0> (free_spaces[index]);
         int starty = std::get<1> (free_spaces[index]);

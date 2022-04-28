@@ -880,7 +880,6 @@ def setup(resolution,
     else:
         raise ValueError('Invalid grid resolution: ' + resolution + '. Valid formats are: x,y and x_and_y.')
 
-    assert pos_seed >= -1, "pos_seed should be -1, 0 or a positiv integer."
     
     clip_game_reward = bool(clip_game_reward)
     one_vid_per_goal = bool(one_vid_per_goal)
