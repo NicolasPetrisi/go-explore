@@ -288,7 +288,7 @@ class CheckpointTracker:
             return False
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
-        if self.early_stopping and cells_found_counter_stop:
+        if self.early_stopping and not test_mode and cells_found_counter_stop:
             print("Early stopping to perform hampu cell merge")
             return False
         if self.early_stopping and self.has_converged(test_mode):
@@ -402,7 +402,7 @@ def _run(**kwargs):
     optimal_length = -1
     dist_from_opt_traj = -1
 
-    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc", "tot_rew_mean"]
+    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc", "rew_mean", "tot_rew_mean"]
     plot_x_value = "frames"
 
     cells_found_counter = deque([-1, -2], maxlen = 30)

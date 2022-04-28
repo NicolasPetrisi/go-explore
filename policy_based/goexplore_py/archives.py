@@ -95,7 +95,6 @@ class StochasticArchive:
                         raise RuntimeError
             
 
-            print(len(self.archive.keys()))
             # FN, Create so called "Hampu Cells". Merging together neighbouring cells with each other to create larger cells.
             mapped_cells: set[CellRepresentationBase] = set()
             for hampu_cell in self.archive.keys():

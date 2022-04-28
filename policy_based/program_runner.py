@@ -10,20 +10,22 @@ from signal import SIGINT
 # gameName, tempPath and endTime MUST be defined.
 #####################
 gameName           : str    = "maze"
-minimumIterations  : int    = 2
-levelSeed          : str    = "107"
-posSeed            : str    = "0"
-testMode           : bool   = False
-endTime            : str    = "0.25"
-tempPath           : str    = '/home/nicolas/temp/'
+minimumIterations  : int    = 1
+levelSeed          : str    = "137"
+
+posSeed            : str    = "-5" # THis should be -5 for all tests, should ALLWAYS be -1 on training
+
+testMode           : bool   = True
+endTime            : str    = "2"
+tempPath           : str    = '/home/fredrik/temp/'
 folder             : str    = "-"
 loadPathModel      : str    = "-"
 loadPathArch       : str    = "-"
 loadPathTrajectory : str    = "-"
 stepsPerIteration  : str    = "20000000"
-numberOfCores      : str    = "2"
+numberOfCores      : str    = "1"
 videoAllEpisodes   : str    = "True"
-continue_run       : bool   = True
+continue_run       : bool   = False
 #####################
 
 #gameName           : What game to run.
