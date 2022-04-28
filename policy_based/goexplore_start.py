@@ -402,7 +402,7 @@ def _run(**kwargs):
     optimal_length = -1
     dist_from_opt_traj = -1
 
-    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc"]
+    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc", "tot_rew_mean"]
     plot_x_value = "frames"
 
     cells_found_counter = deque([-1, -2], maxlen = 30)
@@ -556,6 +556,7 @@ def _run(**kwargs):
             logger.write('dist_from_opt', dist_from_opt_traj)           # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
             logger.write('len_mean', gatherer.length_mean)              # FN, the average number of frames per episode.
             logger.write('frames', expl.frames_compute)                 # FN, the number of frames that has been processed so far.
+            logger.write('tot_rew_mean', gatherer.total_reward/gatherer.nb_of_episodes) # FN, The average reward per episode.
             logger.write('rew_mean', gatherer.reward_mean)              # FN, the mean reward across all episodes.
             logger.write('score', expl.archive.max_score)               # FN, the maximum score aquired so far.
             logger.write('ep', gatherer.nb_of_episodes)                 # FN, the current episode number.
