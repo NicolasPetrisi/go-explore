@@ -60,7 +60,7 @@ compress_kwargs = {'compresslevel': 1}
 MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
-TEST_EPISODES = 100
+TEST_EPISODES = 250
 CONVERGENCE_THRESHOLD_SUC = 0.9 # The success rate for return and policy exploration needed for early stopping.
 
 CHECKPOINT_ABBREVIATIONS = {
@@ -556,7 +556,7 @@ def _run(**kwargs):
             logger.write('dist_from_opt', dist_from_opt_traj)           # FN, how many more steps than necessary are used to reach the goal. 0 means a perfect path was found.
             logger.write('len_mean', gatherer.length_mean)              # FN, the average number of frames per episode.
             logger.write('frames', expl.frames_compute)                 # FN, the number of frames that has been processed so far.
-            logger.write('tot_rew_mean', gatherer.total_reward/gatherer.nb_of_episodes) # FN, The average reward per episode.
+            logger.write('tot_rew_mean', gatherer.total_reward/max(1,gatherer.nb_of_episodes)) # FN, The average reward per episode.
             logger.write('rew_mean', gatherer.reward_mean)              # FN, the mean reward across all episodes.
             logger.write('score', expl.archive.max_score)               # FN, the maximum score aquired so far.
             logger.write('ep', gatherer.nb_of_episodes)                 # FN, the current episode number.

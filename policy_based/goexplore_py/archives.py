@@ -594,8 +594,10 @@ class StochasticArchive:
             if cell in found_cells:
                 chosen_cell = cell
                 break
-
-        assert chosen_cell is not None, "None of the found cells were present in the archive!"
+        
+        #if the chosen cell can't be found in archive, start exploration directly
+        if chosen_cell is None:
+            return [], from_cell
 
         return self.otf_trajectory(from_cell, chosen_cell, max_depth)
 
