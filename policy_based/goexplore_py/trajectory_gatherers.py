@@ -96,7 +96,6 @@ class StochasticGatherer:
         self.nb_policy_exploration_goal_reached = sum([ei['nb_policy_exploration_goal_reached'] for ei in self.ep_infos_to_report])
         self.nb_policy_exploration_goal_chosen = sum([ei['nb_policy_exploration_goal_chosen'] for ei in self.ep_infos_to_report])
 
-        print("BANAN:", [ei['r'] for ei in ep_infos])
         self.total_reward += np.sum([ei['r'] for ei in ep_infos])
 
         self.reward_mean = safemean([ei['r'] for ei in self.ep_infos_to_report])

@@ -74,7 +74,7 @@ class MyAtari(MyWrapper):
         if self.pos_seed < -1:
             chosen_pos = -self.reset_counter
         else:
-            chosen_pos = self.pos
+            chosen_pos = self.pos_seed
         return gym.make(self.name, distribution_mode=self.distribution_mode, render_mode="rgb_array" , start_level=self.org_seed, use_sequential_levels=self.use_sequential_levels, num_levels = self.num_levels, restrict_themes = self.restrict_themes, pos_seed = chosen_pos)
     
     def reset(self) -> np.ndarray:
