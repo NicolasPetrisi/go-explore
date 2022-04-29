@@ -9,23 +9,23 @@ from signal import SIGINT
 # they will get default arguments in Go-Explore.
 # gameName, tempPath and endTime MUST be defined.
 #####################
-gameName           : str    = "maze"
-minimumIterations  : int    = 1
-levelSeed          : str    = "137"
+gameName           : str    = "maze"                # maze
+minimumIterations  : int    = 1                     # For training: hours / 10. For test: 1
+levelSeed          : str    = "137"                 # 137
 
-posSeed            : str    = "-5" # THis should be -5 for all tests, should ALLWAYS be -1 on training
+posSeed            : str    = "-5"                  # For training: "-1". For test: "-5".
 
-testMode           : bool   = True
-endTime            : str    = "2"
-tempPath           : str    = '/home/fredrik/temp/'
-folder             : str    = "-"
-loadPathModel      : str    = "-"
-loadPathArch       : str    = "-"
-loadPathTrajectory : str    = "-"
-stepsPerIteration  : str    = "20000000"
-numberOfCores      : str    = "1"
-videoAllEpisodes   : str    = "True"
-continue_run       : bool   = False
+testMode           : bool   = True                  # For training: False. For test: True
+endTime            : str    = "2"                   # For training: "72". For test: long enough
+tempPath           : str    = '/home/fredrik/temp/' # '/home/nicolasfredrik/temp/'
+folder             : str    = "-"                   # "-" 
+loadPathModel      : str    = "-"                   # "-"
+loadPathArch       : str    = "-"                   # "-"
+loadPathTrajectory : str    = "-"                   # "-"
+stepsPerIteration  : str    = "20000000"            # "20000000"
+numberOfCores      : str    = "1"                   # "8"
+videoAllEpisodes   : str    = "True"                # For training: "False". For test: "True"
+continue_run       : bool   = False                 # For training: True. For test: False
 #####################
 
 #gameName           : What game to run.
