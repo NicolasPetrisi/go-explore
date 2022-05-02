@@ -167,50 +167,13 @@ class StochasticArchive:
 
 
         #FN, The final state of the archive to return.
-
-        #print("done with get state:")
-
-        #print("---------------archive--------------")
-        #tmp_list = list(self.archive.keys())
-        #tmp_list.sort(key=lambda x: (x.x, x.y))
-        #for k in tmp_list:
-        #    print(k)
-        #print("\n")
-        #print("----------------neighbours----------------")
-        #for k in tmp_list:
-        #    print("cell:", k,"neighbours:", self.archive[k].neighbours)
-        #print("\n")
-
-        #print("----------------cellmap----------------")
-        #tmp_list = list(self.cell_map.get_mapping().keys())
-        #tmp_list.sort(key=lambda x: (x.x, x.y))
-        #for k in tmp_list:
-        #    print("cell:", k," maps to:", self.cell_map.get_mapping()[k])
-        #print("\n")
-
-        #print("-------------reverse cellmap-------------")
-        #tmp_list = list(self.cell_map.rev().keys())
-        #tmp_list.sort(key=lambda x: (x.x, x.y))
-        #for k in tmp_list:
-        #    print("cell:", k," rev to:", self.cell_map.rev()[k])
-        #print("\n")
-
-
-
         state = {'archive': self.archive,
                  'trajectory_manager_state': self.cell_trajectory_manager.get_state(save_trajectories),
                  'cell_id_to_key_dict': self.cell_id_to_key_dict,
                  'cells_reached_dict': self.cells_reached_dict,
                  'cell_mapping': self.cell_map.get_mapping(),
                  }
-        for key,value in self.archive.items():
-            for n in value.neighbours:
-                if key not in self.archive[n].neighbours:
-                    print("FAILURE AFTER HAMPU MERGING BUT NOT BEFORE!")
-                    print("key ", key, " has negihbour", n, "but it does not have key as neighbour")
-                    print("keys meighbours", value.neighbours)
-                    print("n:s neighbours", self.archive[n].neighbours) 
-                    raise RuntimeError
+        
         return state
 
     def set_state(self, state):
