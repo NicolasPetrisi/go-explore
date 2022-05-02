@@ -105,7 +105,7 @@ GAME_OPTIONS="--game generic_${Game}"
 
 # Both trajectory reward (goal_reward_factor) are 1, except for reaching the final cell, for which the reward is 3.
 # Extrinsic (game) rewards are clipped to [-2, 2]. Because most Atari games have large rewards, this usually means that extrinsic rewards are twice that of the trajectory rewards.
-REWARD_OPTIONS="--game_reward_factor 1 --goal_reward_factor 1 --clip_game_reward 1 --rew_clip_range=-2,2 --final_goal_reward 3"
+REWARD_OPTIONS="--game_reward_factor 1 --goal_reward_factor 3 --clip_game_reward 1 --rew_clip_range=-2,2 --final_goal_reward 3"
 
 # Cell selection is relative to: 1 / (1 + 0.5*number_of_actions_taken_in_cell). 
 CELL_SELECTION_OPTIONS="--selector_weights=max_score_cell,nb_actions_taken_in_cell,1,1,0.5 --base_weight 0"

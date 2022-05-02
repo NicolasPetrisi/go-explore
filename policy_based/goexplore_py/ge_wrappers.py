@@ -226,6 +226,13 @@ class TargetedGoalExplorer(GoalExplorer):
 
 
 class HampuGoalExplorer(GoalExplorer):
+
+    # FN, To prevent the agent from selecting the same two neighbours over and over again we don't allow the same cell to be
+    # chosen as a goal twice during exploration. Since we always need to choose a cell though we allow the same cell to be chosen
+    # multiple times during the "random cell (known or unkown)" selection part in the case of ever exhausting the possible cells
+    # to explore to.
+    cells_explored = set()
+
     def __init__(self, random_exp_prob, random_explorer):
         super(HampuGoalExplorer,self).__init__(random_exp_prob, random_explorer)
 
@@ -241,24 +248,36 @@ class HampuGoalExplorer(GoalExplorer):
             if len(neighbours) > 0:
                 target_cell = random.sample(neighbours, 1)[0]
                 assert target_cell in go_explore_env.archive.archive, "The chosen neighbouring cell does not exist in the archive!"    
-                return target_cell
+                if not target_cell in self.cells_explored:
+                    self.cells_explored.add(target_cell)
+                    return target_cell
 
         elif rand_value < 0.60:
             # FN, choose the goal cell with 10% probability if it exists
             target_cell = go_explore_env.env.recursive_getattr('goal_cell')
             if target_cell in go_explore_env.archive.archive:
                 go_explore_env.last_reached_cell = target_cell
-                return target_cell
+                if not target_cell in self.cells_explored:
+                    self.cells_explored.add(target_cell)
+                    return target_cell
 
         elif rand_value < 0.80:
             # FN, choose a know cell in archive with 20% probability.
             go_explore_env.last_reached_cell = go_explore_env.select_cell_from_archive()
-            return go_explore_env.last_reached_cell
+            if not go_explore_env.last_reached_cell in self.cells_explored:
+                self.cells_explored.add(go_explore_env.last_reached_cell)
+                return go_explore_env.last_reached_cell
 
 
         # FN, choose a random cell (known or unknown) with 20% probability or if all other options fail to find a cell.
         go_explore_env.last_reached_cell = random.choice(go_explore_env.env.recursive_getattr('potential_cells'))
+        self.cells_explored.add(go_explore_env.last_reached_cell)
         return go_explore_env.last_reached_cell
+
+
+    def on_reset(self):
+        self.cells_explored.clear()
+        self.exploration_strategy = global_const.EXP_STRAT_NONE
 
 
 class DomKnowNeighborGoalExplorer(GoalExplorer):
