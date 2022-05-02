@@ -276,9 +276,7 @@ class HampuGoalExplorer(GoalExplorer):
 
 
     def on_reset(self):
-        print("CLEARING:", self.cells_explored)
         self.cells_explored.clear()
-        print("CLEARED:", self.cells_explored)
         self.exploration_strategy = global_const.EXP_STRAT_NONE
 
 
