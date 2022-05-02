@@ -60,7 +60,7 @@ compress_kwargs = {'compresslevel': 1}
 MODEL_POSTFIX = '_model.joblib'
 ARCHIVE_POSTFIX = '_arch'
 TRAJ_POSTFIX = '_traj.tfrecords'
-TEST_EPISODES = 250
+TEST_EPISODES = 500
 CONVERGENCE_THRESHOLD_SUC = 0.9 # The success rate for return and policy exploration needed for early stopping.
 
 CHECKPOINT_ABBREVIATIONS = {
