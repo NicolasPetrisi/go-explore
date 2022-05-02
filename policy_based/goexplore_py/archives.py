@@ -346,7 +346,8 @@ class StochasticArchive:
                 self.update_cell(cell_key, cell_info)
                 self.cell_selector.cell_update(cell_key)
 
-            self.archive[cell_key].neighbours.update(cell_info.neighbours)
+            if self.otf_trajectories:
+                self.archive[cell_key].neighbours.update(cell_info.neighbours)
 
         for cell_key, cell_info in updated_info.items():
             self.update_cell_info(cell_key, cell_info)
@@ -567,6 +568,14 @@ class StochasticArchive:
                         tmp_list = list(current_traj)
                         tmp_list.append((neighbour, -1))
 
+                        #NOTE: FN, This assumes that there are no other paths available to the goal!
+                        # This is true for the Procgen game by OpenAI "Maze". However once multiple points of interest
+                        # enterns the environment (in "Maze" there is only the cheese) there might be multiple paths of
+                        # cells going to the goal cell. When an environment like this is used this piece of code
+                        # has to be edited! Then you will find a set of potential paths to choose from to get to
+                        # the goal which you will have to choose from! Either use a selector like they do with the
+                        # trajectories and choose according to some condition such as max scoring trajectory, shortest
+                        # trajectory etc. or come up with another way of choosing. Then return this chosen trajectory.
                         if neighbour == to_cell:
                             return tmp_list, to_cell
 
