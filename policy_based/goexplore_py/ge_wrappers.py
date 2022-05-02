@@ -623,7 +623,8 @@ class GoalConGoExploreEnv(MyWrapper):
                             ent_cell = trajectory[i - offset][0]
                             self.entropy_manager.entropy_cells[ent_cell] = end_con, 1 + (nb_failures_above_thresh * 0.01)
         else:
-            trajectory, goal_cell = self.archive.otf_trajectory(self.current_cell, self.goal_cell_rep, 100)
+            goal_cell_rep = self.archive.cell_selector.choose_cell_key(archive)[0]
+            trajectory, goal_cell = self.archive.otf_trajectory(self.current_cell, goal_cell_rep, 100)
 
             self.goal_cell_rep = goal_cell
 
