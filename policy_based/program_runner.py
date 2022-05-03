@@ -11,19 +11,19 @@ from signal import SIGINT
 #####################
 gameName           : str    = "maze"                # maze
 minimumIterations  : int    = 1                     # For training: hours / 10. For test: 1
-levelSeed          : str    = "118"                 # 137
+levelSeed          : str    = "137"                 # 137
 
 posSeed            : str    = "-5"                  # For training: "-1". For test: "-5".
 
 testMode           : bool   = True                  # For training: False. For test: True
-endTime            : str    = "4"                   # For training: "72". For test: long enough
+endTime            : str    = "8"                   # For training: "72". For test: long enough
 tempPath           : str    = '/home/nicolas/temp/' # '/home/nicolasfredrik/temp/'
-folder             : str    = "220_aaaaaaa"                   # "-" 
-loadPathModel      : str    = "000010250623_model.joblib"                   # "-"
-loadPathArch       : str    = "000010250623_arch.gz"                   # "-"
+folder             : str    = "-"                   # "-" 
+loadPathModel      : str    = "-"                   # "-"
+loadPathArch       : str    = "-"                   # "-"
 loadPathTrajectory : str    = "-"                   # "-"
 stepsPerIteration  : str    = "20000000"            # "20000000"
-numberOfCores      : str    = "1"                   # ALSO CHANGE .SH FILE! Nb_env = 1. For training: "8". For test: "1"
+numberOfCores      : str    = "1"                   # For training: "8". For test: "1"
 videoAllEpisodes   : str    = "False"                # For training: "False". For test: "True"
 continue_run       : bool   = False                 # For training: True. For test: False
 #####################
