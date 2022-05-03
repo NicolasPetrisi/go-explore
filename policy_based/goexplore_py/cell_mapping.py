@@ -59,7 +59,7 @@ class CellMapping:
         return dict(self.__cell_mapping)
 
     def __getitem__(self, key):
-        """Allows the class to be indexed using [] to get items like a normal dictionary.
+        """Allows the class to be indexed using [] to get items like a normal dictionary. Returns the key if it does not exist in the dictionary.
 
         Args:
             key (CellRepresentationBase): The cell which you want the value of.

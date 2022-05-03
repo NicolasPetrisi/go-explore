@@ -270,7 +270,7 @@ class HampuGoalExplorer(GoalExplorer):
 
 
         # FN, choose a random cell (known or unknown) with 20% probability or if all other options fail to find a cell.
-        go_explore_env.last_reached_cell = random.choice(go_explore_env.env.recursive_getattr('potential_cells'))
+        go_explore_env.last_reached_cell = go_explore_env.archive.cell_map[random.choice(go_explore_env.env.recursive_getattr('potential_cells'))]
         self.cells_explored.add(go_explore_env.last_reached_cell)
         return go_explore_env.last_reached_cell
 
