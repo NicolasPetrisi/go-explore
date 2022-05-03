@@ -1801,7 +1801,7 @@ def parse_arguments():
                         default=DefaultArg(None),
                         help='The trajectory file to load, should be paired with an exploration state to load.')
     parser.add_argument('--otf_trajectories', dest='otf_trajectories',
-                        default=DefaultArg(True), action='store_true',
+                        default=DefaultArg(False), action='store_true',
                         help='If trajectories should be constructed on the fly (True) or trajectories from the archive should be used.\
                             OTF-trajectories are required to use multiple starting positions.')
     
