@@ -77,15 +77,43 @@ def compute_weight(value, weight):
 
 class AbstractWeight:
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
+        """The final weight of the cell for selection.
+
+        Args:
+            cell_key (_type_): The cell key of the cell in question.
+            cell (_type_): The cell in question
+            known_cells (_type_): _description_
+            special_attributes (_type_): If attribute is present in this object, use the value from here. Otherwise .getattr() will be used
+
+        Returns:
+            _type_: The selector weight for the given cell.
+        """
         return 0
 
     def multiplicative_weight(self, cell_key, cell, known_cells, special_attributes):
+        """Gives a multiplicative value to the weight. Should in general be 1 (keep the value) or 0 (discard the value).
+
+        Args:
+            cell_key (_type_): The cell key of the cell in question.
+            cell (_type_): The cell in question
+            known_cells (_type_): _description_
+            special_attributes (_type_): _description_
+
+        Returns:
+            _type_: The value to use for the given cell's weight.
+        """
         return 1
 
     def cell_update(self, cell_key, is_new, to_update, update_all, archive):
         return to_update, update_all
 
     def update_weights(self, known_cells, update_all):
+        """Used to update any potential attributes of this object. Such as keeping track of max score.
+
+        Args:
+            known_cells (_type_): _description_
+            update_all (_type_): _description_
+        """
         pass
 
 
