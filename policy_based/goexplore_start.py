@@ -402,7 +402,7 @@ def _run(**kwargs):
     optimal_length = -1
     dist_from_opt_traj = -1
 
-    plot_y_values = ["cells", "ret_suc", "dist_from_opt", "len_mean", "exp_suc", "ret_cum_suc", "rew_mean", "tot_rew_mean"]
+    plot_y_values = ["cells", "ret_suc", "len_mean", "exp_suc", "ret_cum_suc", "rew_mean", "tot_rew_mean"]
     plot_x_value = "frames"
 
     cells_found_counter = deque([-1, -2], maxlen = 30)
