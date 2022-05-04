@@ -77,15 +77,43 @@ def compute_weight(value, weight):
 
 class AbstractWeight:
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
+        """The final weight of the cell for selection.
+
+        Args:
+            cell_key (_type_): The cell key of the cell in question.
+            cell (_type_): The cell in question
+            known_cells (_type_): _description_
+            special_attributes (_type_): If attribute is present in this object, use the value from here. Otherwise .getattr() will be used
+
+        Returns:
+            _type_: The selector weight for the given cell.
+        """
         return 0
 
     def multiplicative_weight(self, cell_key, cell, known_cells, special_attributes):
+        """Gives a multiplicative value to the weight. Should in general be 1 (keep the value) or 0 (discard the value).
+
+        Args:
+            cell_key (_type_): The cell key of the cell in question.
+            cell (_type_): The cell in question
+            known_cells (_type_): _description_
+            special_attributes (_type_): _description_
+
+        Returns:
+            _type_: The value to use for the given cell's weight.
+        """
         return 1
 
     def cell_update(self, cell_key, is_new, to_update, update_all, archive):
         return to_update, update_all
 
     def update_weights(self, known_cells, update_all):
+        """Used to update any potential attributes of this object. Such as keeping track of max score.
+
+        Args:
+            known_cells (_type_): _description_
+            update_all (_type_): _description_
+        """
         pass
 
 
@@ -551,15 +579,14 @@ class AttrWeight(AbstractWeight):
         self.scalar: float = scalar
 
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
-        # FN, Don't choose a cell which is done, since these will never get to have actions taken in them.
-        # Meaning they will only increase in chance of being selected.
         if cell_key.done:
-            return 0
-
+            return self.weight * ((1 / 100000) ** self.power)
+        
         if self.attr in special_attributes[cell_key]:
             value = special_attributes[cell_key][self.attr]
         else:
             value = getattr(cell, self.attr)
+        
         return self.weight * ((1 / (1 + self.scalar*value)) ** self.power)
 
     def __repr__(self):
