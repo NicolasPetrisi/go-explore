@@ -184,6 +184,21 @@ def make_plot(filepath, x_name, y_name, level_seed):
     x, y = get_values(filepath + '/log.txt', x_name , y_name)
     plot_values(x, y, x_name, y_name, level_seed, f'{filepath}/plots/{y_name}_of_{x_name}.png')
 
+def plot_actions(filepath,archive):
+
+    if not os.path.isdir(filepath + "/plots"):
+        os.mkdir(filepath + "/plots")
+
+    x_values = list()
+    y_values = list()
+    i = 0
+    for k,v in archive.items():
+        x_values.append( str(i) +" "+ str(k.done))
+        i+=1
+        y_values.append(v.nb_actions_taken_in_cell)
+    plt.bar(x_values, y_values)
+    plt.title("mean:" + str(np.mean(y_values)))
+    plt.savefig(filepath  + "/plots/nb_actions.png")
 
 def get_goal_pos(obs):
     """get location of pixels unique for the goal

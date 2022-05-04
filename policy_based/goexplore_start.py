@@ -40,7 +40,7 @@ import contextlib
 
 # Go-Explore imports
 from goexplore_py.utils import get_code_hash
-from goexplore_py.utils import make_plot
+from goexplore_py.utils import make_plot, plot_actions
 from goexplore_py.experiment_settings import hrv_and_tf_init, parse_arguments, setup, process_defaults, \
     del_out_of_setup_args
 from goexplore_py.logger import SimpleLogger
@@ -410,6 +410,8 @@ def _run(**kwargs):
 
     has_written_checkpoint = False 
 
+    #plot_actions(log_par.base_path, expl.archive.archive)
+    
     while checkpoint_tracker.should_continue(kwargs['test_mode'], cells_found_counter_stop):
         # Run one iteration
         if hvd.rank() == 0:
