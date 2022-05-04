@@ -15,8 +15,8 @@ levelSeed          : str    = "137"                 # 137
 
 posSeed            : str    = "-5"                  # For training: "-1". For test: "-5".
 
-testMode           : bool   = True                  # For training: False. For test: True
-endTime            : str    = "8"                   # For training: "72". For test: long enough
+testMode           : bool   = False                  # For training: False. For test: True
+endTime            : str    = "1.0"                   # For training: "72". For test: long enough
 tempPath           : str    = '/home/nicolas/temp/' # '/home/nicolasfredrik/temp/'
 folder             : str    = "-"                   # "-" 
 loadPathModel      : str    = "-"                   # "-"
@@ -24,7 +24,7 @@ loadPathArch       : str    = "-"                   # "-"
 loadPathTrajectory : str    = "-"                   # "-"
 stepsPerIteration  : str    = "20000000"            # "20000000"
 numberOfCores      : str    = "1"                   # For training: "8". For test: "1"
-videoAllEpisodes   : str    = "False"                # For training: "False". For test: "True"
+videoAllEpisodes   : str    = "True"                # For training: "False". For test: "True"
 continue_run       : bool   = False                 # For training: True. For test: False
 #####################
 
@@ -42,9 +42,6 @@ continue_run       : bool   = False                 # For training: True. For te
 #numberOfCores      : How many cores of the CPU to use during the run.
 #videoAllEpisodes   : If True, then a video for every episodes will be made, if False only every min(2^N, 500) video will be made.
 #continue_run       : If True, then Go-Explore will automatically load the most recent run saved in the temp folder when it restarts. For example when minimumIterations is greater than 1.
-
-if (loadPathArch == '-') != (loadPathTrajectory == '-'):
-    print("\n\n<<WARNING>> Only loading one of archive and trajectory can cause fatal problems. This is however not confirmed yet. Loading both are recommended.\n\n")
 
 
 

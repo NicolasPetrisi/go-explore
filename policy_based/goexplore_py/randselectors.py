@@ -551,15 +551,14 @@ class AttrWeight(AbstractWeight):
         self.scalar: float = scalar
 
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
-        # FN, Don't choose a cell which is done, since these will never get to have actions taken in them.
-        # Meaning they will only increase in chance of being selected.
         if cell_key.done:
-            return 0
-
+            return self.weight * ((1 / 100) ** self.power)
+        
         if self.attr in special_attributes[cell_key]:
             value = special_attributes[cell_key][self.attr]
         else:
             value = getattr(cell, self.attr)
+        
         return self.weight * ((1 / (1 + self.scalar*value)) ** self.power)
 
     def __repr__(self):

@@ -181,9 +181,6 @@ class MyAtari(MyWrapper):
                 tmp_cell.done = 1
                 saved_cells.append(tmp_cell)
 
-
-        for cell in saved_cells:
-            print("this cell is not a wall: ",  cell)
         return saved_cells
 
 
