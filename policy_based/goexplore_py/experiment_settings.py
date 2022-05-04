@@ -1317,8 +1317,9 @@ def setup(resolution,
         # FN, copy the previous log file to get nice plots and log file
         if not test_mode:
             path = '/'.join(expl_state.split('/')[:-1]) + "/log.txt"
-            import shutil
-            shutil.copyfile(path, base_path +"log.txt")
+            if os.path.exists(path):
+                import shutil
+                shutil.copyfile(path, base_path +"log.txt")
 
         if isinstance(expl_state, str):
             with gzip.open(expl_state, 'rb') as file_handle:
