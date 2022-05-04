@@ -146,7 +146,7 @@ class MyAtari(MyWrapper):
                 return True
             r_g_b = list()
             for i in range(3):
-                mean = np.mean(full_image[start_x:end_x, start_y:end_y, i])
+                mean = np.mean(full_image[start_y:end_y , start_x:end_x, i])
                 r_g_b.append(mean)
 
             # FN, since the walls have a pattern and the number of pixels of a cells may differ with one pixel in x and y
@@ -180,7 +180,10 @@ class MyAtari(MyWrapper):
                 saved_cells.remove(p_cell)
                 tmp_cell.done = 1
                 saved_cells.append(tmp_cell)
- 
+
+
+        for cell in saved_cells:
+            print("this cell is not a wall: ",  cell)
         return saved_cells
 
 
