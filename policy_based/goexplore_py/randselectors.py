@@ -580,7 +580,7 @@ class AttrWeight(AbstractWeight):
 
     def additive_weight(self, cell_key, cell, known_cells, special_attributes):
         if cell_key.done:
-            return self.weight * ((1 / 10000) ** self.power)
+            return self.weight * ((1 / 100000) ** self.power)
         
         if self.attr in special_attributes[cell_key]:
             value = special_attributes[cell_key][self.attr]
