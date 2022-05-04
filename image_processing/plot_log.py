@@ -73,10 +73,53 @@ def plot_values(word_dict, x_values, y_values, x_label, y_label, title, name="pl
     plt.xlabel(label_name)
     
     # NOTE: If you want a fixed y-axis. Use this line!
-    #plt.ylim([0,1])
+    plt.ylim([0,1])
     
     plt.title(title)
     plt.savefig(name)
+
+
+def multiple_plot_values(word_dict, x_values_list, y_values_list, x_label, y_label, x_value_name, name="plot.png"):
+        
+    for i in range(len(x_values_list)):
+        plt.plot(x_values_list[i], y_values_list[i], label = x_value_name[i])
+
+    if y_label in word_dict:
+        label_name = word_dict[y_label]
+    else:
+        label_name = y_label
+        print("Y-label name was not in the word dictionary! Using log file label name instead")
+    plt.ylabel(label_name)
+
+    if x_label in word_dict:
+        label_name = word_dict[x_label]
+    else:
+        label_name = x_label
+        print("X-label name was not in the word dictionary! Using log file label name instead")
+    plt.xlabel(label_name)
+    
+    # NOTE: If you want a fixed y-axis. Use this line!
+    plt.ylim([0,1])
+
+
+    plt.legend()
+    plt.title("")
+    plt.savefig(name)
+
+
+
+def moving_average(x_values, y_values, average_size):
+
+    moving_x = []
+    moving_y = []
+
+    for i in range(1, len(x_values)):
+        #print(max(i - average_size, 0))
+        #print(len(x_values[max(i - average_size, 0):i]))
+        moving_x.append(np.mean(x_values[max(i - average_size, 0):i]))
+        moving_y.append(np.mean(y_values[max(i - average_size, 0):i]))
+
+    return moving_x, moving_y
 
 def main(word_dict):
 
@@ -93,19 +136,29 @@ def main(word_dict):
     y_axis_label = "ret_suc"
     x_values = []
     y_values = []
-    min_len = sys.maxsize
+    min_frame = sys.maxsize
     for file in files:
         x, y = get_values(file, x_axis_label, y_axis_label)
         x_values.append(x)
         y_values.append(y)
-        min_len = np.min([min_len, len(x)])
+        min_frame = min(min_frame, x[-1])
+    
+    for i in range(len(x_values)):
+
+        for k in range(len(x_values[i])):
+            if x_values[i][k] > min_frame:
+                x_values[i] = x_values[i][:k]
+                y_values[i] = y_values[i][:k]
+                break
+
+    
 
     for i in range(len(x_values)):
-        x_values[i] = x_values[i][:min_len]
-        y_values[i] = y_values[i][:min_len]
+        x_values[i], y_values[i] = moving_average(x_values[i], y_values[i], 200)
 
-    for i in range(len(x_values)):
         plot_values(word_dict, x_values[i], y_values[i], x_axis_label, y_axis_label, files[i].split('.')[0], "plots/" + files[i].split('.')[0] + "_" + y_axis_label + "_of_" + x_axis_label + ".png")
 
+    x_value_labels = [x.split(".")[0] for x in files]
+    multiple_plot_values(word_dict, x_values, y_values, x_axis_label, y_axis_label, x_value_labels, "plots/tmp.png")
 
 main(word_dict)
