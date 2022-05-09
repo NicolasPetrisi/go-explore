@@ -122,7 +122,7 @@ class MyAtari(MyWrapper):
         """ function that returns every cell that's not a way in the procgen game maze. 
             To determine if a cell is a wall the rgb-value is checked for the x,y cordinates
             fo the cell and see if they match the rgb-value of walls. Note that this returns a list 
-            of single cells, i.e. hampu cells are not regarded in this funcion
+            of single cells, i.e. dynamic cells are not regarded in this funcion
 
         Returns:
             List[CellRepresentationBase]: a list of all cells that are not walls

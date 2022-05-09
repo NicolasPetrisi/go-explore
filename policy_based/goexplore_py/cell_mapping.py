@@ -4,7 +4,7 @@ from typing import Set, Dict
 
 class CellMapping:
     """Works as a two way dictionary where it is a normal dictionary, 
-    but each value backtracks to all keys pointing to it. It is used to map from one cell to another and create so-called Hampu Cells.
+    but each value backtracks to all keys pointing to it. It is used to map from one cell to another and create so-called Dynamic Cells.
     To create the illusion of larger cells in Go-Explore, this class re-links one cell to another such when
     a cell is referenced, the actual cell it is mapped to can be reached from here.
 

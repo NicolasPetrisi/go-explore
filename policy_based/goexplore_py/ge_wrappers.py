@@ -225,7 +225,7 @@ class TargetedGoalExplorer(GoalExplorer):
         return goal_cell
 
 
-class HampuGoalExplorer(GoalExplorer):
+class DynamicGoalExplorer(GoalExplorer):
 
     # FN, To prevent the agent from selecting the same two neighbours over and over again we don't allow the same cell to be
     # chosen as a goal twice during exploration. Since we always need to choose a cell though we allow the same cell to be chosen
@@ -234,12 +234,12 @@ class HampuGoalExplorer(GoalExplorer):
     cells_explored = set()
 
     def __init__(self, random_exp_prob, random_explorer):
-        super(HampuGoalExplorer,self).__init__(random_exp_prob, random_explorer)
+        super(DynamicGoalExplorer,self).__init__(random_exp_prob, random_explorer)
 
     def choose(self, go_explore_env):
 
         rand_value = random.random()
-        # FN, choose a neighbouring hampu cell to the current cell with 50% proability 
+        # FN, choose a neighbouring dynamic cell to the current cell with 50% proability 
         if go_explore_env.archive.cell_map and go_explore_env.last_reached_cell in go_explore_env.archive.archive\
              and rand_value < 0.50:
             current_cell = go_explore_env.last_reached_cell

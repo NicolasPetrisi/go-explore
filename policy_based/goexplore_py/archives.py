@@ -56,11 +56,11 @@ class StochasticArchive:
     def add_to_cell_map(self, cell_key):
         self.cell_map.add_cell(cell_key)
 
-    def get_state(self, hampu_cells_save=False):
+    def get_state(self, dynamic_cells_save=False):
         """Get the current state of the archive.
 
         Args:
-            hampu_cells_save (bool, optional): If the save should merge the cells together as Hampu Cells before saving the archive state. Defaults to False.
+            dynamic_cells_save (bool, optional): If the save should merge the cells together as Dynamic Cells before saving the archive state. Defaults to False.
 
         Returns:
             Dict[string, Any]: The current state of the archive as a dictionary.
@@ -73,8 +73,8 @@ class StochasticArchive:
 
         save_trajectories = None
 
-        # FN, NOTE: The resulting cells we end up with when merging together individual cells are refered to as "Hampu Cells".
-        if hampu_cells_save:
+        # FN, NOTE: The resulting cells we end up with when merging together individual cells are refered to as "Dynamic Cells".
+        if dynamic_cells_save:
             #print("--------------------------------------------------\n--------------------------------------------------\n--------------------------------------------------\n")
             #print("CELLMAPPING K: V")
             #tmp_list = list(self.cell_map.keys())
@@ -95,43 +95,43 @@ class StochasticArchive:
                         raise RuntimeError
             
 
-            # FN, Create so called "Hampu Cells". Merging together neighbouring cells with each other to create larger cells.
+            # FN, Create so called "Dynamic Cells". Merging together neighbouring cells with each other to create larger cells.
             mapped_cells: set[CellRepresentationBase] = set()
-            for hampu_cell in self.archive.keys():
+            for dynamic_cell in self.archive.keys():
                 
                 #FN, If this is already mapped to a cell this run, don't map others to it, it may cause chain mapping.
-                if hampu_cell in mapped_cells:
+                if dynamic_cell in mapped_cells:
                     continue
-                mapped_cells.add(hampu_cell)
+                mapped_cells.add(dynamic_cell)
 
-                # FN, Sort the neighbouring cells according to their cell size, making Hampu Cells prioritizing merging with smaller neighbours before the larger.
-                hampu_neighbours = list(self.archive[hampu_cell].neighbours)
-                hampu_neighbours.sort(key=self.cell_map.get_cell_size)
-                #print("Hampu Neighbours:", hampu_cell, "has these ->", hampu_neighbours)
-                for merging_cell in hampu_neighbours:
-                    if merging_cell == hampu_cell:
+                # FN, Sort the neighbouring cells according to their cell size, making Dynamic Cells prioritizing merging with smaller neighbours before the larger.
+                dynamic_neighbours = list(self.archive[dynamic_cell].neighbours)
+                dynamic_neighbours.sort(key=self.cell_map.get_cell_size)
+                #print("Dynamic Neighbours:", dynamic_cell, "has these ->", dynamic_neighbours)
+                for merging_cell in dynamic_neighbours:
+                    if merging_cell == dynamic_cell:
                         continue
 
-                    if self.cell_map.get_cell_size(hampu_cell) + self.cell_map.get_cell_size(merging_cell) <= self.max_cell_size and \
-                            self.archive[self.cell_map[merging_cell]].score == self.archive[self.cell_map[hampu_cell]].score:
+                    if self.cell_map.get_cell_size(dynamic_cell) + self.cell_map.get_cell_size(merging_cell) <= self.max_cell_size and \
+                            self.archive[self.cell_map[merging_cell]].score == self.archive[self.cell_map[dynamic_cell]].score:
                         
                         #FN, Only add cells that have not been mapped to another cell yet.
                         if not merging_cell in mapped_cells:
                             try:
                                 mapped_cells.add(merging_cell)
-                                self.cell_map[merging_cell] = self.cell_map[hampu_cell]
-                                #print("Merging Cell : Hampu Cell ->", merging_cell, ":", hampu_cell)
+                                self.cell_map[merging_cell] = self.cell_map[dynamic_cell]
+                                #print("Merging Cell : Dynamic Cell ->", merging_cell, ":", dynamic_cell)
 
                                 merge_cell_neighbours = set(self.archive[merging_cell].neighbours)
                                 for neighbour_key in merge_cell_neighbours:
                                     #print("Neighbour key:", neighbour_key)
                                     self.archive[neighbour_key].neighbours.discard(merging_cell)
-                                    self.archive[neighbour_key].neighbours.add(hampu_cell)
-                                    self.archive[hampu_cell].neighbours.add(neighbour_key)
-                                self.archive[hampu_cell].neighbours.discard(merging_cell)
+                                    self.archive[neighbour_key].neighbours.add(dynamic_cell)
+                                    self.archive[dynamic_cell].neighbours.add(neighbour_key)
+                                self.archive[dynamic_cell].neighbours.discard(merging_cell)
                             except:
                                 print("falied when mergin neighbours")
-                                print("merging_cell", merging_cell, "hampu_cell", hampu_cell)
+                                print("merging_cell", merging_cell, "dynamic_cell", dynamic_cell)
                                 print("mergin cells negihbours",self.archive[merging_cell].neighbours)
                                 print("mergin cell in archive?:", merging_cell in self.archive)
                                 print("mergin cells macro cell ", self.cell_map[merging_cell])
@@ -140,15 +140,15 @@ class StochasticArchive:
             # FN, Update the cell_id mapping according to the mapping already done in cell_map.
             cell_id_map = dict()
             items = list(self.cell_id_to_key_dict.items())
-            for cell_id, hampu_cell in items:
+            for cell_id, dynamic_cell in items:
                 if cell_id != -1:
-                    mapped_cell_id = self.cell_key_to_id_dict[self.cell_map[hampu_cell]]
+                    mapped_cell_id = self.cell_key_to_id_dict[self.cell_map[dynamic_cell]]
                     cell_id_map[cell_id] = mapped_cell_id
 
                     if cell_id != mapped_cell_id:
                         self.cell_id_to_key_dict.pop(cell_id)
             
-            #FN, Extract the cell info of all cells that have survived the creation of the Hampu Cells (those that were not removed).
+            #FN, Extract the cell info of all cells that have survived the creation of the Dynamic Cells (those that were not removed).
             cell_infos = list()
             for key in self.cell_map.values():
                 if self.archive[key] not in cell_infos:

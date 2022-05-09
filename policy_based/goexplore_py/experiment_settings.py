@@ -1064,8 +1064,8 @@ def setup(resolution,
     
     if explorer == 'targeted':
         goal_explorer = ge_wrappers.TargetedGoalExplorer(random_exp_prob, random_explorer)
-    elif explorer == 'hampu':
-        goal_explorer = ge_wrappers.HampuGoalExplorer(random_exp_prob, random_explorer)
+    elif explorer == 'dynamic':
+        goal_explorer = ge_wrappers.DynamicGoalExplorer(random_exp_prob, random_explorer)
     elif explorer == 'domain':
         goal_explorer = ge_wrappers.DomKnowNeighborGoalExplorer(x_res, y_res, random_exp_prob, random_explorer)
     else:
@@ -1794,7 +1794,7 @@ def parse_arguments():
                         help='If the network is to be tested (True) or trained (False).')
     parser.add_argument('--explorer', dest='explorer',
                         type=str, default=DefaultArg('domain'),
-                        help='If dynamic Hampu Cells (hampu), targeted cell (targeted) or domain knowledge (domain) is to be used.')
+                        help='If dynamic Dynamic Cells (dynamic), targeted cell (targeted) or domain knowledge (domain) is to be used.')
     parser.add_argument('--folder', type=str,
                         default=DefaultArg(None),
                         help='The folder containing the model, archive and/or trajectory_file to load.')

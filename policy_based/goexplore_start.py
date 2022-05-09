@@ -289,7 +289,7 @@ class CheckpointTracker:
         if self.log_par.max_score is not None and self.expl.archive.max_score >= self.log_par.max_score:
             return False
         if self.early_stopping and not test_mode and cells_found_counter_stop:
-            print("Early stopping to perform hampu cell merge")
+            print("Early stopping to perform dynamic cell merge")
             return False
         if self.early_stopping and self.has_converged(test_mode):
             print("Performing early stopping since it's deemed that the agent has converged")
@@ -501,8 +501,8 @@ def _run(**kwargs):
                 c_return_succes_rate += success_rate 
             c_return_succes_rate /= len(expl.archive.archive)
 
-            #FN, when using Hampu Cells it's impossible to calculate the optimal length using the cells since they change over time.
-            if not kwargs['explorer'] == 'hampu':
+            #FN, when using Dynamic Cells it's impossible to calculate the optimal length using the cells since they change over time.
+            if not kwargs['explorer'] == 'dynamic':
                 if expl.archive.max_score > 0 and start_coords == (-1, -1) and kwargs["pos_seed"] != -1:
 
                     start_coords = (list(expl.archive.archive.keys())[0].x, list(expl.archive.archive.keys())[0].y)
@@ -682,7 +682,7 @@ def _run(**kwargs):
 
         cells_found_counter.append(len(expl.archive.archive))
         # FN, If we haven't found any new cells for a set number of cycles then early stop to merge the cells.
-        if has_written_checkpoint and kwargs['explorer'] == 'hampu' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
+        if has_written_checkpoint and kwargs['explorer'] == 'dynamic' and expl.frames_compute < 1000000 and cells_found_counter[0] == cells_found_counter[-1]:
             cells_found_counter_stop = True
 
 
@@ -695,8 +695,8 @@ def _run(**kwargs):
     local_logger.info(f'Rank {hvd.rank()} finished experiment')
     mpi.get_comm_world().barrier()
 
-    # FN, One last save to update the archive if Hampu Cells (dynamic cells) are used.
-    if kwargs['explorer'] == 'hampu' and hvd.rank() == 0 and not disable_logging:
+    # FN, One last save to update the archive if Dynamic Cells (dynamic cells) are used.
+    if kwargs['explorer'] == 'dynamic' and hvd.rank() == 0 and not disable_logging:
         # Save Archive
         if log_par.save_archive:
             save_state(expl.get_state(True), filename + ARCHIVE_POSTFIX)
