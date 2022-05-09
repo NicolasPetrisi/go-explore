@@ -146,10 +146,17 @@ def get_values(filepath, x_name, y_name):
         y_index = first[0].index(y_name)
         for line in first[1:]:
             if line[y_index] != 'nan':
-                y = float(line[y_index])
-                if y > -0.1:
-                    x_values.append(int(line[x_index]))
-                    y_values.append(float(line[y_index]))
+                # FN, In case of race condition(?) where the headlines for the log file is added to a loaded log before
+                # the check if the log is loaded or not is done, we will simply ignore values from the log that can't
+                # be converted to numbers (ex string for the headlines if they have been added in the middle of the log).
+                try:
+                    y = float(line[y_index])
+                    x = int(line[x_index])
+                    if y > -0.1:
+                        x_values.append(x)
+                        y_values.append(y)
+                except:
+                    pass
         return x_values,y_values
 
 def plot_values(x_values, y_values, x_label, y_label, seed, name="plot.png"):
