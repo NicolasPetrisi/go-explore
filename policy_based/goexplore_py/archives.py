@@ -412,7 +412,8 @@ class StochasticArchive:
 
             traj_id = self.cell_trajectory_manager.cell_trajectory_id
             traj_length = self.cell_trajectory_manager.get_current_trajectory_length()
-            if self.should_accept_cell(current_cell_key, score, length, traj_id, self.otf_trajectories):
+            should_accept = self.should_accept_cell(current_cell_key, score, length, traj_id, self.otf_trajectories):
+            if should_accept:
                 if current_cell_key in self.archive:
                     should_reset = self.reset_on_update
                     ret_discovered = self.archive[current_cell_key].ret_discovered
@@ -433,7 +434,9 @@ class StochasticArchive:
                 if new_cell:
                     self.new_cells[current_cell_key] = ret_discovered
 
-            self.updated_cells.add(current_cell_key)
+            if should_accept or self.otf_trajectories:
+                self.updated_cells.add(current_cell_key)
+
             cell_info = self.archive[current_cell_key]
             u_cell_info = self.updated_info[current_cell_key]
             cell_info.nb_actions_taken_in_cell += 1
