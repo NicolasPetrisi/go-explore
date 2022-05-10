@@ -380,11 +380,6 @@ class StochasticArchive:
                 
                 neighbour_list_dict[trajectory_id].append(cell_key)
 
-
-
-
-
-
             if trajectory_id != current_trajectory_id:  # <- This is an optimization to reduce the number of lookups
                 current_trajectory_id = trajectory_id
                 self.cell_trajectory_manager.switch_trajectory(trajectory_id)
@@ -412,7 +407,7 @@ class StochasticArchive:
 
             traj_id = self.cell_trajectory_manager.cell_trajectory_id
             traj_length = self.cell_trajectory_manager.get_current_trajectory_length()
-            should_accept = self.should_accept_cell(current_cell_key, score, length, traj_id, self.otf_trajectories):
+            should_accept = self.should_accept_cell(current_cell_key, score, length, traj_id, self.otf_trajectories)
             if should_accept:
                 if current_cell_key in self.archive:
                     should_reset = self.reset_on_update
