@@ -78,10 +78,10 @@ class MyAtari(MyWrapper):
         return gym.make(self.name, distribution_mode=self.distribution_mode, render_mode="rgb_array" , start_level=self.org_seed, use_sequential_levels=self.use_sequential_levels, num_levels = self.num_levels, restrict_themes = self.restrict_themes, pos_seed = chosen_pos)
     
     def reset(self) -> np.ndarray:
-        """reseting an enviroment to the start state
+        """Reseting an enviroment to the start state
 
         Returns:
-            np.ndarray: observation of the start frame (64,64,3) in procgen
+            np.ndarray: Observation of the start frame (512,512,3).
         """
         self.reset_counter += 1
         self.env = self.make_env()
