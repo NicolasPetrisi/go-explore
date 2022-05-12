@@ -1,12 +1,20 @@
 # Go-Explore
 
-This is the code for [First return then explore](https://arxiv.org/abs/2004.12919), the new Go-explore paper. Code for the [original paper](https://arxiv.org/abs/1901.10995) can be found in this repository under the tag "v1.0" or the release "Go-Explore v1". 
+This is the code used in ["First return, then explore" Adapted and Evaluated for Dynamic Environments](link_to_paper). Code given in the [First return, then Explore](https://arxiv.org/abs/2004.12919) paper can be found at: https://github.com/uber-research/go-explore 
 
-The code for Go-Explore with a deterministic exploration phase followed by a robustification phase is located in the `robustified` subdirectory. The code for Go-Explore with a policy-based exploration phase is located in the `policy_based` subdirectory. The `policy_based` directory is the only one used in the master thesis found at(future link to master thesis).
+The code for Go-Explore with a policy-based exploration phase is located in the `policy_based` subdirectory. The modied procgen code can be found in the `procgen` subdirectory.
 
 ## Requirements
 
 To be able to run the code conda is required. The only tested conda version is Miniconda3 so no guarante that any other conda works. A guide to install Miniconda3 can be found at (https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html)
+
+
+Ubuntu 22.04, 20.04 or WSL2 20.04, 18.04 is required for the code to work. Using Ubuntu 18.04 causes the program to deadlock when exiting because of multiprocessing in python.
+The program deadlocks when trying to exit the program because of suspected orphan threads left alive in procgen. 
+
+Ubuntu 22.04, 20.04 and WSL2 20.04, 18.04 all appear to clean up the orphans which enables the program to exit as intended, however Ubuntu 18.04 instead deadlocks in this scenario.
+Any other versions than those listed have not been tested.
+
 
 To try out the code do the following:
 
@@ -17,6 +25,8 @@ chmod a+x init.sh
 ./init.sh
 conda activate go-explore
 cd policy-based
-sh generic_atari_env maze - 0.1 123 # The arguments are: game to play, model to load, time to train and level-seed
+python program_runner.py
 ```
-The results will be in the ~/temp folder. Here plots about the run, videos of some episodes, model, archive and a log file will be written
+The results will be in the ~/temp folder. In this folder all runs will be saved where plots, videos, model, archive and a log file for the run can be found.
+
+To change the settings of the run modify the program_runner.py file perferably. Some settings can only be changed in the run_procgen_game.sh file but do this only if you are certain on what your doing.
