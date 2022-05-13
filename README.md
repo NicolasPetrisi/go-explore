@@ -31,6 +31,6 @@ The results will be in the ~/temp folder. In this folder all runs will be saved 
 
 To change the settings of the run modify the program_runner.py file perferably. Some settings can only be changed in the run_procgen_game.sh file but do this only if you are certain on what your doing.
 
-##Notes
+## Notes
 
 If a run is either interupted using CTRL-C or through a crash there is a high risk for zombie processes to stay alive. Use 'ps -a' and check for any python processes still running. Given that there shouldn't be any for any other reason, kill these zombies using 'killall python3'.
