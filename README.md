@@ -33,4 +33,4 @@ To change the settings of the run modify the program_runner.py file perferably. 
 
 ## Notes
 
-If a run is either interupted using CTRL-C or through a crash there is a high risk for zombie processes to stay alive. Use 'ps -a' and check for any python processes still running. Given that there shouldn't be any for any other reason, kill these zombies using 'killall python3'.
+If a run is either interupted using CTRL-C or through a crash there is a high risk for zombie processes to stay alive because of multithreading. Use 'ps -a' and check for any python processes still running. Given that there shouldn't be any for any other reason, kill these processes using 'killall python3'. Otherwise there will be a build-up of zombies that will eventually prevent the program from being able to start.
