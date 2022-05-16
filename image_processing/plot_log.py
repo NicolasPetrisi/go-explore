@@ -80,9 +80,10 @@ def plot_values(word_dict, x_values, y_values, x_label, y_label, title, name="pl
 
 
 def multiple_plot_values(word_dict, x_values_list, y_values_list, x_label, y_label, x_value_name, name="plot.png"):
-        
+    plt.clf()
+    linestyles = ['solid', 'dotted', 'dashed', 'dashdot'] # NOTE, There's no fail safe if more than 4 lines (reading 4 log files at once) is written at the same time. Will give index out of bounds.
     for i in range(len(x_values_list)):
-        plt.plot(x_values_list[i], y_values_list[i], label = x_value_name[i])
+        plt.plot(x_values_list[i], y_values_list[i], label = x_value_name[i], linestyle=linestyles[i])
 
     if y_label in word_dict:
         label_name = word_dict[y_label]
