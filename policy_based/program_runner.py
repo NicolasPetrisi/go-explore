@@ -6,8 +6,12 @@ import numpy as np
 from signal import SIGINT
 
 # Set any unwished arguments (except gameName) to "-" if they are not desired,
-# they will get default arguments in Go-Explore.
-# gameName, tempPath and endTime MUST be defined.
+# they will get default arguments in Go-Explore. If an argument does not have standard value then a warning will be raised.
+
+# NOTE: If the program would have too little execution time, such as setting max steps or time to 0 the program will crash with
+# a "referenced before assigned" or "index out of range" error. This is because the program will start but then terminate before
+# it has had a chance to write the first checkpoint. Then during exit it will try to access values it should have created
+# during runtime but not had time to do. This is why 0.1 is the minimum time allowed. There is however no safety min for max frames.
 #####################
 gameName           : str    = "maze"                # maze
 minimumIterations  : int    = 1                     # For training: hours / 10. For test: 1
